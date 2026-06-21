@@ -8,54 +8,45 @@ import ActivityFeed from "../../components/dashboard/ActivityFeed";
 import RecruiterSimulation from "../../components/dashboard/RecruiterSimulation";
 
 export default function Dashboard() {
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        const timer = setTimeout(() => setLoading(false), 1200);
-        return () => clearTimeout(timer);
-    }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
-    const refresh = async () => {
-        setRefreshing(true);
-        setLoading(true);
+  const refresh = async () => {
+    setRefreshing(true);
+    setLoading(true);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        setLoading(false);
-        setRefreshing(false);
-    };
+    setLoading(false);
+    setRefreshing(false);
+  };
 
-    return (
-        <div className="h-full overflow-y-auto">
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <DashboardHeader refreshing={refreshing} onRefresh={refresh} />
 
-                <DashboardHeader
-                    refreshing={refreshing}
-                    onRefresh={refresh}
-                />
+        {/* <StatsGrid loading={loading} />
 
-                {/* <StatsGrid loading={loading} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <AtsTrendChart />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                    <AtsTrendChart />
-
-                    <ResumeRadarChart loading={loading} />
-
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                    <WeeklyActivityChart loading={loading} />
-
-                    <ActivityFeed loading={loading} />
-
-                </div>
-
-                <RecruiterSimulation /> */}
-
-            </div>
+          <ResumeRadarChart loading={loading} />
         </div>
-    );
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <WeeklyActivityChart loading={loading} />
+
+          <ActivityFeed loading={loading} />
+        </div>
+
+        <RecruiterSimulation /> */}
+      </div>
+    </div>
+  );
 }

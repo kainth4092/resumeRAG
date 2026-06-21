@@ -7,8 +7,8 @@ CURRENT_YEAR = datetime.now().year
 class EducationCreate(BaseModel):
     institution: str = Field(min_length=2, max_length=150)
     degree: str = Field(min_length=2, max_length=80)
-    start_year: int
-    end_year: int
+    start_year: int | None = None
+    end_year: int | None = None
 
     @field_validator("institution", "degree")
     @classmethod

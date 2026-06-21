@@ -18,9 +18,6 @@ export default function Navbar({ notifRef, unreadCount, notifOpen, profileRef, s
             >
                 <Search size={14} className="flex-shrink-0" />
                 <span className="flex-1 text-left text-muted-foreground/70 hidden sm:block">Search anything...</span>
-                <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] bg-muted text-muted-foreground/70 px-1.5 py-0.5 rounded-md border border-border font-mono ml-auto">
-                    ⌘K
-                </kbd>
             </button>
 
             <div className="flex items-center gap-1.5 ml-auto">

@@ -13,4 +13,10 @@ class UserExperience(Base):
     company: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    start_month: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    start_year: Mapped[int | None] = mapped_column(nullable=True)
+    end_month: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    end_year: Mapped[int | None] = mapped_column(nullable=True)
+    currently_working: Mapped[bool] = mapped_column(default=False)
+    
     user = relationship("User", back_populates="experiences")

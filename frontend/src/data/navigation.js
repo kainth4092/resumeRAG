@@ -16,13 +16,11 @@ export const NAV_SECTIONS = [
         items: [
             { id: "tracker", icon: Briefcase, label: "Job Tracker", badge: "12" },
             { id: "interview", icon: MessageSquare, label: "Interview Prep", badge: null },
-            // { id: "roadmap", icon: Map, label: "Career Roadmap", badge: null },
         ],
     },
     {
         title: "Insights",
         items: [
-            // { id: "analytics", icon: BarChart3, label: "Analytics", badge: null },
             { id: "settings", icon: Settings, label: "Settings", badge: null },
         ],
     },
