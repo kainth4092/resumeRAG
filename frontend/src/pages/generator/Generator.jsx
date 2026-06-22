@@ -136,6 +136,7 @@ export function ResumeGenerator() {
               handleDrop={handleDrop}
               generated={generated}
               setGenerated={setGenerated}
+              generating={generating}
             />
             <JobDescription
               jd={jd}

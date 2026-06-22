@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.add_column('user_experience', sa.Column('start_year', sa.Integer(), nullable=True))
     op.add_column('user_experience', sa.Column('end_month', sa.String(length=20), nullable=True))
     op.add_column('user_experience', sa.Column('end_year', sa.Integer(), nullable=True))
-    op.add_column('user_experience', sa.Column('currently_working', sa.Boolean(), nullable=False))
+    op.add_column('user_experience', sa.Column('currently_working', sa.Boolean(), nullable=False, server_default=sa.text('false')))
     # ### end Alembic commands ###
 
 

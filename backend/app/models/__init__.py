@@ -6,3 +6,4 @@ from app.models.user_skill import UserSkill
 from app.models.user_project import UserProject
 from app.models.user_education import UserEducation
 from app.models.user_experience import UserExperience
+from app.models.interview import InterviewSession, InterviewQuestion, InterviewAnswer

@@ -1,139 +1,190 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Calendar, Edit, Trash2, Plus, Sparkles } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
+import Header from "../../components/resume/dashboard/Header";
+import StatsCards from "../../components/resume/dashboard/StatsCards";
+import SearchFilter from "../../components/resume/dashboard/SearchFilter";
+import ResumeTable from "../../components/resume/dashboard/ResumeTable";
+import ResumePreviewModal from "../../components/resume/dashboard/ResumePreviewModal";
+import DeleteDialog from "../../components/resume/dashboard/DeleteDialog";
 
 export default function MyResumes() {
   const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
-  const [deletingId, setDeletingId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [starredFilter, setStarredFilter] = useState(false);
+  const [sortBy, setSortBy] = useState("updated");
+
+  const [previewResume, setPreviewResume] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
+
+  const [menuOpen, setMenuOpen] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
-    setResumes(saved);
+    const mapped = saved.map((item) => ({
+      id: item.id,
+      name: item.title || "Untitled Resume",
+      role: item.resume?.personal_info?.title || item.resume?.headline || "Software Engineer",
+      company: item.resume?.work_experience?.[0]?.company || "",
+      score: item.score || item.resume?.score || 85,
+      status: item.status || "Active",
+      updated: item.updatedAt || "Just now",
+      pages: item.pages || 1,
+      version: item.version || "v1",
+      starred: item.starred || false,
+      template: item.template || "Professional",
+      color: item.color || "#7C3AED",
+      resume: item.resume,
+    }));
+    setResumes(mapped);
   }, []);
 
-  const handleDelete = (id, e) => {
-    e.stopPropagation();
-    const updated = resumes.filter((r) => r.id !== id);
-    setResumes(updated);
-    localStorage.setItem("saved_resumes", JSON.stringify(updated));
-    setDeletingId(null);
-  };
+  const filtered = resumes
+    .filter((r) => {
+      if (search && !r.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (statusFilter !== "All" && r.status !== statusFilter) return false;
+      if (starredFilter && !r.starred) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "score") return b.score - a.score;
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      return 0;
+    });
 
-  const handleEdit = (resumeEntry) => {
-    navigate("/resume/editor", {
-      state: {
-        resume: resumeEntry.resume,
-      },
+  const toggleStar = (id) => {
+    setResumes((prev) => {
+      const next = prev.map((r) => (r.id === id ? { ...r, starred: !r.starred } : r));
+      const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+      const updatedSaved = saved.map((item) => {
+        if (item.id === id) {
+          return { ...item, starred: !item.starred };
+        }
+        return item;
+      });
+      localStorage.setItem("saved_resumes", JSON.stringify(updatedSaved));
+      return next;
     });
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    setDeleteTarget(null);
+    setRemovingId(id);
+    await new Promise((r) => setTimeout(r, 350)); // let exit anim play
+
+    const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+    const updated = saved.filter((r) => r.id !== id);
+    localStorage.setItem("saved_resumes", JSON.stringify(updated));
+
+    setResumes((prev) => prev.filter((r) => r.id !== id));
+    setRemovingId(null);
+    if (previewResume?.id === id) setPreviewResume(null);
+  };
+
+  const handleEdit = (r) => {
+    setPreviewResume(null);
+    navigate("/resume/editor", { state: { resume: r.resume } });
+  };
+
+  const statusOpts = [
+    { value: "All", label: "All Status" },
+    { value: "Active", label: "Active" },
+    { value: "Draft", label: "Draft" },
+    { value: "Submitted", label: "Submitted" },
+  ];
+  const sortOpts = [
+    { value: "updated", label: "Last Updated" },
+    { value: "score", label: "ATS Score" },
+    { value: "name", label: "Name (A–Z)" },
+  ];
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">My Resumes</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Access and customize your ATS-optimized resumes.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/generator")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm shadow-primary/20"
-        >
-          <Plus size={16} /> Create New
-        </button>
+    <div className="h-full overflow-y-auto font-sans bg-background">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <Header resumes={resumes} onNewResume={() => navigate("/generator")} />
+
+        {resumes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-2xl p-12 text-center bg-card">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 animate-pulse">
+              <FileText size={24} />
+            </div>
+            <h3 className="font-semibold text-foreground">
+              No Resumes Saved Yet
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-sm mt-2 mb-6">
+              Upload your resume and use our AI generator to build an optimized
+              resume, then save it here.
+            </p>
+            <button
+              onClick={() => navigate("/generator")}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
+            >
+              <Sparkles size={16} /> Go to Generator
+            </button>
+          </div>
+        ) : (
+          <>
+
+            <StatsCards resumes={resumes} />
+
+            <SearchFilter
+              search={search}
+              setSearch={setSearch}
+              starredFilter={starredFilter}
+              setStarredFilter={setStarredFilter}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              statusOpts={statusOpts}
+              sortOpts={sortOpts}
+            />
+
+            <ResumeTable
+              filtered={filtered}
+              removingId={removingId}
+              toggleStar={toggleStar}
+              setPreviewResume={setPreviewResume}
+              handleEdit={handleEdit}
+              menuOpen={menuOpen}
+              setMenuOpen={setMenuOpen}
+              menuRef={menuRef}
+              setDeleteTarget={setDeleteTarget}
+              navigate={navigate}
+            />
+          </>
+        )}
       </div>
 
-      {resumes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-dashed rounded-2xl p-12 text-center bg-card">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-            <FileText size={24} />
-          </div>
-          <h3 className="font-semibold text-foreground">
-            No Resumes Saved Yet
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-sm mt-2 mb-6">
-            Upload your resume and use our AI generator to build an optimized
-            resume, then save it here.
-          </p>
-          <button
-            onClick={() => navigate("/generator")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all"
-          >
-            <Sparkles size={16} /> Go to Generator
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {resumes.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleEdit(item)}
-              className="bg-card border border-border rounded-2xl p-5 hover:shadow-md hover:border-primary/20 transition-all duration-200 cursor-pointer group flex flex-col justify-between h-[200px]"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                    <FileText size={20} />
-                  </div>
-                  <span className="text-[10px] font-semibold px-2 py-1 bg-secondary text-secondary-foreground rounded-full">
-                    {item.template || "Professional"}
-                  </span>
-                </div>
-                <h3 className="font-bold text-foreground mt-4 group-hover:text-primary transition-colors line-clamp-1">
-                  {item.title}
-                </h3>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                  <Calendar size={13} />
-                  <span>Updated {item.updatedAt}</span>
-                </div>
-              </div>
+      <ResumePreviewModal
+        previewResume={previewResume}
+        setPreviewResume={setPreviewResume}
+        handleEdit={handleEdit}
+        setDeleteTarget={setDeleteTarget}
+      />
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4">
-                {deletingId === item.id ? (
-                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                    <span className="text-xs text-red-500 font-semibold mr-1">Sure?</span>
-                    <button
-                      onClick={(e) => handleDelete(item.id, e)}
-                      className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(null)}
-                      className="px-2.5 py-1.5 border border-border text-muted-foreground hover:bg-muted rounded-lg text-xs font-semibold transition-all"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(item);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs hover:bg-muted transition-all"
-                    >
-                      <Edit size={13} /> Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingId(item.id);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-xs hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all"
-                    >
-                      <Trash2 size={13} /> Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <DeleteDialog
+        deleteTarget={deleteTarget}
+        setDeleteTarget={setDeleteTarget}
+        handleDeleteConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

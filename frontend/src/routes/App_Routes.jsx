@@ -10,6 +10,7 @@ import ResumeEditor from "../pages/resume/ResumeEditor";
 
 import MyResumes from "../pages/resume/MyResumes";
 import Templates from "../pages/resume/Templates";
+import InterviewPrep from "../pages/interview/InterviewPrep";
 
 export default function AppRoutes() {
     return (
@@ -25,7 +26,9 @@ export default function AppRoutes() {
                         <Route path="/resume/editor" element={<ResumeEditor />} />
                         <Route path="/resumes" element={<MyResumes />} />
                         <Route path="/templates" element={<Templates />} />
+                        <Route path="/interview" element={<InterviewPrep />} />
                     </Route>
+
                 </Route>
             </Routes>
         </BrowserRouter>

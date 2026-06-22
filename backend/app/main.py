@@ -9,6 +9,7 @@ from app.api.skills.routes import router as skills_router
 from app.api.projects.routes import router as projects_router
 from app.api.education.routes import router as education_router
 from app.api.experience.routes import router as experience_router
+from app.api.interview.routes import router as interview_router
 
 app = FastAPI(title="ResumeRAG API")
 
@@ -28,6 +29,8 @@ app.include_router(skills_router)
 app.include_router(projects_router)
 app.include_router(education_router)
 app.include_router(experience_router)
+
+app.include_router(interview_router)
 
 
 @app.get("/")

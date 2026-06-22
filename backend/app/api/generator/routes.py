@@ -10,7 +10,7 @@ from app.schemas.generator import (
     GenerateRequest,
     GenerateResponse,
 )
-from app.services.gemini_service import analyze_resume, generate_resume
+from app.services.llm_service import analyze_resume, generate_resume
 
 router = APIRouter(prefix="/api/generator", tags=["Generator"])
 
@@ -34,8 +34,11 @@ def analyze(
         return result
     except Exception as e:
         import traceback
+
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to analyze resume: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to analyze resume: {str(e)}"
+        )
 
 
 @router.post("/generate", response_model=GenerateResponse)
@@ -57,5 +60,8 @@ def generate(
         return result
     except Exception as e:
         import traceback
+
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to generate resume: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate resume: {str(e)}"
+        )

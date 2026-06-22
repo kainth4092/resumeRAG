@@ -14,7 +14,8 @@ export default function ResumeUpload({
     handleUpload,
     handleDrop,
     generated,
-    setGenerated }) {
+    setGenerated,
+    generating }) {
 
     const fileRef = useRef(null);
 
@@ -74,9 +75,9 @@ export default function ResumeUpload({
                     <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0" />
                     <button
                         onClick={() => { setUploaded(false); setAnalysis(false); setGenerated(false); }}
-                        disabled={!generated}
-                        className={`transition-colors ${!generated ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
-                        title={!generated ? "Generate the resume first to reset upload" : "Reset upload"}
+                        disabled={generating || generated}
+                        className={`transition-colors ${generating || generated ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
+                        title={generating || generated ? "Cannot reset file after generating" : "Reset upload"}
                     >
                         <X size={16} />
                     </button>

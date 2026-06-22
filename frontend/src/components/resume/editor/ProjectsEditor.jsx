@@ -1,121 +1,47 @@
-import EditorSection from "./EditorSection";
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { FolderOpen, Trash2, Plus } from "lucide-react";
+import EditorSection, { Label, Input, Textarea } from "./EditorSection";
 
-export default function ProjectsEditor({ resume, setResume }) {
+export default function ProjectsEditor({ projects = [], onChange }) {
+  const addProject = () => onChange([...projects, {
+    id: Date.now(), name: "", tech: "", url: "", desc: "",
+  }]);
 
-    const [open, setOpen] = useState(false);
-    const updateField = (index, field, value) => {
-        const projects = [...resume.project];
-        projects[index][field] = value;
-        setResume(prev => ({
-            ...prev,
-            projects,
-        }));
-    };
-    const addProject = () => {
-        setResume(prev => ({
-            ...prev,
-            projects: [
-                ...prev.projects,
-                {
-                    title: "",
-                    technologies: [],
-                    description: [],
-                    github: "",
-                    live: ""
-                },
-            ],
-        }));
-    };
-    const removeProject = (index) => {
-        setResume(prev => ({
-            ...prev,
-            project: prev.project.filter((_, i) => i !== index),
-        }));
-    };
-    return (
-        <EditorSection
-            title="Project"
-            open={open}
-            setOpen={setOpen}
-        >
-            <div className="space-y-5">
-                {resume.projects.map((pro, index) => (
-                    <div
-                        key={index}
-                        className="border rounded-lg p-4 space-y-3"
-                    >
-                        <input
-                            className="w-full border rounded-lg p-2"
-                            value={pro.title}
-                            placeholder="Title"
-                            onChange={(e) =>
-                                updateField(index, "title", e.target.value)
-                            }
-                        />
-                        <input
-                            className="w-full border rounded-lg p-2"
-                            value={pro.technologies.join(",")}
-                            placeholder="Technologies"
-                            onChange={(e) =>
-                                updateField(
-                                    index,
-                                    "technologies",
-                                    e.target.value
-                                        .split(",")
-                                        .map(item => item.trim())
-                                        .filter(Boolean)
-                                )
-                            }
-                        />
-                        <textarea
-                            rows={5}
-                            className="w-full border rounded-lg p-3"
-                            value={pro.description.join("\n")}
-                            onChange={(e) =>
-                                updateField(
-                                    index,
-                                    "description",
-                                    e.target.value
-                                        .split("\n")
-                                        .filter(Boolean)
-                                )
-                            }
-                        />
-                        <input
-                            className="w-full border rounded-lg p-2"
-                            value={pro.github}
-                            placeholder="Github"
-                            onChange={(e) =>
-                                updateField(index, "github", e.target.value)
-                            }
-                        />
-                        <input
-                            className="w-full border rounded-lg p-2"
-                            value={pro.live}
-                            placeholder="Live"
-                            onChange={(e) =>
-                                updateField(index, "live", e.target.value)
-                            }
-                        />
-                        <button
-                            onClick={() => removeProject(index)}
-                            className="text-red-500 flex items-center gap-2"
-                        >
-                            <Trash2 size={16} />
-                            Remove
-                        </button>
-                    </div>
-                ))}
-                <button
-                    onClick={addProject}
-                    className="flex items-center gap-2 text-primary"
-                >
-                    <Plus size={16} />
-                    Add Project
-                </button>
+  const updateProj = (id, key, val) =>
+    onChange(projects.map(p => p.id === id ? { ...p, [key]: val } : p));
+
+  return (
+    <EditorSection title="Projects" icon={FolderOpen} badge={`${projects.length}`} defaultOpen={false}>
+      <div className="space-y-4 text-left">
+        {projects.map(p => (
+          <div key={p.id} className="p-4 border border-border rounded-xl bg-background/50 space-y-3 relative group">
+            <button
+              onClick={() => onChange(projects.filter(x => x.id !== p.id))}
+              className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
+            >
+              <Trash2 size={12} />
+            </button>
+            <div>
+              <Label>Project Name</Label>
+              <Input value={p.name} onChange={v => updateProj(p.id, "name", v)} placeholder="AI Resume Builder" />
             </div>
-        </EditorSection>
-    );
+            <div>
+              <Label>Technologies</Label>
+              <Input value={p.tech} onChange={v => updateProj(p.id, "tech", v)} placeholder="React · Node.js · PostgreSQL" />
+            </div>
+            <div>
+              <Label>URL (optional)</Label>
+              <Input value={p.url} onChange={v => updateProj(p.id, "url", v)} placeholder="github.com/you/project" />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={p.desc} onChange={v => updateProj(p.id, "desc", v)} placeholder="Describe the project and its impact…" rows={2} />
+            </div>
+          </div>
+        ))}
+        <button onClick={addProject} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/3 transition-all cursor-pointer">
+          <Plus size={14} /> Add Project
+        </button>
+      </div>
+    </EditorSection>
+  );
 }
