@@ -1,238 +1,145 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as interviewService from "../services/interviewService";
+import { normalizeHistory, normalizeSession } from "../utils/interviewHelpers";
 
 export function useInterview() {
-    const [loading, setLoading] = useState(true);
-    const [generating, setGenerating] = useState(false);
-    const [viewState, setViewState] = useState("loading");
-    const [session, setSession] = useState(null);
-    const [questions, setQuestions] = useState([]);
-    const [history, setHistory] = useState([]);
-    const [activeCategory, setActiveCategory] = useState("Technical");
-    const [search, setSearch] = useState("");
-    const [diffFilter, setDiffFilter] = useState("");
-    const [bookmarkOnly, setBookmarkOnly] = useState(false);
+  const [viewState, setViewState] = useState("loading");
+  const [session, setSession] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [error, setError] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Technical");
+  const [search, setSearch] = useState("");
+  const [diffFilter, setDiffFilter] = useState("");
+  const [bookmarkOnly, setBookmarkOnly] = useState(false);
 
-    const [showTimer, setShowTimer] = useState(false);
-    const [showHistory, setShowHistory] = useState(false);
-    const [showSidebar, setShowSidebar] = useState(false);
+  const updateQuestionLocal = useCallback((id, patch) => {
+    setQuestions((current) => current.map((question) => (
+      question.id === id ? { ...question, ...patch } : question
+    )));
+  }, []);
 
-    const loadHistory = useCallback(async () => {
-        try {
-            const res = await interviewService.getInterviewHistory();
-            setHistory(res.data || []);
-            return res.data || [];
-        } catch (err) {
-            console.error("Failed to load interview history:", err);
-            return [];
-        }
-    }, []);
+  const loadSession = useCallback(async (id) => {
+    setViewState("loading");
+    setError("");
+    try {
+      const response = await interviewService.getInterviewSession(id);
+      const nextSession = normalizeSession(response.data);
+      setSession(nextSession);
+      setQuestions(nextSession.questions);
+      setActiveCategory(nextSession.questions[0]?.category || "Technical");
+      setViewState(nextSession.questions.length ? "active" : "empty");
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "Unable to load the interview session.");
+      setViewState("empty");
+    }
+  }, []);
 
-    const loadSession = useCallback(async (sessionId) => {
-        setLoading(true);
-        try {
-            const res = await interviewService.getInterviewSession(sessionId);
-            const sess = res.data;
-            setSession(sess);
-            setQuestions(sess.questions || []);
-            if (sess.questions?.length > 0) {
+  const loadHistory = useCallback(async () => {
+    const response = await interviewService.getInterviewHistory();
+    const items = (response.data || []).map(normalizeHistory);
+    setHistory(items);
+    return items;
+  }, []);
 
-                setActiveCategory(sess.questions[0].category || "Technical");
-            }
-            setViewState("active");
-        } catch (err) {
-            console.error("Failed to load session:", err);
-            setViewState("setup");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        const init = async () => {
-            const hist = await loadHistory();
-            if (hist && hist.length > 0) {
-                await loadSession(hist[0].id);
-            } else {
-                setViewState("setup");
-                setLoading(false);
-            }
-        };
-        init();
-    }, [loadHistory, loadSession]);
-
-    const updateQuestionLocal = useCallback((questionId, patch) => {
-        setQuestions(prev =>
-            prev.map(q => (q.id === questionId ? { ...q, ...patch } : q))
-        );
-    }, []);
-
-    // Toggle bookmark
-    const handleToggleBookmark = useCallback(async (questionId) => {
-        // Optimistic update
-        setQuestions(prev =>
-            prev.map(q => (q.id === questionId ? { ...q, bookmarked: !q.bookmarked } : q))
-        );
-        try {
-            await interviewService.bookmarkQuestion(questionId);
-        } catch (err) {
-            console.error("Failed to toggle bookmark:", err);
-            // Revert on error
-            setQuestions(prev =>
-                prev.map(q => (q.id === questionId ? { ...q, bookmarked: !q.bookmarked } : q))
-            );
-        }
-    }, []);
-
-    // Evaluate answer
-    const handleEvaluateAnswer = useCallback(async (questionId, userAnswer) => {
-        if (!userAnswer.trim()) return;
-
-        updateQuestionLocal(questionId, { answered: true });
-
-        try {
-            const res = await interviewService.evaluateAnswer({
-                question_id: questionId,
-                user_answer: userAnswer,
-            });
-
-            const evalData = res.data;
-            const formattedEvaluation = {
-                overall: evalData.overall_score,
-                technical: evalData.technical_score,
-                communication: evalData.communication_score,
-                confidence: evalData.confidence_score,
-                strengths: evalData.strengths || [],
-                weaknesses: evalData.weaknesses || [],
-                missingPoints: evalData.missing_points || [],
-                feedback: evalData.feedback || "",
-                improvedAnswer: evalData.improved_answer || "",
-                followUps: evalData.follow_ups || [],
-            };
-
-            updateQuestionLocal(questionId, {
-                answered: true,
-                user_answer: userAnswer,
-                evaluation: formattedEvaluation,
-            });
-        } catch (err) {
-            console.error("Failed to evaluate answer:", err);
-            updateQuestionLocal(questionId, { answered: false });
-            throw err;
-        }
-    }, [updateQuestionLocal]);
-
-    // Generate new interview session
-    const handleGenerateInterview = useCallback(async (data) => {
-        setGenerating(true);
-        setViewState("loading");
-        try {
-            const res = await interviewService.generateInterview(data);
-            const sess = res.data.session;
-            setSession(sess);
-            setQuestions(sess.questions || []);
-            if (sess.questions?.length > 0) {
-                setActiveCategory(sess.questions[0].category || "Technical");
-            }
-            await loadHistory();
-            setViewState("active");
-        } catch (err) {
-            console.error("Failed to generate interview:", err);
-            setViewState("setup");
-            throw err;
-        } finally {
-            setGenerating(false);
-            setLoading(false);
-        }
-    }, [loadHistory]);
-
-    // Delete interview session
-    const handleDeleteSession = useCallback(async (sessionId) => {
-        try {
-            await interviewService.deleteInterviewSession(sessionId);
-            const hist = await loadHistory();
-
-            // If we deleted the currently active session
-            if (session?.id === sessionId) {
-                if (hist && hist.length > 0) {
-                    await loadSession(hist[0].id);
-                } else {
-                    setSession(null);
-                    setQuestions([]);
-                    setViewState("setup");
-                }
-            }
-        } catch (err) {
-            console.error("Failed to delete session:", err);
-        }
-    }, [session, loadHistory, loadSession]);
-
-    // Quick Actions
-    const jumpToNext = useCallback(() => {
-        const next = questions.find(q => !q.answered);
-        if (next) {
-            setActiveCategory(next.category);
-            setTimeout(() => {
-                document.getElementById(`q-${next.id}`)?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                });
-            }, 150);
-        }
-    }, [questions]);
-
-    const jumpToRandom = useCallback(() => {
-        const arr = questions.filter(q => q.category === activeCategory);
-        if (!arr.length) return;
-        const q = arr[Math.floor(Math.random() * arr.length)];
-        document.getElementById(`q-${q.id}`)?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-        });
-    }, [questions, activeCategory]);
-
-    const retryIncorrect = useCallback(() => {
-        const low = questions.filter(q => q.evaluation && q.evaluation.overall < 70);
-        if (low.length) {
-            setActiveCategory(low[0].category);
-            setTimeout(() => {
-                document.getElementById(`q-${low[0].id}`)?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                });
-            }, 150);
-        }
-    }, [questions]);
-
-    return {
-        loading,
-        generating,
-        viewState,
-        session,
-        questions,
-        history,
-        activeCategory,
-        setActiveCategory,
-        search,
-        setSearch,
-        diffFilter,
-        setDiffFilter,
-        bookmarkOnly,
-        setBookmarkOnly,
-        showTimer,
-        setShowTimer,
-        showHistory,
-        setShowHistory,
-        showSidebar,
-        setShowSidebar,
-        loadSession,
-        handleToggleBookmark,
-        handleEvaluateAnswer,
-        handleGenerateInterview,
-        handleDeleteSession,
-        updateQuestionLocal,
-        jumpToNext,
-        jumpToRandom,
-        retryIncorrect,
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const items = await loadHistory();
+        if (items.length) await loadSession(items[0].id);
+        else setViewState("empty");
+      } catch (requestError) {
+        setError(requestError.response?.data?.detail || "Unable to load interview history.");
+        setViewState("empty");
+      }
     };
+    initialize();
+  }, [loadHistory, loadSession]);
+
+  const toggleBookmark = useCallback(async (id) => {
+    const original = questions.find((question) => question.id === id)?.bookmarked;
+    updateQuestionLocal(id, { bookmarked: !original });
+    try {
+      const response = await interviewService.bookmarkQuestion(id);
+      updateQuestionLocal(id, { bookmarked: response.data.bookmarked });
+    } catch (requestError) {
+      updateQuestionLocal(id, { bookmarked: original });
+      throw requestError;
+    }
+  }, [questions, updateQuestionLocal]);
+
+  const evaluateAnswer = useCallback(async (id, answer) => {
+    const response = await interviewService.evaluateAnswer({
+      question_id: id,
+      user_answer: answer,
+    });
+    const data = response.data;
+    const question = questions.find((item) => item.id === id);
+    updateQuestionLocal(id, {
+      answered: true,
+      answer,
+      evaluation: {
+        overall: Math.round(data.overall_score),
+        technical: Math.round(data.technical_score),
+        communication: Math.round(data.communication_score),
+        confidence: Math.round(data.confidence_score),
+        strengths: data.strengths || [],
+        weaknesses: data.weaknesses || [],
+        missingPoints: data.missing_points || [],
+        improvedAnswer: data.improved_answer || "",
+        followUps: data.follow_ups || question?.followUps || [],
+      },
+    });
+  }, [questions, updateQuestionLocal]);
+
+  const regenerate = useCallback(async () => {
+    if (!session) return;
+    setViewState("loading");
+    setError("");
+    try {
+      const response = await interviewService.generateInterview({
+        resume_id: session.resume_id,
+        job_description: session.job_description,
+        company: session.company,
+        role: session.role,
+      });
+      const nextSession = normalizeSession(response.data.session);
+      setSession(nextSession);
+      setQuestions(nextSession.questions);
+      setActiveCategory(nextSession.questions[0]?.category || "Technical");
+      await loadHistory();
+      setViewState("active");
+    } catch (requestError) {
+      setError(requestError.response?.data?.detail || "Unable to regenerate questions.");
+      setViewState("active");
+    }
+  }, [loadHistory, session]);
+
+  const deleteSession = useCallback(async (id) => {
+    await interviewService.deleteInterviewSession(id);
+    const items = await loadHistory();
+    if (session?.id === id) {
+      if (items.length) await loadSession(items[0].id);
+      else {
+        setSession(null);
+        setQuestions([]);
+        setViewState("empty");
+      }
+    }
+  }, [loadHistory, loadSession, session]);
+
+  const filteredQuestions = useMemo(() => questions.filter((question) => {
+    if (question.category !== activeCategory) return false;
+    if (bookmarkOnly && !question.bookmarked) return false;
+    if (diffFilter && question.difficulty !== diffFilter) return false;
+    return !search || question.question.toLowerCase().includes(search.toLowerCase());
+  }), [activeCategory, bookmarkOnly, diffFilter, questions, search]);
+
+  return {
+    viewState, session, questions, history, error, setError,
+    activeCategory, setActiveCategory, search, setSearch,
+    diffFilter, setDiffFilter, bookmarkOnly, setBookmarkOnly,
+    filteredQuestions, updateQuestionLocal, toggleBookmark,
+    evaluateAnswer, regenerate, deleteSession, loadSession,
+  };
 }

@@ -1,7 +1,8 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
-export function Select({ options = [], value, onChange, placeholder = "Select...", size = "md" }) {
+export function Select({ options = [], value, onChange, placeholder = "Select...", size = "md", pill = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -22,7 +23,7 @@ export function Select({ options = [], value, onChange, placeholder = "Select...
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full border border-border rounded-xl text-left cursor-pointer transition-all ${
+        className={`flex items-center justify-between w-full border border-border ${pill ? "rounded-full" : "rounded-xl"} text-left cursor-pointer transition-all ${
           size === "sm" ? "h-9 px-3 text-xs" : "h-10 px-3.5 text-sm"
         } bg-card text-foreground hover:border-primary/30`}
       >

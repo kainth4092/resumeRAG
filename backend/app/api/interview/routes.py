@@ -29,6 +29,14 @@ router = APIRouter(
     tags=["Interview Prep"],
 )
 
+CATEGORY_NAMES = {
+    "technical": "Technical",
+    "behavioral": "Behavioral",
+    "hr": "HR",
+    "coding": "Coding",
+    "project": "Project",
+}
+
 
 @router.post(
     "/generate",
@@ -76,7 +84,10 @@ def generate_interview(
                 db.add(
                     InterviewQuestion(
                         session_id=session.id,
-                        category=category,
+                        category=CATEGORY_NAMES.get(
+                            str(category).lower(),
+                            str(category).title(),
+                        ),
                         question=item.get("question", ""),
                         difficulty=item.get("difficulty", "Medium"),
                         tip=item.get("tip"),
@@ -133,24 +144,32 @@ def evaluate_answer(
             payload.user_answer,
         )
 
-        evaluation = result["evaluation"]
+        evaluation = result.get("evaluation", result) if isinstance(result, dict) else {}
+        if not isinstance(evaluation, dict):
+            evaluation = {}
+
+        strengths = evaluation.get("strengths", []) or []
+        weaknesses = evaluation.get("weaknesses", []) or []
+        missing_points = evaluation.get("missing_points", evaluation.get("missingPoints", [])) or []
+        improved_answer = evaluation.get("improved_answer", evaluation.get("improvedAnswer", "")) or ""
+        feedback = evaluation.get("feedback", "") or ""
 
         db_answer = InterviewAnswer(
             question_id=question.id,
             user_answer=payload.user_answer,
-            overall_score=evaluation["overall"],
-            technical_score=evaluation["technical"],
-            communication_score=evaluation["communication"],
-            confidence_score=evaluation["confidence"],
+            overall_score=evaluation.get("overall", evaluation.get("overall_score", 0)),
+            technical_score=evaluation.get("technical", evaluation.get("technical_score", 0)),
+            communication_score=evaluation.get("communication", evaluation.get("communication_score", 0)),
+            confidence_score=evaluation.get("confidence", evaluation.get("confidence_score", 0)),
             feedback=json.dumps(
                 {
-                    "feedback": evaluation.get("feedback", ""),
-                    "strengths": evaluation.get("strengths", []),
-                    "weaknesses": evaluation.get("weaknesses", []),
-                    "missing_points": evaluation.get("missing_points", []),
+                    "feedback": feedback,
+                    "strengths": strengths,
+                    "weaknesses": weaknesses,
+                    "missing_points": missing_points,
                 }
             ),
-            improved_answer=evaluation["improved_answer"],
+            improved_answer=improved_answer,
         )
 
         db.add(db_answer)
@@ -158,15 +177,15 @@ def evaluate_answer(
         db.refresh(db_answer)
 
         return EvaluateAnswerResponse(
-            overall_score=evaluation["overall"],
-            technical_score=evaluation["technical"],
-            communication_score=evaluation["communication"],
-            confidence_score=evaluation["confidence"],
-            feedback=evaluation.get("feedback", ""),
-            improved_answer=evaluation.get("improved_answer", ""),
-            strengths=evaluation.get("strengths", []),
-            weaknesses=evaluation.get("weaknesses", []),
-            missing_points=evaluation.get("missing_points", []),
+            overall_score=evaluation.get("overall", evaluation.get("overall_score", 0)),
+            technical_score=evaluation.get("technical", evaluation.get("technical_score", 0)),
+            communication_score=evaluation.get("communication", evaluation.get("communication_score", 0)),
+            confidence_score=evaluation.get("confidence", evaluation.get("confidence_score", 0)),
+            feedback=feedback,
+            improved_answer=improved_answer,
+            strengths=strengths,
+            weaknesses=weaknesses,
+            missing_points=missing_points,
         )
 
     except HTTPException:

@@ -73,6 +73,18 @@ class InterviewQuestionResponse(BaseModel):
             return "Medium"
         return value
 
+    @field_validator("category")
+    @classmethod
+    def normalize_category(cls, value: str):
+        categories = {
+            "technical": "Technical",
+            "behavioral": "Behavioral",
+            "hr": "HR",
+            "coding": "Coding",
+            "project": "Project",
+        }
+        return categories.get(value.lower(), value.title())
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -115,4 +127,3 @@ class InterviewHistoryItem(BaseModel):
     questions_count: int
     avg_score: float
     model_config = ConfigDict(from_attributes=True)
-

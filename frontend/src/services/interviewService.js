@@ -1,19 +1,34 @@
 import api from "./api";
 
+export const interviewService = {
+  generateInterview: (data) => api.post("/interview/generate", data),
+  
+  evaluateAnswer: (data) => api.post("/interview/evaluate", data),
+  
+  getHistory: () => api.get("/interview/history").then((res) => res.data),
+  
+  getSession: (id) => api.get(`/interview/${id}`).then((res) => res.data),
+  
+  toggleBookmark: (id) => api.patch(`/interview/bookmark/${id}`).then((res) => res.data),
+  
+  deleteSession: (id) => api.delete(`/interview/${id}`).then((res) => res.data),
+};
+
+// Export individual functions for backward compatibility
 export const generateInterview = (data) =>
-    api.post("/interview/generate", data);
+    interviewService.generateInterview(data);
 
 export const evaluateAnswer = (data) =>
-    api.post("/interview/evaluate", data);
+    interviewService.evaluateAnswer(data);
 
 export const getInterviewHistory = () =>
-    api.get("/interview/history");
+    interviewService.getHistory();
 
 export const getInterviewSession = (id) =>
-    api.get(`/interview/${id}`);
+    interviewService.getSession(id);
 
 export const bookmarkQuestion = (id) =>
-    api.patch(`/interview/bookmark/${id}`);
+    interviewService.toggleBookmark(id);
 
 export const deleteInterviewSession = (id) =>
-    api.delete(`/interview/${id}`);
+    interviewService.deleteSession(id);

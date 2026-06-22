@@ -2,16 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadResume } from "../../services/resumeService";
 import { analyzeResume, generateResume } from "../../services/generatorService";
+import { interviewService } from "../../services/interviewService";
 import Header from "../../components/generator/Header";
 import ResumeUpload from "../../components/generator/ResumeUpload";
-import { VERSIONS } from "../../data/generatorData";
 import JobDescription from "../../components/generator/JobDescription";
 import KeywordAnalysis from "../../components/generator/KeywordAnalysis";
 import HeatMap from "../../components/generator/HeatMap";
 import ATSScore from "../../components/generator/ATSScore";
 import AISuggestions from "../../components/generator/AISuggestions";
 import GenerateResume from "../../components/generator/GenerateResume";
-import VersionHistory from "../../components/generator/VersionHistory";
 
 export function ResumeGenerator() {
   const navigate = useNavigate();
@@ -29,7 +28,6 @@ export function ResumeGenerator() {
   const [generated, setGenerated] = useState(false);
   const [generatedResume, setGeneratedResume] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [versions, setVersions] = useState(VERSIONS);
   const [generatorError, setGeneratorError] = useState(null);
 
   const handleUpload = async (file) => {
@@ -93,6 +91,19 @@ export function ResumeGenerator() {
       });
       setGeneratedResume(response.data.resume);
       setGenerated(true);
+
+      try {
+        const interviewResponse = await interviewService.generateInterview({
+          resume_id: resume.resume_id,
+          job_description: jd,
+        });
+
+        if (interviewResponse?.data?.session?.id) {
+          navigate("/interview");
+        }
+      } catch (interviewErr) {
+        console.error("Interview generation failed", interviewErr);
+      }
     } catch (err) {
       console.error("Generation failed", err);
       setGeneratorError(err.response?.data?.detail || "Generation failed. Please try again.");

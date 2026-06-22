@@ -47,6 +47,34 @@ def extract_json(text: str):
     return json.loads(text)
 
 
+def _to_list(value):
+    if isinstance(value, list):
+        return value
+    if value is None:
+        return []
+    return [value]
+
+
+def _normalize_evaluation_payload(payload):
+    evaluation = payload.get("evaluation") if isinstance(payload, dict) else None
+    if not isinstance(evaluation, dict):
+        evaluation = payload if isinstance(payload, dict) else {}
+
+    return {
+        "evaluation": {
+            "overall": evaluation.get("overall", evaluation.get("overall_score", 0)),
+            "technical": evaluation.get("technical", evaluation.get("technical_score", 0)),
+            "communication": evaluation.get("communication", evaluation.get("communication_score", 0)),
+            "confidence": evaluation.get("confidence", evaluation.get("confidence_score", 0)),
+            "strengths": _to_list(evaluation.get("strengths", [])),
+            "weaknesses": _to_list(evaluation.get("weaknesses", [])),
+            "missing_points": _to_list(evaluation.get("missing_points", evaluation.get("missingPoints", []))),
+            "feedback": evaluation.get("feedback", ""),
+            "improved_answer": evaluation.get("improved_answer", evaluation.get("improvedAnswer", "")),
+        }
+    }
+
+
 INTERVIEW_SCHEMA = {
     "technical": [
         {
@@ -210,6 +238,20 @@ def evaluate_interview_answer(
     user_answer: str,
 ):
 
+    evaluation_schema = {
+        "evaluation": {
+            "overall": 0,
+            "technical": 0,
+            "communication": 0,
+            "confidence": 0,
+            "strengths": [""],
+            "weaknesses": [""],
+            "missing_points": [""],
+            "feedback": "",
+            "improved_answer": "",
+        }
+    }
+
     prompt = f"""
     You are a Senior Software Engineering Interviewer.
     Evaluate the candidate's interview answer.
@@ -222,7 +264,7 @@ def evaluate_interview_answer(
     #####################################
     IDEAL ANSWER
     #####################################
-    {ideal_answer}
+    {json.dumps(ideal_answer, indent=2) if isinstance(ideal_answer, (dict, list)) else ideal_answer}
 
     #####################################
     CANDIDATE ANSWER
@@ -259,25 +301,7 @@ def evaluate_interview_answer(
     #####################################
     OUTPUT JSON
     #####################################
-    {
-        "evaluation": {
-            "overall": 0,
-            "technical": 0,
-            "communication": 0,
-            "confidence": 0,
-            "strengths": [
-             ""
-            ],
-            "weaknesses": [
-                ""
-            ],
-            "missing_points": [
-                ""
-            ],
-            "feedback": "",
-            "improved_answer": ""
-        }
-    }
+    {json.dumps(evaluation_schema, indent=2)}
     Return ONLY valid JSON.
     No markdown.
     No explanation.
@@ -285,4 +309,4 @@ def evaluate_interview_answer(
     """
 
     response = call_llm_with_retry(prompt)
-    return extract_json(response)
+    return _normalize_evaluation_payload(extract_json(response))
