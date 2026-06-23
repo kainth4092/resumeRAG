@@ -29,7 +29,7 @@ export default function EmptyState({ onGoGenerate }) {
           />
         ))}
       </div>
-      <h2 className="text-xl font-bold text-foreground mb-3">No Interview Questions Available</h2>
+      <h2 className="text-xl font-bold text-foreground mb-3">No Interview Questions Found</h2>
       <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-8">
         No interview session has been generated yet. Create one from the generator after uploading a resume and adding a job description.
       </p>
@@ -47,7 +47,7 @@ export default function EmptyState({ onGoGenerate }) {
         ))}
       </div>
       <button onClick={onGoGenerate} className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20">
-        <Zap size={15} /> Go to Resume Generator <ArrowRight size={14} />
+        <Zap size={15} /> Generate Resume <ArrowRight size={14} />
       </button>
     </div>
   );

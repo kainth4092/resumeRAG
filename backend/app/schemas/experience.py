@@ -18,7 +18,6 @@ class ExperienceBase(BaseModel):
             return value
         return value.strip()
 
-
 class ExperienceCreate(ExperienceBase):
 
     @model_validator(mode="after")

@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  SearchIcon, History, BrainCircuit, X,
-} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { SearchIcon, BrainCircuit, X } from "lucide-react";
 import { CAT_CFG, DIFF_CFG } from "../../data/interviewConstants";
-import { interviewService } from "../../services/interviewService";
+import {
+  retrieveInterviewQuestions,
+  getAllInterviewQuestions,
+} from "../../services/interviewBankService";
 
 import QuestionCard from "../../components/interview/QuestionCard";
-import HistoryDrawer from "../../components/interview/HistoryDrawer";
 import AISidebar from "../../components/interview/AISidebar";
 import LoadingState from "../../components/interview/LoadingState";
 import EmptyState from "../../components/interview/EmptyState";
@@ -19,123 +19,212 @@ import SectionCollapsible from "../../components/interview/SectionCollapsible";
 import {
   asText,
   estimateMinutes,
-  findTechnicalSkill,
-  getProjectName,
-  getCompanyName,
 } from "../../utils/interviewUtils";
 
 export default function InterviewPrep() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [viewState, setViewState] = useState("loading");
   const [questions, setQuestions] = useState([]);
   const [session, setSession] = useState(null);
   const [search, setSearch] = useState("");
   const [diffFilter, setDiffFilter] = useState("");
   const [bookmarkOnly, setBookmarkOnly] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("All");
   const [showSidebar, setShowSidebar] = useState(false);
-  const [error, setError] = useState("");
   const [loadingQuestionId, setLoadingQuestionId] = useState(null);
-
-  const updateQuestion = useCallback((id, patch) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, ...patch } : q))
-    );
-  }, []);
-
-  const loadSession = useCallback(async (sessionId = null) => {
+  const [error, setError] = useState("");
+  const loadSession = useCallback(async () => {
     try {
+      setError("");
       setViewState("loading");
-      let targetSessionId = sessionId;
 
-      if (!targetSessionId) {
-        const latestSessions = await interviewService.getHistory();
-        if (latestSessions.length === 0) {
+      const resumeId = location.state?.resumeId || localStorage.getItem("last_resume_id");
+      const jd = location.state?.jobDescription || localStorage.getItem("last_job_description");
+
+      const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+
+      if (!resumeId || !jd) {
+
+        const res = await getAllInterviewQuestions();
+        const data = res.data || [];
+
+        const transformed = data.map((q) => ({
+          ...q,
+          bookmarked: savedBookmarks.includes(q.id),
+          sampleAnswer: asText(q.answer),
+          estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
+        }));
+
+        setQuestions(transformed);
+
+        if (transformed.length > 0) {
+          setSession({
+            company: "Interview Bank",
+            role: "Software Engineer",
+            companyLogo: "B",
+            logoColor: "#7C3AED",
+            resumeUsed: "None",
+            generatedAt: new Date().toLocaleDateString(),
+            questionCount: transformed.length,
+            difficulty: {
+              easy: transformed.filter((q) => q.difficulty === "Easy").length,
+              medium: transformed.filter((q) => q.difficulty === "Medium").length,
+              hard: transformed.filter((q) => q.difficulty === "Hard").length,
+            },
+            status: "Ready",
+          });
+          setViewState("active");
+        } else {
           setViewState("empty");
-          setSession(null);
-          setQuestions([]);
-          return;
         }
-        targetSessionId = latestSessions[0].id;
+        return;
       }
 
-      const fullSession = await interviewService.getSession(targetSessionId);
-
-      setSession({
-        ...fullSession,
-        companyLogo: fullSession.company?.[0] || "I",
-        logoColor: "#635BFF",
-        resumeUsed: "Resume",
-        atsScore: 91,
-        generatedAt: new Date(fullSession.created_at).toLocaleDateString(),
-        questionCount: fullSession.questions?.length || 0,
-        difficulty: {
-          easy: fullSession.questions?.filter((q) => q.difficulty === "Easy").length || 0,
-          medium: fullSession.questions?.filter((q) => q.difficulty === "Medium").length || 0,
-          hard: fullSession.questions?.filter((q) => q.difficulty === "Hard").length || 0,
-        },
-        status: "Ready",
+      const res = await retrieveInterviewQuestions({
+        resume_id: parseInt(resumeId, 10),
+        job_description: jd,
       });
 
-      const transformedQuestions = (fullSession.questions || []).map((q) => ({
+      const data = res.data || [];
+      const transformed = data.map((q) => ({
         ...q,
+        bookmarked: savedBookmarks.includes(q.id),
         sampleAnswer: asText(q.answer),
-        estimatedMins: q.estimated_duration || q.estimatedMins || estimateMinutes(q.answer),
+        estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
       }));
 
-      setQuestions(transformedQuestions);
-      setViewState("active");
+      setQuestions(transformed);
+
+      if (transformed.length > 0) {
+        setSession({
+          company: "Personalized Prep",
+          role: "Interview Candidate",
+          companyLogo: "P",
+          logoColor: "#635BFF",
+          resumeUsed: "Selected Resume",
+          generatedAt: new Date().toLocaleDateString(),
+          questionCount: transformed.length,
+          difficulty: {
+            easy: transformed.filter((q) => q.difficulty === "Easy").length,
+            medium: transformed.filter((q) => q.difficulty === "Medium").length,
+            hard: transformed.filter((q) => q.difficulty === "Hard").length,
+          },
+          status: "Ready",
+        });
+        setViewState("active");
+      } else {
+
+        const allRes = await getAllInterviewQuestions();
+        const allData = allRes.data || [];
+        const allTransformed = allData.map((q) => ({
+          ...q,
+          bookmarked: savedBookmarks.includes(q.id),
+          sampleAnswer: asText(q.answer),
+          estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
+        }));
+
+        setQuestions(allTransformed);
+
+        if (allTransformed.length > 0) {
+          setSession({
+            company: "Interview Bank",
+            role: "Software Engineer",
+            companyLogo: "B",
+            logoColor: "#7C3AED",
+            resumeUsed: "None",
+            generatedAt: new Date().toLocaleDateString(),
+            questionCount: allTransformed.length,
+            difficulty: {
+              easy: allTransformed.filter((q) => q.difficulty === "Easy").length,
+              medium: allTransformed.filter((q) => q.difficulty === "Medium").length,
+              hard: allTransformed.filter((q) => q.difficulty === "Hard").length,
+            },
+            status: "Ready",
+          });
+          setViewState("active");
+        } else {
+          setViewState("empty");
+        }
+      }
     } catch (err) {
       console.error("Failed to load session:", err);
+      const detail = err.response?.data?.detail || err.message || "An unexpected error occurred.";
+      setError(detail);
       setViewState("empty");
       setSession(null);
       setQuestions([]);
     }
-  }, []);
+  }, [location.state, navigate]);
 
   useEffect(() => {
     loadSession();
   }, [loadSession]);
 
-  const handleToggleBookmark = async (questionId) => {
-    try {
-      await interviewService.toggleBookmark(questionId);
-      const question = questions.find((q) => q.id === questionId);
-      if (question) {
-        const nextBookmarked = !question.bookmarked;
-        updateQuestion(questionId, { bookmarked: nextBookmarked });
-      }
-    } catch (err) {
-      console.error("Failed to bookmark question:", err);
-    }
+  const handleToggleBookmark = (questionId) => {
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id === questionId) {
+          const nextBookmarked = !q.bookmarked;
+          const saved = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+
+          if (nextBookmarked) {
+            if (!saved.includes(questionId)) {
+              saved.push(questionId);
+            }
+          } else {
+            const idx = saved.indexOf(questionId);
+            if (idx > -1) {
+              saved.splice(idx, 1);
+            }
+          }
+
+          localStorage.setItem("bookmarked_questions", JSON.stringify(saved));
+          return { ...q, bookmarked: nextBookmarked };
+        }
+        return q;
+      })
+    );
   };
 
-  const handleQuestionExpand = async (questionId) => {
-    const question = questions.find((q) => q.id === questionId);
-    if (!question || question.details_generated) return;
+  const handleQuestionExpand = (questionId) => {
 
-    if (loadingQuestionId) {
-      return;
-    }
-
-    setLoadingQuestionId(questionId);
-    try {
-      const details = await interviewService.getQuestionDetails(questionId);
-      updateQuestion(questionId, {
-        details_generated: true,
-        sampleAnswer: asText(details.answer),
-      });
-    } catch (err) {
-      console.error("Failed to load question details:", err);
-    } finally {
-      setLoadingQuestionId(null);
-    }
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === questionId ? { ...q, details_generated: true } : q))
+    );
   };
 
   const filteredQuestions = questions.filter((q) => {
     if (bookmarkOnly && !q.bookmarked) return false;
     if (diffFilter && q.difficulty !== diffFilter) return false;
-    if (search && !q.question.toLowerCase().includes(search.toLowerCase())) return false;
+
+    if (activeFilter !== "All") {
+      let qSkill = q.skill || "General";
+      if (q.category === "Behavioral") qSkill = "Behavioral";
+      if (q.category === "Project") qSkill = "Projects";
+
+      if (qSkill.toLowerCase() !== activeFilter.toLowerCase()) {
+        return false;
+      }
+    }
+    if (search) {
+      const query = search.toLowerCase();
+      const matchQuestion = q.question?.toLowerCase().includes(query);
+      const matchSkill = q.skill?.toLowerCase().includes(query);
+
+      let matchTags = false;
+      if (Array.isArray(q.tags)) {
+        matchTags = q.tags.some((tag) => tag.toLowerCase().includes(query));
+      } else if (typeof q.tags === "string") {
+        matchTags = q.tags.toLowerCase().includes(query);
+      }
+
+      if (!matchQuestion && !matchSkill && !matchTags) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -155,125 +244,35 @@ export default function InterviewPrep() {
     document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  // Group the questions dynamically
-  const groupedSections = [];
+  const groupedSections = {};
+  filteredQuestions.forEach((q) => {
+    let skillGroup = q.skill || "General";
 
-  // Group technical questions by skill
-  const techQuestions = filteredQuestions.filter(q => q.category === "Technical");
-  const skillGroups = {};
-  techQuestions.forEach(q => {
-    const skill = q.tech_skill || findTechnicalSkill(q.question);
-    if (!skillGroups[skill]) {
-      skillGroups[skill] = [];
+    if (skillGroup.toLowerCase() === "react") skillGroup = "React";
+    else if (skillGroup.toLowerCase() === "python") skillGroup = "Python";
+    else if (skillGroup.toLowerCase() === "fastapi") skillGroup = "FastAPI";
+    else if (skillGroup.toLowerCase() === "postgresql") skillGroup = "PostgreSQL";
+    else if (skillGroup.toLowerCase() === "javascript") skillGroup = "JavaScript";
+    else if (skillGroup.toLowerCase() === "projects" || q.category === "Project") skillGroup = "Projects";
+    else if (skillGroup.toLowerCase() === "behavioral" || q.category === "Behavioral") skillGroup = "Behavioral";
+
+    if (!groupedSections[skillGroup]) {
+      groupedSections[skillGroup] = [];
     }
-    skillGroups[skill].push(q);
+    groupedSections[skillGroup].push(q);
   });
-
-  // Add skill groups to sections
-  Object.entries(skillGroups).forEach(([skillName, qs]) => {
-    groupedSections.push({
-      id: `skill-${skillName}`,
-      title: skillName,
-      count: qs.length,
-      questions: qs,
-      type: "skill"
-    });
-  });
-
-  // Group project questions by project name
-  const projQuestions = filteredQuestions.filter(q => q.category === "Project");
-  if (projQuestions.length > 0) {
-    const subGroups = {};
-    let consensusProject = "ResumeRAG";
-    for (const q of projQuestions) {
-      const extracted = getProjectName(q.question);
-      if (extracted && extracted !== "Project" && extracted !== "ResumeRAG") {
-        consensusProject = extracted;
-        break;
-      }
-    }
-    projQuestions.forEach(q => {
-      let projName = getProjectName(q.question);
-      if (projName === "Project" || projName === "ResumeRAG") {
-        projName = consensusProject;
-      }
-      if (!subGroups[projName]) {
-        subGroups[projName] = [];
-      }
-      subGroups[projName].push(q);
-    });
-    groupedSections.push({
-      id: "projects-section",
-      title: "Projects",
-      count: projQuestions.length,
-      subGroups,
-      type: "projects"
-    });
-  }
-
-  // Group experience questions by company name
-  const expQuestions = filteredQuestions.filter(q => q.category === "Experience");
-  if (expQuestions.length > 0) {
-    const subGroups = {};
-    let consensusCompany = "Company Name";
-    for (const q of expQuestions) {
-      const extracted = getCompanyName(q.question);
-      if (extracted && extracted !== "Company" && extracted !== "Company Name") {
-        consensusCompany = extracted;
-        break;
-      }
-    }
-    expQuestions.forEach(q => {
-      let compName = getCompanyName(q.question);
-      if (compName === "Company" || compName === "Company Name") {
-        compName = consensusCompany;
-      }
-      if (!subGroups[compName]) {
-        subGroups[compName] = [];
-      }
-      subGroups[compName].push(q);
-    });
-    groupedSections.push({
-      id: "experience-section",
-      title: "Experience",
-      count: expQuestions.length,
-      subGroups,
-      type: "experience"
-    });
-  }
-
-  const skillOrder = ["React", "Python", "FastAPI", "PostgreSQL", "Docker"];
-  
-  groupedSections.sort((a, b) => {
-    if (a.type === "experience") return 1;
-    if (b.type === "experience") return -1;
-    if (a.type === "projects") {
-      if (b.type === "experience") return -1;
-      return 1;
-    }
-    if (b.type === "projects") {
-      if (a.type === "experience") return 1;
-      return -1;
-    }
-    
-    const idxA = skillOrder.indexOf(a.title);
-    const idxB = skillOrder.indexOf(b.title);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
+  const sortedSections = Object.entries(groupedSections).map(([title, qs]) => ({
+    id: `skill-${title}`,
+    title,
+    count: qs.length,
+    questions: qs,
+  })).sort((a, b) => {
+    if (a.title === "Projects") return 1;
+    if (b.title === "Projects") return -1;
+    if (a.title === "Behavioral") return 1;
+    if (b.title === "Behavioral") return -1;
     return a.title.localeCompare(b.title);
   });
-
-  if (!session && viewState !== "empty" && viewState !== "loading") {
-    return (
-      <div className="h-full bg-background flex items-center justify-center">
-        <div className="text-center">
-          <BrainCircuit size={48} className="text-muted-foreground mb-4 mx-auto" />
-          <p className="text-muted-foreground">{error || "No session data"}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-background">
@@ -286,15 +285,16 @@ export default function InterviewPrep() {
               Practice personalized interview questions generated from your resume and job description.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-            <button
-              onClick={() => setShowHistory(true)}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted hover:border-primary/30 transition-all"
-            >
-              <History size={14} className="text-muted-foreground" /> History
+        </div>
+
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError("")} className="text-red-500 hover:text-red-600 transition-colors cursor-pointer">
+              <X size={16} />
             </button>
           </div>
-        </div>
+        )}
 
         {viewState === "loading" && <LoadingState />}
 
@@ -327,7 +327,26 @@ export default function InterviewPrep() {
                   setDiffFilter={setDiffFilter}
                   filteredQuestions={filteredQuestions} />
 
-                {groupedSections.length === 0 ? (
+                {/* Filter Chips */}
+                <div className="flex flex-wrap gap-2 py-1">
+                  {["All", "React", "Python", "FastAPI", "JavaScript", "PostgreSQL", "Projects", "Behavioral"].map((chip) => {
+                    const active = activeFilter === chip;
+                    return (
+                      <button
+                        key={chip}
+                        onClick={() => setActiveFilter(chip)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${active
+                          ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
+                          : "bg-card border-border text-muted-foreground hover:bg-muted hover:border-primary/20"
+                          }`}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {sortedSections.length === 0 ? (
                   <div className="flex flex-col items-center py-16 text-center bg-card border border-border rounded-2xl">
                     <SearchIcon size={22} className="text-muted-foreground/30 mb-2" />
                     <p className="text-sm font-semibold text-foreground mb-1">No questions match</p>
@@ -336,6 +355,7 @@ export default function InterviewPrep() {
                         setSearch("");
                         setDiffFilter("");
                         setBookmarkOnly(false);
+                        setActiveFilter("All");
                       }}
                       className="text-xs text-primary hover:text-primary/80 font-semibold mt-2"
                     >
@@ -344,48 +364,24 @@ export default function InterviewPrep() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {groupedSections.map((section) => (
+                    {sortedSections.map((section) => (
                       <SectionCollapsible
                         key={section.id}
                         title={section.title}
                         count={section.count}
                       >
-                        {section.type === "skill" ? (
-                          <div className="space-y-3">
-                            {section.questions.map((q, i) => (
-                              <QuestionCard
-                                key={q.id}
-                                question={q}
-                                index={i}
-                                onToggleBookmark={handleToggleBookmark}
-                                loadingQuestionId={loadingQuestionId}
-                                onExpand={() => handleQuestionExpand(q.id)}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="space-y-5">
-                            {Object.entries(section.subGroups).map(([subName, subQuestions]) => (
-                              <div key={subName} className="space-y-2.5">
-                                <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1">
-                                  {subName}
-                                </h4>
-                                <div className="space-y-3">
-                                  {subQuestions.map((q, i) => (
-                                    <QuestionCard
-                                      key={q.id}
-                                      question={q}
-                                      index={i}
-                                      onToggleBookmark={handleToggleBookmark}
-                                      loadingQuestionId={loadingQuestionId}
-                                      onExpand={() => handleQuestionExpand(q.id)}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <div className="space-y-3">
+                          {section.questions.map((q, i) => (
+                            <QuestionCard
+                              key={q.id}
+                              question={q}
+                              index={i}
+                              onToggleBookmark={handleToggleBookmark}
+                              loadingQuestionId={loadingQuestionId}
+                              onExpand={() => handleQuestionExpand(q.id)}
+                            />
+                          ))}
+                        </div>
                       </SectionCollapsible>
                     ))}
                   </div>
@@ -428,18 +424,6 @@ export default function InterviewPrep() {
             </div>
           </div>
         </>
-      )}
-
-      {showHistory && (
-        <HistoryDrawer
-          onClose={() => setShowHistory(false)}
-          onOpenSession={(id) => loadSession(id)}
-          onSessionDeleted={(deletedId) => {
-            if (session?.id === deletedId) {
-              loadSession();
-            }
-          }}
-        />
       )}
     </div>
   );

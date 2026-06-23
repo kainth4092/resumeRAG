@@ -41,6 +41,9 @@ export function ResumeGenerator() {
       const response = await uploadResume(formData);
 
       setResume(response.data);
+      if (response.data?.resume_id) {
+        localStorage.setItem("last_resume_id", response.data.resume_id);
+      }
       setUploaded(true);
       setAnalysis(null);
       setFileName(file.name);
@@ -68,6 +71,10 @@ export function ResumeGenerator() {
     try {
       setAnalyzing(true);
       setGeneratorError(null);
+      localStorage.setItem("last_job_description", jd);
+      if (resume?.resume_id) {
+        localStorage.setItem("last_resume_id", resume.resume_id);
+      }
       const response = await analyzeResume({
         resume_id: resume.resume_id,
         job_description: jd,
@@ -85,6 +92,10 @@ export function ResumeGenerator() {
     try {
       setGenerating(true);
       setGeneratorError(null);
+      localStorage.setItem("last_job_description", jd);
+      if (resume?.resume_id) {
+        localStorage.setItem("last_resume_id", resume.resume_id);
+      }
       const response = await generateResume({
         resume_id: resume.resume_id,
         job_description: jd,
@@ -99,7 +110,12 @@ export function ResumeGenerator() {
         });
 
         if (interviewResponse?.data?.session?.id) {
-          navigate("/interview");
+          navigate("/interview", {
+            state: {
+              resumeId: resume.resume_id,
+              jobDescription: jd,
+            }
+          });
         }
       } catch (interviewErr) {
         console.error("Interview generation failed", interviewErr);

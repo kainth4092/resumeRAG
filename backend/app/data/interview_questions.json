@@ -1,0 +1,1457 @@
+[
+  {
+    "question": "What are semantic HTML tags, and why should you use them over generic divs?",
+    "answer": "Semantic HTML elements (like , , , and ) clearly describe their meaning to both the browser and the developer. Using them is critical for web accessibility, as screen readers rely on these landmarks to navigate pages. They also improve SEO by helping search engine crawlers understand content hierarchy, and they result in cleaner, more maintainable code compared to a nested structure of generic  tags.",
+    "skill": "HTML",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "semantic-html",
+      "seo",
+      "accessibility"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the difference between the 'async' and 'defer' attributes when loading external scripts.",
+    "answer": "Both attributes download scripts asynchronously without blocking HTML parsing. However, an 'async' script executes the exact moment it finishes downloading, pausing HTML parsing if necessary, which can lead to unpredictable execution order. A 'defer' script waits until the entire HTML document is fully parsed before executing, maintaining the order in which the scripts appear in the document. Use defer for dependent scripts and async for isolated scripts like analytics.",
+    "skill": "HTML",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "script-loading",
+      "performance",
+      "async-defer"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement HTML microdata and structured data schemas to optimize an e-commerce platform for search engines?",
+    "answer": "Structured data is implemented using Schema.org vocabularies, typically injected via JSON-LD or microdata attributes like 'itemscope' and 'itemprop'. By tagging products with specific properties like price, availability, and review ratings, search engine crawlers can interpret the page context explicitly. This enables rich snippets in search results, which drastically boosts click-through rates and structural readability for indexing pipelines.",
+    "skill": "HTML",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "seo",
+      "structured-data",
+      "microdata",
+      "schema-org"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the CSS Box Model, and how does 'box-sizing: border-box' change it?",
+    "answer": "The CSS Box Model defines the layout of elements, consisting of the content, padding, border, and margin. By default, 'box-sizing: content-box' adds padding and borders to the specified width and height, often causing elements to overflow. Setting 'box-sizing: border-box' alters this model so that the declared width and height include the content, padding, and border, making responsive sizing highly predictable.",
+    "skill": "CSS",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "box-model",
+      "box-sizing",
+      "layout"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are stacking contexts in CSS, and how do they impact the behavior of the z-index property?",
+    "answer": "A stacking context is a three-dimensional conceptual grouping of HTML elements along the Z-axis. Z-index values only determine display order relative to other elements within the *same* stacking context. Stacking contexts are formed by the root element, positions like absolute or fixed combined with a z-index, opacity less than 1, transforms, or properties like mix-blend-mode. Elements cannot leak outside their parent stacking context.",
+    "skill": "CSS",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "stacking-context",
+      "z-index",
+      "css-rendering"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the architectural advantages of CSS Container Queries over traditional Viewport Media Queries.",
+    "answer": "Viewport media queries respond strictly to the global width of the browser window, which breaks modularity in design systems. Container queries allow components to query the layout dimensions of their direct parent container. This enables a card component to automatically transform from a stacked layout to a multi-column row layout when placed inside a wide main content section versus a narrow sidebar, independent of the overall viewport width.",
+    "skill": "CSS",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "container-queries",
+      "responsive-design",
+      "design-systems"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a JavaScript closure, and what is a practical real-world scenario for using one?",
+    "answer": "A closure is a function that retains access to its lexical scope, meaning it remembers and can access variables from its outer scope even after the parent function has completed execution. A common real-world use case is data encapsulation, allowing developers to create private state variables inside objects or factory functions that cannot be directly modified or accessed from external application scripts.",
+    "skill": "JavaScript",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "closures",
+      "scope",
+      "encapsulation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does the JavaScript Event Loop handle microtasks vs macrotasks, and how does this affect runtime performance?",
+    "answer": "The Event Loop continuously executes tasks from queues when the Call Stack is clear. Macrotasks include things like setTimeout, setInterval, and I/O. Microtasks include Promise resolutions (then/catch) and queueMicrotask. The event loop prioritizes draining the entire microtask queue before moving on to the next single macrotask, meaning code blockages in microtasks can rapidly halt UI rendering and animation loops.",
+    "skill": "JavaScript",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "event-loop",
+      "asynchronous",
+      "microtasks",
+      "promises"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Deep dive into prototypal inheritance in JavaScript. How does it operate differently from classical class-based inheritance?",
+    "answer": "In classical inheritance, classes act as blueprinted types that copy properties down to instances at instantiation. JavaScript uses prototypal inheritance, where objects link directly to other objects via an internal prototype chain reference ([[Prototype]]). Property lookup travels dynamically up this chain at runtime. ES6 classes are syntactic sugar over this mechanic, functioning via constructor delegation rather than formal type cloning.",
+    "skill": "JavaScript",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "prototypes",
+      "inheritance",
+      "oop",
+      "v8-engine"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an interface and a type alias in TypeScript?",
+    "answer": "Interfaces are strictly for defining object shapes and support declaration merging, meaning declaring the same interface twice merges their fields. Type aliases are more flexible, supporting primitives, union types, intersection types, and tuples. Use interfaces for public-facing API schemas and component prop definitions, and type aliases when implementing complex utility types or domain unions.",
+    "skill": "TypeScript",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "typescript",
+      "interfaces",
+      "types"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do mapped types and conditional types work in TypeScript? Provide a use case.",
+    "answer": "Mapped types let you generate new types by transforming property keys from an existing type using 'in keyof' loops. Conditional types apply ternary evaluation logic to types ('T extends U ? X : Y'). A practical use case is creating an automated type mapper that dynamically strips null and undefined variants from API data contracts or converts all keys to readonly flags.",
+    "skill": "TypeScript",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "mapped-types",
+      "conditional-types",
+      "generics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain TypeScript's structural typing system and how it differs from nominal typing systems.",
+    "answer": "Nominal typing systems check type compatibility using the explicit names and declarations of types (e.g., Java). TypeScript uses a structural typing system (or duck typing), where compatibility is determined solely by the shape and properties of the object. If an object has the required fields with matching types, TypeScript considers it compatible, regardless of its explicit inheritance or named reference.",
+    "skill": "TypeScript",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "structural-typing",
+      "type-safety",
+      "advanced-typescript"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between Virtual DOM and Real DOM in React, and how does reconciliation work?",
+    "answer": "The Real DOM directly renders updates, which is costly. The Virtual DOM is an in-memory representation of UI elements. When state changes, React builds a new Virtual DOM tree and runs a diffing algorithm (reconciliation) against the previous tree. It calculates the minimum structural operations required and batches updates to the Real DOM to ensure performant UI updates.",
+    "skill": "React",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "react",
+      "virtual-dom",
+      "reconciliation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does React's 'useCallback' hook work, and when should you avoid using it?",
+    "answer": "The 'useCallback' hook returns a memoized version of a callback function that only changes if its dependencies update. It prevents unnecessary child component re-renders when passing functions as props. Avoid using it blindly for every function, as the optimization check has performance overhead. Do not use it if the child component doesn't benefit from React.memo.",
+    "skill": "React",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "hooks",
+      "usecallback",
+      "performance",
+      "memoization"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the mechanics of Concurrent Features in modern React and how 'useTransition' manages heavy rendering states.",
+    "answer": "Concurrent Features allow React to interrupt, pause, and resume rendering operations dynamically. The 'useTransition' hook lets developers split state updates into high-priority interactions (e.g., typing in an input) and low-priority transition updates (e.g., filtering a long list). React keeps the UI responsive by allowing user typing to interrupt the background rendering of the filtered list.",
+    "skill": "React",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "concurrent-mode",
+      "usetransition",
+      "performance",
+      "rendering"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the core problem that Redux solves in a large-scale React application?",
+    "answer": "Redux solves the problem of complex state management and 'prop drilling' (passing props through deeply nested child components). It centralizes application state in a single immutable store tree, ensuring predictable updates via explicit actions and pure reducer functions, which dramatically improves debugging, visibility, and state stability across disparate UI views.",
+    "skill": "Redux",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redux",
+      "state-management",
+      "architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do Redux Thunks or Redux Sagas handle asynchronous logic inside a standard synchronous flow?",
+    "answer": "Redux stores handle dispatch actions synchronously by default. Thunks intercept actions and allow action creators to return a function containing async code instead of a plain action object. Sagas use generator functions and ES6 yields, listening for specific actions via a background middleware pipeline, making highly complex side-effect workflows decoupled and testable.",
+    "skill": "Redux",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "middleware",
+      "redux-thunk",
+      "redux-saga",
+      "async"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Compare Redux Toolkit (RTK) Query with manual Redux Thunk implementations for data fetching pipelines.",
+    "answer": "Manual Thunks require building explicit slices, actions, and custom reducers for handling pending, fulfilled, and rejected network fetching states. RTK Query encapsulates this boilerplate completely, automating data fetching, built-in caching, polling, optimistic updates, and garbage collection directly through auto-generated hooks, reducing state management codebase size significantly.",
+    "skill": "Redux",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redux-toolkit",
+      "rtk-query",
+      "data-fetching",
+      "caching"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Tailwind CSS, and how does its utility-first approach contrast with semantic CSS styles?",
+    "answer": "Tailwind CSS is a utility-first CSS framework that provides low-level atomic classes (e.g., 'flex', 'pt-4', 'text-center') directly in HTML structures. Instead of writing abstract custom class sheets, styles are composed directly on elements. This minimizes custom CSS file growth and ensures design system uniformity across application interfaces.",
+    "skill": "Tailwind CSS",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "tailwind",
+      "utility-css",
+      "frontend-styling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does Tailwind CSS eliminate unused utility classes from your production application build bundles?",
+    "answer": "Tailwind employs an internal scanning architecture via PostCSS or its compiler engine that analyzes source code templates (HTML, JS, JSX) using regular expressions. It identifies any class names explicitly used in code strings and filters out everything else from the compiled stylesheet, resulting in highly lightweight production bundles.",
+    "skill": "Tailwind CSS",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "tailwind",
+      "optimization",
+      "purgecss",
+      "bundling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement custom design systems, custom themes, and plugins inside a tailwind.config.js architecture?",
+    "answer": "Custom design systems are configured within the 'theme' object of tailwind.config.js. Extending colors, fonts, or spacing models inside 'theme.extend' prevents overriding default configurations. Custom plugins can be added via Tailwind's plugin API to automatically inject static component layer styles or utilities directly into the generation pipeline.",
+    "skill": "Tailwind CSS",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "design-systems",
+      "tailwind-config",
+      "plugins",
+      "theming"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between Python lists and tuples, and when should you favor using tuples?",
+    "answer": "Lists are mutable collections initialized with square brackets, allowing on-the-fly appending and popping. Tuples are immutable structures initialized with parentheses. You should favor tuples for collections of fixed variables, dictionary lookup keys, or when data integrity must be guaranteed across parallel worker processes, as they are faster and memory-optimized.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "python",
+      "lists",
+      "tuples",
+      "data-structures"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain Python's Global Interpreter Lock (GIL) and its direct impact on multi-threaded CPU performance.",
+    "answer": "The GIL is a mutex barrier that restricts Python from executing more than one thread of bytecode simultaneously. Even on multi-core processors, multi-threaded CPU-heavy scripts run sequentially. To bypass GIL limitations for heavy calculations, you must utilize multiprocessing wrappers, C-extensions, or concurrent event loop pipelines.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "gil",
+      "multi-threading",
+      "concurrency",
+      "multiprocessing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do Python Metaclasses operate, and in what scenarios would you construct a custom metaclass?",
+    "answer": "Metaclasses are the blueprints that construct class definitions. By default, classes in Python are instances of 'type'. Custom metaclasses inherit from 'type' and override methods like **new** or **init** to intercept, validate, or modify class generation behaviors, which is heavily utilized in ORM frameworks to map variables into database schema definitions.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "metaclasses",
+      "metaprogramming",
+      "advanced-python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is FastAPI, and how does it use Pydantic for automated request validation?",
+    "answer": "FastAPI is a modern, asynchronous web framework built for Python. It relies on Pydantic models to define strict object schemas for requests and responses. When an HTTP payload arrives, FastAPI checks the fields against Pydantic type annotations, automatically raising explicit 422 validation errors if fields fail schema requirements.",
+    "skill": "FastAPI",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "fastapi",
+      "pydantic",
+      "data-validation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do Dependency Injection operations function inside FastAPI route design workflows?",
+    "answer": "Dependency injection in FastAPI is handled using the 'Depends' function inside route path parameters. It allows routes to declare shared dependencies like database sessions, authentication helpers, or rate-limiting components seamlessly. This enhances separation of concerns and makes mock testing straightforward by allowing developers to override dependencies easily.",
+    "skill": "FastAPI",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "dependency-injection",
+      "fastapi-routes",
+      "testing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you manage concurrent connections and high throughput using async/await and Uvicorn in FastAPI?",
+    "answer": "FastAPI uses ASGI (Asynchronous Server Gateway Interface) via Uvicorn. By using 'async def' for route endpoints, tasks that await I/O operations (like database queries or external API calls) yield control back to the event loop. This allows a single worker thread to handle thousands of concurrent requests without blocking execution threads.",
+    "skill": "FastAPI",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "asgi",
+      "uvicorn",
+      "async-await",
+      "high-throughput"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Flask, and how do application contexts work during HTTP request dispatching?",
+    "answer": "Flask is a WSGI micro-framework for Python. It handles execution pipelines using application contexts and request contexts. These contexts make variables like 'request' and 'g' thread-local or greenlet-local, allowing distinct web requests to isolate their internal tracking states safely during parallel request dispatching loops.",
+    "skill": "Flask",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "flask",
+      "wsgi",
+      "request-context"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you integrate Flask-SQLAlchemy safely to avoid stale connection pooling and memory leaks?",
+    "answer": "Flask-SQLAlchemy binds database connection engines directly to the Flask application context. To prevent stale connections, you configure pooling thresholds like pool_recycle and pool_size. Flask handles session removal automatically at the end of every request cycle via 'scoped_session', avoiding active thread memory leak issues.",
+    "skill": "Flask",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "flask-sqlalchemy",
+      "connection-pooling",
+      "orm"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain how you would architect a modular, highly scalable Flask application using Blueprints and Factory patterns.",
+    "answer": "A scalable Flask setup uses an Application Factory pattern ('create_app') to defer configuration bindings during testing execution. Codebases are split into domain-specific modules using Flask Blueprints. Each blueprint handles its own routes, static assets, and template sub-folders, allowing multiple developers to work independently across logical application layers.",
+    "skill": "Flask",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "blueprints",
+      "factory-pattern",
+      "architecture",
+      "scalability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the role of Django Middleware, and how does it process requests and responses?",
+    "answer": "Django Middleware is a framework of hooks that hooks into Django's request/response processing pipeline. It is a light, low-level plugin system for globally modifying input or output. When a request comes in, Django runs it through middleware classes sequentially from top to bottom before routing, and then processes the response in reverse order.",
+    "skill": "Django",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "django",
+      "middleware",
+      "request-pipeline"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you solve the N+1 query problem inside Django ORM engines using prefetch_related and select_related?",
+    "answer": "The N+1 problem occurs when querying records triggers individual sub-queries for foreign relations. 'select_related' is a performance optimization that performs an SQL JOIN on foreign key or one-to-one relations in a single database hit. 'prefetch_related' optimizes many-to-many or many-to-one relations by executing a separate lookup query and stitching tables inside Python.",
+    "skill": "Django",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "django-orm",
+      "optimization",
+      "n-plus-one",
+      "database-queries"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you configure Django to handle asynchronous task offloading safely via Celery and Redis in highly active applications?",
+    "answer": "To prevent HTTP threads from stalling during slow operations, Django tasks are decoupled using Celery. Redis serves as the message broker queue. Long-running tasks are flagged with Celery's decorator and invoked using '.delay()'. This immediately releases the Django view lifecycle while background workers consume and process tasks asynchronously.",
+    "skill": "Django",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "django",
+      "celery",
+      "redis",
+      "async-workers"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What makes Node.js asynchronous single-threaded architecture uniquely powerful for network I/O applications?",
+    "answer": "Node.js runs an event-driven architecture using Libuv's execution loop on top of a single main JavaScript thread. Instead of spawning new system execution threads for incoming connections, network operations are handled asynchronously. The engine yields I/O lookups to underlying kernel threads, enabling high concurrency with negligible resource footprints.",
+    "skill": "Node.js",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "node",
+      "event-loop",
+      "libuv",
+      "non-blocking"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain Node.js streams and why you should leverage them when reading massive system files.",
+    "answer": "Traditional file reading pulls complete target datasets directly into V8 engine memory buffers before processing, which can trigger heap crashes with large datasets. Node.js streams read files chunk-by-chunk sequentially. This ensures constant, predictable memory overhead by processing data in small pieces as it streams across network sockets.",
+    "skill": "Node.js",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "streams",
+      "memory-management",
+      "file-io",
+      "buffers"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you debug severe memory leaks and capture heap dumps in production Node.js servers?",
+    "answer": "Node.js memory leaks are inspected by generating heap snapshots using packages like heapdump or via the '--inspect' flag. Chrome DevTools allows comparison of multiple sequential dumps. Developers isolate leaks by looking for unexpected object allocation trends (like closures or global cache arrays) that fail garbage collection sweeps.",
+    "skill": "Node.js",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "debugging",
+      "memory-leaks",
+      "v8-heap",
+      "profiling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Express.js middleware, and what is the function of the 'next()' parameter?",
+    "answer": "Express.js middleware functions have sequential access to request and response objects during runtime dispatch phases. The 'next()' function is an execution trigger that tells Express to hand control over to the subsequent middleware handler down the stack line. Failing to call 'next()' leaves requests hanging indefinitely.",
+    "skill": "Express.js",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "express",
+      "middleware",
+      "routing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you handle unhandled promise rejections and errors globally inside Express.js applications?",
+    "answer": "Express 4 does not automatically catch errors from async routes, requiring them to be passed manually via 'next(error)'. A global error middleware is defined with four specific parameters: '(err, req, res, next)'. In Express 5, async route rejections are caught natively, route execution errors are intercepted, and structured JSON failure payloads are returned to consumers.",
+    "skill": "Express.js",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "error-handling",
+      "express",
+      "async-routes"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you secure production-grade Express.js REST APIs from script injection, cross-site leaks, and rate-overloading?",
+    "answer": "Express APIs are secured by integrating Helmet middleware to enforce secure HTTP headers (like CSP and HSTS) and using CORS policies to restrict origin validation. Rate limiting is managed via express-rate-limit to protect endpoints from brute-force traffic, and body-parser payload caps prevent large, malicious payload injections.",
+    "skill": "Express.js",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "security",
+      "helmet-js",
+      "rate-limiting",
+      "cors"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between inner joins, left joins, and outer joins in SQL?",
+    "answer": "An INNER JOIN returns only rows with matching values in both tables. A LEFT JOIN returns all rows from the left table and matched records from the right table, filling mismatched right columns with NULL values. An OUTER JOIN returns all records from both tables, filling missing links on either side with NULL indicators.",
+    "skill": "SQL",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "sql",
+      "joins",
+      "relational-database"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain SQL Window Functions and highlight how they differ from standard aggregation queries.",
+    "answer": "Standard aggregation queries ('GROUP BY') collapse rows into single summarized data points. Window functions perform calculations across a set of table rows that are related to the current row, using the 'OVER' clause. They allow rows to retain their individual identities while generating running totals, moving averages, or rank indexes.",
+    "skill": "SQL",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "window-functions",
+      "sql-analytics",
+      "aggregation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you diagnose and optimize slow SQL queries using EXPLAIN ANALYZE execution trees?",
+    "answer": "Slow queries are troubleshot by running them with 'EXPLAIN ANALYZE' to view the execution tree. Developers check the plan for high-cost indicators like sequential table scans ('Seq Scan'). Performance is optimized by adding indexes to frequently filtered columns, rewriting sub-queries into explicit joins, and avoiding wildcard selectors ('SELECT *').",
+    "skill": "SQL",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "query-optimization",
+      "explain-analyze",
+      "indexing",
+      "performance"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is PostgreSQL, and what are the main differences between primary keys and unique constraints?",
+    "answer": "PostgreSQL is an advanced, open-source object-relational database. A table can have only one Primary Key, which uniquely identifies each row and strictly forbids NULL values. Unique Constraints also enforce data uniqueness across rows, but they allow multiple columns to accept NULL values and can be applied multiple times per table schema.",
+    "skill": "PostgreSQL",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "postgresql",
+      "constraints",
+      "database-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain Write-Ahead Logging (WAL) in PostgreSQL and why it is critical for system durability.",
+    "answer": "Write-Ahead Logging (WAL) ensures ACID durability compliance by recording data modifications to disk sequentially before committing changes to actual table files. If the database crashes unexpectedly, PostgreSQL plays back the WAL log records upon restart to safely rebuild state data and prevent transactional data loss.",
+    "skill": "PostgreSQL",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "wal-logs",
+      "acid-properties",
+      "durability",
+      "postgres-internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you manage high-traffic PostgreSQL scaling using Connection Pooling (e.g., PgBouncer) and MVCC Vacuuming?",
+    "answer": "PostgreSQL spawns a process per connection, which can quickly exhaust resources. PgBouncer manages connection pooling to safely multiplex active client sessions. For MVCC (Multi-Version Concurrency Control), dead row versions created during updates are cleaned up using 'VACUUM' configurations to prevent storage bloat and maintain performance.",
+    "skill": "PostgreSQL",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "pgbouncer",
+      "mvcc",
+      "vacuuming",
+      "database-scaling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is MongoDB, and how does document embedding contrast with referencing across collections?",
+    "answer": "MongoDB is a NoSQL document database that stores datasets in flexible JSON-like BSON formats. Embedding embeds child objects directly inside a parent document, which is ideal for atomic, read-heavy operations. Referencing stores separate ID strings linking distinct documents, mimicking foreign keys to reduce document size overhead.",
+    "skill": "MongoDB",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "mongodb",
+      "nosql",
+      "data-modeling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you construct high-performance MongoDB data aggregation pipelines for complex processing tasks?",
+    "answer": "Aggregation pipelines process documents through sequential, stage-based pipelines using operators like '$match', '$group', and '$project'. Performance is optimized by placing filtering stages ('$match') first to reduce the document volume passed downstream, and ensuring that sorting stages take advantage of compound collection indexes.",
+    "skill": "MongoDB",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "aggregation-pipeline",
+      "optimization",
+      "indexing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain replica sets, sharding architectures, and write-concern parameters inside MongoDB clusters.",
+    "answer": "Replica sets handle high availability by replicating documents across multiple nodes. Sharding distributes data across horizontal nodes using a partition key to scale write performance. Write concern settings ('w: 1', 'w: majority') specify how many cluster nodes must acknowledge a write operation before returning a success status to the client application.",
+    "skill": "MongoDB",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "sharding",
+      "replica-sets",
+      "write-concern",
+      "scalability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Redis, and what makes it an ideal system layer for managing user session configurations?",
+    "answer": "Redis is an in-memory, key-value data structure store that delivers sub-millisecond read and write responses. It is ideal for session management because it supports TTL (Time-To-Live) expiration counters on keys, allowing session tokens to clean themselves up automatically, and keeps high-frequency auth validation requests off primary disk databases.",
+    "skill": "Redis",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis",
+      "caching",
+      "session-management"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do Redis Eviction Policies (like LRU and LFU) function when system memory reaches capacity limits?",
+    "answer": "When memory reaches capacity limits, Redis uses its configured eviction policy to free up space. Least Recently Used (LRU) evicts keys that haven't been accessed for the longest time, which is ideal for standard caching. Least Frequently Used (LFU) tracks access frequency counters, preserving popular keys regardless of their last access timestamp.",
+    "skill": "Redis",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "eviction-policies",
+      "memory-management",
+      "lru-cache"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement distributed locking in a multi-node backend architecture using the Redis Redlock algorithm?",
+    "answer": "The Redlock algorithm manages distributed locks by acquiring a lock across multiple independent Redis instances simultaneously using a matching random token value and a short timeout flag. A client is granted the lock only if it secures it from a majority of nodes within the window, preventing split-brain conditions across parallel application instances.",
+    "skill": "Redis",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redlock",
+      "distributed-locks",
+      "concurrency"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Docker image, what is a container, and how do they relate to each other?",
+    "answer": "A Docker image is a read-only blueprint template that packages application dependencies, environment runtime configs, and source files. A container is a live, isolated execution instance spawned from that image blueprint. Multiple runtime containers can be instantiated from a single underlying base image safely and concurrently.",
+    "skill": "Docker",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker",
+      "containers",
+      "devops-basics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you build highly optimized Docker images using multi-stage builds?",
+    "answer": "Multi-stage builds use multiple 'FROM' statements inside a single Dockerfile. Developers use heavy dependency layers to compile application binaries or build frontend bundles in an early stage, then copy only the final compiled assets into a minimal runtime base image (like Alpine), reducing final production image sizes.",
+    "skill": "Docker",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "dockerfile",
+      "multi-stage",
+      "optimization",
+      "ci-cd"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain Docker container networking types and the difference between bridge, host, and overlay modes.",
+    "answer": "Bridge mode isolates containers on a private internal virtual network on a single host. Host mode removes isolation, mapping the container's ports directly to the host's networking stack. Overlay routing modes link networks across separate physical Docker hosts, enabling secure swarm or distributed cluster orchestrations.",
+    "skill": "Docker",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "networking",
+      "docker-overlay",
+      "infrastructure"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Docker Compose, and how do you define application multi-service dependencies?",
+    "answer": "Docker Compose is a tool for defining and running multi-container Docker applications via a 'docker-compose.yml' configuration. It maps isolated network structures, storage volumes, and environment bindings across services, using directives like 'depends_on' to orchestrate order-of-startup operations across services.",
+    "skill": "Docker Compose",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker-compose",
+      "orchestration",
+      "local-development"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you manage persistent application storage using volumes and bind mounts in Docker Compose configurations?",
+    "answer": "Bind mounts link direct absolute paths from the host machine straight into a container, which is useful for hot-reloading code during local development. Volumes are isolated storage spaces fully managed by Docker on the host disk, providing decoupled persistence and performance optimization for database structures.",
+    "skill": "Docker Compose",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "volumes",
+      "storage-persistence",
+      "devops"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Git, and what is the core operational difference between running a git fetch versus a git pull command?",
+    "answer": "Git is a distributed version control tracking system. Running 'git fetch' downloads metadata, branches, and commit histories from remote repositories into your local tracking cache without overwriting active work files. Running 'git pull' executes a fetch and immediately runs a git merge to integrate remote changes into your active branch.",
+    "skill": "Git",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "git",
+      "version-control",
+      "collaboration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the difference between running a git merge versus a git rebase operation on feature branches.",
+    "answer": "Git merge combines historical branch lines by appending a single unique merge commit to the target branch, keeping historical timelines intact. Git rebase moves the entire commit history of a feature branch to the tip of the target branch, rewriting commit histories to produce a clean, linear project timeline.",
+    "skill": "Git",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "git-rebase",
+      "git-merge",
+      "code-conflict"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you resolve complex merge conflicts and clean up messy project histories using interactive git squashing techniques?",
+    "answer": "Interactive squashing is performed via 'git rebase -i HEAD~N', which opens a terminal list of recent commits. Developers can change commit commands to 'squash' or 'fixup' to merge messy intermediate progress commits into a single, well-documented commit before merging feature branches into production tracking paths.",
+    "skill": "Git",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "git-interactive",
+      "merge-conflicts",
+      "advanced-git"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are GitHub Actions, and how do you define a workflow pipeline using YAML schema formats?",
+    "answer": "GitHub Actions is an automated CI/CD platform integrated directly into GitHub. Workflows are defined inside `.github/workflows/` using YAML. They listen for repository trigger hooks (like pull requests) to execute jobs on clean virtual runner environments, automating test execution and deployment steps.",
+    "skill": "GitHub",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "github-actions",
+      "yaml-config",
+      "ci-cd-automation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you protect production deployment branches on GitHub using granular repository configuration rules?",
+    "answer": "Branch protection rules prevent unreviewed changes from breaking production. Teams require explicit pull request approvals, successful CI/CD status checks, and linear histories, while completely blocking force-pushes ('git push --force') to maintain branch stability.",
+    "skill": "GitHub",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "branch-protection",
+      "github-security",
+      "code-review"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the core difference between Continuous Integration, Continuous Delivery, and Continuous Deployment?",
+    "answer": "Continuous Integration automatically integrates and validates code changes via automated testing suites. Continuous Delivery builds production-ready release packages that can be deployed to production at any time with manual approval. Continuous Deployment automates this final step, immediately pushing every verified update to live servers without human intervention.",
+    "skill": "CI/CD",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "ci-cd",
+      "automation",
+      "devops-pipeline"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you manage encrypted environment variables and deployment secrets inside automated execution runners?",
+    "answer": "Secrets are never committed to repositories. They are stored within encrypted environment stores on platforms like GitHub Secrets or AWS Secrets Manager. During runner execution, the orchestration system injects these keys as ephemeral environment variables into memory container blocks, keeping them hidden from build logs.",
+    "skill": "CI/CD",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "secrets-management",
+      "security",
+      "devops-pipelines"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain Blue-Green deployment strategies and how you orchestrate them using modern traffic load balancers.",
+    "answer": "Blue-Green deployment runs two identical production environments simultaneously. 'Blue' serves active live traffic, while the new version is deployed to 'Green'. Once testing passes on Green, the load balancer switches traffic routing to Green instantly, ensuring zero-downtime updates and seamless rollbacks if issues arise.",
+    "skill": "CI/CD",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "blue-green-deployment",
+      "zero-downtime",
+      "load-balancers"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a JSON Web Token (JWT), and what are the three structural segments that comprise its encoding model?",
+    "answer": "A JWT is a compact, URL-safe container format for securely transmitting structured assertions between services. It consists of three parts separated by dots: the Header (specifying algorithm types), the Payload (containing user context metadata claims), and the Signature (verifying that the content has not been tampered with).",
+    "skill": "JWT Authentication",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "tokens",
+      "authentication-basics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Where should you store JWT access tokens in web clients to prevent Cross-Site Scripting (XSS) exposures?",
+    "answer": "Storing tokens in LocalStorage or SessionStorage makes them accessible to malicious scripts via Cross-Site Scripting (XSS). To mitigate this risk, tokens should be stored in an HTTP-only, secure cookie with the SameSite flag enabled, which prevents JavaScript from accessing the token directly.",
+    "skill": "JWT Authentication",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt-security",
+      "xss-mitigation",
+      "cookies",
+      "web-security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement a secure refresh token rotation flow to mitigate token theft risks?",
+    "answer": "Refresh token rotation generates a new refresh token every time an access token is renewed. The database tracks active tokens; if a revoked or old refresh token is reused, the system flags it as a potential breach, revokes the entire family chain, and forces the user to log in again.",
+    "skill": "JWT Authentication",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "token-rotation",
+      "jwt-architecture",
+      "advanced-auth"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is OAuth 2.0, and what is the difference between an Authentication and an Authorization protocol?",
+    "answer": "OAuth 2.0 is an industry-standard authorization framework. Authentication verifies *who* an identity user is (often handled via OpenID Connect), while Authorization validates what access permissions ('scopes') that identity has over specific server resources.",
+    "skill": "OAuth",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oauth2",
+      "authorization",
+      "authentication"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the OAuth 2.0 Authorization Code Flow with PKCE and why it is critical for single-page web applications.",
+    "answer": "The Authorization Code Flow with PKCE (Proof Key for Code Exchange) protects public clients that cannot securely store client secrets. The client generates a secret verifier and passes its hashed challenge version during lookup, verifying authorization codes on the callback to prevent token interception attacks.",
+    "skill": "OAuth",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "pkce-flow",
+      "spa-security",
+      "oauth-advanced"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What makes an API strictly conformant to REST architectural designs, and what is the role of HATEOAS?",
+    "answer": "A REST API must adhere to constraints like client-server separation, statelessness, cacheability, a layered system structure, and a uniform interface. HATEOAS (Hypermedia As the Engine of Application State) requires responses to dynamically include hypermedia links that guide clients through available downstream actions.",
+    "skill": "REST API",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rest-api",
+      "hateoas",
+      "api-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement proper versioning schemes and return correct HTTP response status codes inside enterprise REST APIs?",
+    "answer": "API versioning is typically managed via URL paths (e.g., `/v1/`) or accept headers. Status codes must reflect specific outcomes: `201 Created` for resource generation, `400 Bad Request` for validation failures, `401 Unauthorized` for missing auth, `403 Forbidden` for insufficient permissions, and `409 Conflict` for duplicate states.",
+    "skill": "REST API",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "api-versioning",
+      "http-status-codes",
+      "rest-best-practices"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you architect a high-throughput REST API layer that implements token-bucket rate limiting across cluster distributed backends?",
+    "answer": "Distributed rate limiting is built using a centralized Redis cluster running Lua script logic. The token-bucket configuration evaluates request volume counts against client identifier keys, allowing for burst traffic while rejecting excessive requests with a `429 Too Many Requests` status.",
+    "skill": "REST API",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rate-limiting",
+      "redis-lua",
+      "system-scale",
+      "api-architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is GraphQL, and how does it solve the twin problems of REST API over-fetching and under-fetching?",
+    "answer": "GraphQL is a query language and runtime for APIs. In REST, over-fetching happens when endpoints return unwanted data fields, and under-fetching requires hitting multiple endpoints for related data. GraphQL resolves this by letting clients request the exact fields and nested resources they need in a single round-trip.",
+    "skill": "GraphQL",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "graphql",
+      "api-design",
+      "query-language"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the N+1 problem inside GraphQL server query networks, and how do DataLoader utilities solve it?",
+    "answer": "The GraphQL N+1 problem occurs when a query resolves nested object relations, causing child field resolvers to fire individual database lookups sequentially. DataLoader utilities batch and memoize these lookups during the event tick, consolidating them into a single batch query to maximize performance.",
+    "skill": "GraphQL",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "dataloader",
+      "graphql-resolvers",
+      "query-optimization"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the four pillars of Object-Oriented Programming (OOP) with clear, practical programming definitions.",
+    "answer": "The four pillars of OOP are: Encapsulation (bundling data and methods within objects to restrict direct access), Inheritance (allowing child classes to inherit attributes from parents), Polymorphism (enabling different classes to respond to the same method call in their own way), and Abstraction (hiding complex implementation details behind simple public interfaces).",
+    "skill": "OOP",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oop-pillars",
+      "encapsulation",
+      "polymorphism",
+      "software-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the SOLID design principles? Pick two and explain how they help write maintainable code.",
+    "answer": "SOLID represents five object-oriented design principles. The Single Responsibility Principle dictates that a class should have only one reason to change, keeping modules focused. The Open-Closed Principle states that software entities should be open for extension but closed for modification, allowing you to add features via inheritance or composition without breaking existing code.",
+    "skill": "OOP",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "solid-principles",
+      "clean-code",
+      "software-architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the structural difference between an Array and a Linked List? When should you use one over the other?",
+    "answer": "Arrays store elements in contiguous memory blocks, allowing O(1) time complexity for random access, but resizing or inserting elements can require costly O(n) reallocations. Linked Lists use nodes containing data and pointers distributed across memory, enabling rapid O(1) insertions but requiring O(n) linear time to look up an element by index.",
+    "skill": "Data Structures",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "arrays",
+      "linked-lists",
+      "data-structures"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do Hash Tables resolve collision scenarios under heavy load conditions?",
+    "answer": "Collisions occur when different keys hash to the same index array slot. They are resolved via Chaining (storing colliding entries in a linked list or binary tree at that index) or Open Addressing (searching for the next available array index via probing), which helps maintain near-O(1) search performance.",
+    "skill": "Data Structures",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "hash-tables",
+      "hash-collisions",
+      "data-structures"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the functional and structural performance difference between a Binary Search Tree (BST) and an AVL Tree.",
+    "answer": "A standard BST can become unbalanced into a linear chain under sequential inserts, degrading lookup times from O(log n) to O(n). An AVL tree is a self-balancing binary search tree that enforces a strict height balance factor limit of 1, running rotations during insertions to guarantee O(log n) performance.",
+    "skill": "Data Structures",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "avl-trees",
+      "binary-search-trees",
+      "balancing-algorithms"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between Bubble Sort and Quick Sort regarding their time and space complexities?",
+    "answer": "Bubble Sort is a simple comparison sort with a time complexity of O(n^2) and an in-place space complexity of O(1), making it inefficient for large datasets. Quick Sort uses a divide-and-conquer strategy, achieving an average time complexity of O(n log n) and an average space complexity of O(log n) due to recursive call stacks.",
+    "skill": "Algorithms",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "sorting-algorithms",
+      "quick-sort",
+      "time-complexity"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you implement a Breadth-First Search (BFS) graph traversal algorithm using Queue data types?",
+    "answer": "BFS traverses graphs level by level. It initializes by pushing the starting node into a queue and marking it as visited. While the queue is not empty, the front node is popped and processed, and all its unvisited neighbors are pushed to the back of the queue, ensuring shortest-path detection in unweighted graphs.",
+    "skill": "Algorithms",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "bfs-traversal",
+      "graph-algorithms",
+      "queue-structure"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Deep dive into the operational mechanics of Dijkstra's Shortest Path Algorithm and its performance optimization using Min-Heaps.",
+    "answer": "Dijkstra's algorithm finds the shortest path from a source node to all other nodes in a weighted graph. Using a Min-Heap (Priority Queue) allows the algorithm to extract the unvisited node with the lowest tentative distance in O(log V) time, reducing total runtime complexity from O(V^2) to O((V + E) log V).",
+    "skill": "Algorithms",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "dijkstras-algorithm",
+      "min-heaps",
+      "priority-queues",
+      "graph-optimization"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Horizontal Scaling vs Vertical Scaling, and how does a Load Balancer facilitate system availability?",
+    "answer": "Vertical scaling increases the resources (CPU, RAM) of a single server, which hits physical limits and introduces a single point of failure. Horizontal scaling adds more machines to the application pool. A load balancer distributes incoming traffic across these servers to prevent bottlenecks and ensure high availability.",
+    "skill": "System Design (Basic)",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "scaling",
+      "load-balancers",
+      "system-architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the CAP Theorem and how it forces engineering tradeoffs when designing distributed database systems.",
+    "answer": "The CAP Theorem states that a distributed system can guarantee at most two out of three core properties: Consistency, Availability, and Partition Tolerance. Since network partitions are inevitable in distributed environments, architects must choose between Consistency (returning errors if nodes aren't synced) or Availability (returning stale data from active nodes).",
+    "skill": "System Design (Basic)",
+    "category": "Technical",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "cap-theorem",
+      "distributed-systems",
+      "tradeoffs"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you architect a cache-aside strategy using Redis to prevent database cache stampedes and thundering herd failures?",
+    "answer": "A cache-aside architecture queries Redis first; on a miss, it fetches data from the primary database and populates the cache. To prevent cache stampedes when popular keys expire, systems implement random jitter in TTL flags or use distributed locking to ensure only one worker thread rebuilds the cache value at a time.",
+    "skill": "System Design (Basic)",
+    "category": "Technical",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "cache-aside",
+      "cache-stampede",
+      "redis-architecture",
+      "system-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Walk me through a Full-Stack project you developed. What architectural decisions led your selection of front and backend structures?",
+    "answer": "I built an internal logistics tracking application using React, FastAPI, and PostgreSQL. React was chosen to manage dynamic UI states and real-time dashboard updates efficiently. FastAPI was selected for its high performance with asynchronous operations and automated Pydantic request validations, while PostgreSQL provided reliable relational tracking for order fulfillment pipelines.",
+    "skill": "Projects",
+    "category": "Project",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "project-architecture",
+      "react",
+      "fastapi",
+      "postgres"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What was the most technically challenging bug you encountered in your recent production project deployments, and how did you resolve it?",
+    "answer": "We hit a severe performance issue where our Express API would stall under heavy load. Profiling revealed an N+1 query issue inside our MongoDB analytics pipeline. I resolved this by rewriting the lookup logic into a native aggregation pipeline using compound indexes, which reduced average response times from 4.2 seconds down to 180 milliseconds.",
+    "skill": "Projects",
+    "category": "Project",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "debugging",
+      "mongodb-optimization",
+      "bottlenecks",
+      "production-issue"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Describe a scenario where you had a sharp technical disagreement with a team member. How did you resolve it?",
+    "answer": "During a feature kickoff, a teammate wanted to use MongoDB for a new transaction-heavy service, while I advocated for PostgreSQL due to our strict data relationship needs. To resolve it, I set up a quick benchmark simulating our expected data workloads. The data showed that relational joins were significantly more performant for our use case, leading to a team consensus based on objective metrics.",
+    "skill": "Behavioral",
+    "category": "Behavioral",
+    "experience_level": "1-3 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "conflict-resolution",
+      "communication",
+      "teamwork"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Tell me about a time you had to lead a critical project delivery under an extremely tight production deadline. How did you manage it?",
+    "answer": "We had two weeks to integrate a new payment gateway provider before a seasonal sales event. To deliver on time, I broke the project down into granular, independent tasks, deprioritized non-critical features, and set up clear daily syncs. By maintaining open communication and focusing on the core integration, we deployed the system ahead of schedule with zero downtime issues.",
+    "skill": "Behavioral",
+    "category": "Behavioral",
+    "experience_level": "3-5 Years",
+    "company": null,
+    "role": null,
+    "tags": [
+      "leadership",
+      "time-management",
+      "project-delivery"
+    ],
+    "source": "Admin",
+    "approved": true
+  }
+]

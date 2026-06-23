@@ -83,6 +83,11 @@ export default function QuestionCard({
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Clock size={10} />{formatDuration(question.estimatedMins)}
             </span>
+            {question.experience_level && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                {question.experience_level}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
