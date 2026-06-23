@@ -3,24 +3,20 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.resume import Resume
-from app.models.interview import (
-    InterviewSession,
-    InterviewQuestion,
-    InterviewAnswer,
-)
+from app.models.interview import InterviewSession, InterviewQuestion
 from app.models.user import User
 from app.schemas.interview import (
     GenerateInterviewRequest,
     GenerateInterviewResponse,
-    EvaluateAnswerRequest,
-    EvaluateAnswerResponse,
     InterviewSessionResponse,
     InterviewHistoryItem,
 )
 from app.services.interview_service import (
     generate_interview_questions,
-    evaluate_interview_answer,
+    generate_question_details,
+    generate_sample_answer,
 )
+
 import json
 
 
@@ -31,10 +27,8 @@ router = APIRouter(
 
 CATEGORY_NAMES = {
     "technical": "Technical",
-    "behavioral": "Behavioral",
-    "hr": "HR",
-    "coding": "Coding",
     "project": "Project",
+    "experience": "Experience",
 }
 
 
@@ -70,6 +64,7 @@ def generate_interview(
             resume_id=resume.id,
             company=payload.company,
             role=payload.role,
+            candidate_type=ai.get("candidate_type", "FRESHER"),
             job_description=payload.job_description,
         )
 
@@ -90,11 +85,10 @@ def generate_interview(
                         ),
                         question=item.get("question", ""),
                         difficulty=item.get("difficulty", "Medium"),
-                        tip=item.get("tip"),
-                        answer=item.get("answer"),
-                        key_points=item.get("key_points", []),
-                        common_mistakes=item.get("common_mistakes", []),
-                        follow_up_questions=item.get("follow_up_questions", []),
+                        answer=None,
+                        details_generated=False,
+                        estimated_duration=item.get("estimated_duration"),
+                        tech_skill=item.get("tech_skill"),
                         bookmarked=False,
                     )
                 )
@@ -114,92 +108,6 @@ def generate_interview(
         )
 
 
-@router.post(
-    "/evaluate",
-    response_model=EvaluateAnswerResponse,
-)
-def evaluate_answer(
-    payload: EvaluateAnswerRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    try:
-        question = (
-            db.query(InterviewQuestion)
-            .join(InterviewSession)
-            .filter(
-                InterviewQuestion.id == payload.question_id,
-                InterviewSession.user_id == current_user.id,
-            )
-            .first()
-        )
-        if not question:
-            raise HTTPException(
-                status_code=404,
-                detail="Interview question not found",
-            )
-        result = evaluate_interview_answer(
-            question.question,
-            question.answer,
-            payload.user_answer,
-        )
-
-        evaluation = result.get("evaluation", result) if isinstance(result, dict) else {}
-        if not isinstance(evaluation, dict):
-            evaluation = {}
-
-        strengths = evaluation.get("strengths", []) or []
-        weaknesses = evaluation.get("weaknesses", []) or []
-        missing_points = evaluation.get("missing_points", evaluation.get("missingPoints", [])) or []
-        improved_answer = evaluation.get("improved_answer", evaluation.get("improvedAnswer", "")) or ""
-        feedback = evaluation.get("feedback", "") or ""
-
-        db_answer = InterviewAnswer(
-            question_id=question.id,
-            user_answer=payload.user_answer,
-            overall_score=evaluation.get("overall", evaluation.get("overall_score", 0)),
-            technical_score=evaluation.get("technical", evaluation.get("technical_score", 0)),
-            communication_score=evaluation.get("communication", evaluation.get("communication_score", 0)),
-            confidence_score=evaluation.get("confidence", evaluation.get("confidence_score", 0)),
-            feedback=json.dumps(
-                {
-                    "feedback": feedback,
-                    "strengths": strengths,
-                    "weaknesses": weaknesses,
-                    "missing_points": missing_points,
-                }
-            ),
-            improved_answer=improved_answer,
-        )
-
-        db.add(db_answer)
-        db.commit()
-        db.refresh(db_answer)
-
-        return EvaluateAnswerResponse(
-            overall_score=evaluation.get("overall", evaluation.get("overall_score", 0)),
-            technical_score=evaluation.get("technical", evaluation.get("technical_score", 0)),
-            communication_score=evaluation.get("communication", evaluation.get("communication_score", 0)),
-            confidence_score=evaluation.get("confidence", evaluation.get("confidence_score", 0)),
-            feedback=feedback,
-            improved_answer=improved_answer,
-            strengths=strengths,
-            weaknesses=weaknesses,
-            missing_points=missing_points,
-        )
-
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to evaluate interview answer: {str(e)}",
-        )
-
-
 @router.get(
     "/history",
     response_model=list[InterviewHistoryItem],
@@ -211,11 +119,7 @@ def interview_history(
     try:
         history = (
             db.query(InterviewSession)
-            .options(
-                joinedload(InterviewSession.questions).joinedload(
-                    InterviewQuestion.answers
-                )
-            )
+            .options(joinedload(InterviewSession.questions))
             .filter(
                 InterviewSession.user_id == current_user.id,
             )
@@ -356,4 +260,86 @@ def delete_interview_session(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete interview session: {str(e)}",
+        )
+
+
+@router.post("/question/{question_id}/details")
+def get_question_details(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        question = (
+            db.query(InterviewQuestion)
+            .filter(InterviewQuestion.id == question_id)
+            .first()
+        )
+
+        if not question:
+            raise HTTPException(
+                status_code=404,
+                detail="Question not found",
+            )
+
+        session = (
+            db.query(InterviewSession)
+            .filter(
+                InterviewSession.id == question.session_id,
+                InterviewSession.user_id == current_user.id,
+            )
+            .first()
+        )
+
+        if not session:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied",
+            )
+
+        if question.details_generated:
+            return {
+                "answer": question.answer,
+            }
+
+        resume = (
+            db.query(Resume)
+            .filter(
+                Resume.id == session.resume_id,
+                Resume.user_id == current_user.id,
+            )
+            .first()
+        )
+
+        if not resume:
+            raise HTTPException(
+                status_code=404,
+                detail="Resume not found",
+            )
+
+        result = generate_sample_answer(
+            resume.parsed_text,
+            session.job_description,
+            question.question,
+        )
+
+        question.answer = result["answer"]
+        question.details_generated = True
+
+        db.commit()
+        db.refresh(question)
+
+        return {
+            "answer": question.answer,
+        }
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate sample answer: {str(e)}",
         )

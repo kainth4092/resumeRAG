@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator
 
 
-class ExperienceCreate(BaseModel):
+class ExperienceBase(BaseModel):
     company: str = Field(min_length=2, max_length=100)
     role: str = Field(min_length=2, max_length=100)
     description: str | None = Field(default=None, max_length=500)
@@ -18,6 +18,9 @@ class ExperienceCreate(BaseModel):
             return value
         return value.strip()
 
+
+class ExperienceCreate(ExperienceBase):
+
     @model_validator(mode="after")
     def validate_dates(self):
         if not self.currently_working:
@@ -28,7 +31,7 @@ class ExperienceCreate(BaseModel):
         return self
 
 
-class ExperienceResponse(ExperienceCreate):
+class ExperienceResponse(ExperienceBase):
     id: int
     user_id: int
 

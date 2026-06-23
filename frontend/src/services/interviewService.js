@@ -1,25 +1,21 @@
 import api from "./api";
 
 export const interviewService = {
-  generateInterview: (data) => api.post("/interview/generate", data),
-  
-  evaluateAnswer: (data) => api.post("/interview/evaluate", data),
-  
-  getHistory: () => api.get("/interview/history").then((res) => res.data),
-  
-  getSession: (id) => api.get(`/interview/${id}`).then((res) => res.data),
-  
-  toggleBookmark: (id) => api.patch(`/interview/bookmark/${id}`).then((res) => res.data),
-  
-  deleteSession: (id) => api.delete(`/interview/${id}`).then((res) => res.data),
+    generateInterview: (data) => api.post("/interview/generate", data),
+
+    getHistory: () => api.get("/interview/history").then((res) => res.data),
+
+    getSession: (id) => api.get(`/interview/${id}`).then((res) => res.data),
+
+    toggleBookmark: (id) => api.patch(`/interview/bookmark/${id}`).then((res) => res.data),
+
+    deleteSession: (id) => api.delete(`/interview/${id}`).then((res) => res.data),
+
+    getQuestionDetails: (id) => api.post(`/interview/question/${id}/details`).then((res) => res.data),
 };
 
-// Export individual functions for backward compatibility
 export const generateInterview = (data) =>
     interviewService.generateInterview(data);
-
-export const evaluateAnswer = (data) =>
-    interviewService.evaluateAnswer(data);
 
 export const getInterviewHistory = () =>
     interviewService.getHistory();
@@ -32,3 +28,6 @@ export const bookmarkQuestion = (id) =>
 
 export const deleteInterviewSession = (id) =>
     interviewService.deleteSession(id);
+
+export const getQuestionDetails = (id) =>
+    interviewService.getQuestionDetails(id);

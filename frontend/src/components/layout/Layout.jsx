@@ -76,7 +76,7 @@ export default function Layout({ children }) {
                     setProfileOpen={setProfileOpen}
                     setMobileOpen={setMobileOpen} />
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">
+                <main className="flex-1 overflow-y-auto bg-background">
                     <Outlet />
                 </main>
             </div>

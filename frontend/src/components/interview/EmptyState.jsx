@@ -29,7 +29,7 @@ export default function EmptyState({ onGoGenerate }) {
           />
         ))}
       </div>
-      <h2 className="text-xl font-bold text-foreground mb-3">No Interview Session Available</h2>
+      <h2 className="text-xl font-bold text-foreground mb-3">No Interview Questions Available</h2>
       <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-8">
         No interview session has been generated yet. Create one from the generator after uploading a resume and adding a job description.
       </p>

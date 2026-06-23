@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Eye, History, Trash2, X } from "lucide-react";
-import ScoreRing from "./ScoreRing";
 import { interviewService } from "../../services/interviewService";
 
-export default function HistoryDrawer({ onClose }) {
+export default function HistoryDrawer({ onClose, onOpenSession, onSessionDeleted }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +24,11 @@ export default function HistoryDrawer({ onClose }) {
 
   const deleteHistory = async (id) => {
     try {
+      await interviewService.deleteSession(id);
       setHistory((prev) => prev.filter((x) => x.id !== id));
+      if (onSessionDeleted) {
+        onSessionDeleted(id);
+      }
     } catch (error) {
       console.error("Failed to delete history:", error);
     }
@@ -70,12 +73,10 @@ export default function HistoryDrawer({ onClose }) {
                       <p className="text-xs text-muted-foreground">{h.role || "Session"}</p>
                     </div>
                   </div>
-                  <ScoreRing value={Math.round(h.avg_score)} size={40} stroke={3} />
                 </div>
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="grid grid-cols-2 gap-2 mb-3">
                   {[
                     { l: "Questions", v: h.questions_count },
-                    { l: "Score", v: `${Math.round(h.avg_score)}%` },
                     { l: "Date", v: new Date(h.created_at).toLocaleDateString() },
                   ].map((d) => (
                     <div key={d.l} className="p-2 bg-muted/40 rounded-xl text-center">
@@ -85,7 +86,13 @@ export default function HistoryDrawer({ onClose }) {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-all">
+                  <button
+                    onClick={() => {
+                      if (onOpenSession) onOpenSession(h.id);
+                      onClose();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-all"
+                  >
                     <Eye size={12} /> Open
                   </button>
                   <button onClick={() => deleteHistory(h.id)} className="w-8 h-8 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 transition-all">

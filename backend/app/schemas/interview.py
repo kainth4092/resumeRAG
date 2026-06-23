@@ -25,45 +25,16 @@ class GenerateInterviewRequest(BaseModel):
         return value
 
 
-class EvaluateAnswerRequest(BaseModel):
-    question_id: int
-    user_answer: str
-
-    @field_validator("user_answer")
-    @classmethod
-    def validate_answer(cls, value: str):
-        value = value.strip()
-        if len(value) < 5:
-            raise ValueError("Answer is too short.")
-        return value
-
-
-class EvaluationDetail(BaseModel):
-    overall: float
-    technical: float
-    communication: float
-    confidence: float
-    strengths: List[str] = []
-    weaknesses: List[str] = []
-    missingPoints: List[str] = []
-    feedback: str
-    improvedAnswer: str
-    followUps: List[str] = []
-
 class InterviewQuestionResponse(BaseModel):
     id: int
     category: str
     question: str
     difficulty: str
-    tip: Optional[Any] = None
+    estimated_duration: Optional[str] = None
+    tech_skill: Optional[str] = None
     answer: Optional[Any] = None
-    key_points: List[str] = []
-    common_mistakes: List[str] = []
-    follow_up_questions: List[str] = []
+    details_generated: bool
     bookmarked: bool
-    answered: bool
-    user_answer: Optional[str] = None
-    evaluation: Optional[EvaluationDetail] = None
 
     @field_validator("difficulty")
     @classmethod
@@ -78,10 +49,8 @@ class InterviewQuestionResponse(BaseModel):
     def normalize_category(cls, value: str):
         categories = {
             "technical": "Technical",
-            "behavioral": "Behavioral",
-            "hr": "HR",
-            "coding": "Coding",
             "project": "Project",
+            "experience": "Experience",
         }
         return categories.get(value.lower(), value.title())
 
@@ -94,6 +63,7 @@ class InterviewSessionResponse(BaseModel):
     resume_id: int
     company: Optional[str] = None
     role: Optional[str] = None
+    candidate_type: str
     job_description: str
     created_at: datetime
     questions: List[InterviewQuestionResponse] = []
@@ -104,20 +74,6 @@ class GenerateInterviewResponse(BaseModel):
     session: InterviewSessionResponse
 
 
-class EvaluateAnswerResponse(BaseModel):
-
-    overall_score: float
-    technical_score: float
-    communication_score: float
-    confidence_score: float
-    feedback: str
-    improved_answer: str
-    strengths: List[str] = []
-    weaknesses: List[str] = []
-    missing_points: List[str] = []
-
-
-
 class InterviewHistoryItem(BaseModel):
 
     id: int
@@ -125,5 +81,4 @@ class InterviewHistoryItem(BaseModel):
     role: Optional[str] = None
     created_at: datetime
     questions_count: int
-    avg_score: float
     model_config = ConfigDict(from_attributes=True)

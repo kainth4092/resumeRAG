@@ -68,30 +68,6 @@ export function useInterview() {
     }
   }, [questions, updateQuestionLocal]);
 
-  const evaluateAnswer = useCallback(async (id, answer) => {
-    const response = await interviewService.evaluateAnswer({
-      question_id: id,
-      user_answer: answer,
-    });
-    const data = response.data;
-    const question = questions.find((item) => item.id === id);
-    updateQuestionLocal(id, {
-      answered: true,
-      answer,
-      evaluation: {
-        overall: Math.round(data.overall_score),
-        technical: Math.round(data.technical_score),
-        communication: Math.round(data.communication_score),
-        confidence: Math.round(data.confidence_score),
-        strengths: data.strengths || [],
-        weaknesses: data.weaknesses || [],
-        missingPoints: data.missing_points || [],
-        improvedAnswer: data.improved_answer || "",
-        followUps: data.follow_ups || question?.followUps || [],
-      },
-    });
-  }, [questions, updateQuestionLocal]);
-
   const regenerate = useCallback(async () => {
     if (!session) return;
     setViewState("loading");
@@ -140,6 +116,6 @@ export function useInterview() {
     activeCategory, setActiveCategory, search, setSearch,
     diffFilter, setDiffFilter, bookmarkOnly, setBookmarkOnly,
     filteredQuestions, updateQuestionLocal, toggleBookmark,
-    evaluateAnswer, regenerate, deleteSession, loadSession,
+    regenerate, deleteSession, loadSession,
   };
 }

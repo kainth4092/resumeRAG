@@ -13,11 +13,11 @@ def call_llm_with_retry(
     for attempt in range(max_retries):
         try:
             response = client.chat.completions.create(
-                model="openai/gpt-oss-20b:free",
+                model="google/gemma-4-26b-a4b-it:free",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert ATS Resume Writer. Always return valid JSON only.",
+                        "content": "You are a Senior Software Engineering Interviewer at Google. Always return valid JSON only.",
                     },
                     {
                         "role": "user",
@@ -55,42 +55,58 @@ def _to_list(value):
     return [value]
 
 
-def _normalize_evaluation_payload(payload):
-    evaluation = payload.get("evaluation") if isinstance(payload, dict) else None
-    if not isinstance(evaluation, dict):
-        evaluation = payload if isinstance(payload, dict) else {}
-
+def _normalize_question(question: dict, category: str):
     return {
-        "evaluation": {
-            "overall": evaluation.get("overall", evaluation.get("overall_score", 0)),
-            "technical": evaluation.get("technical", evaluation.get("technical_score", 0)),
-            "communication": evaluation.get("communication", evaluation.get("communication_score", 0)),
-            "confidence": evaluation.get("confidence", evaluation.get("confidence_score", 0)),
-            "strengths": _to_list(evaluation.get("strengths", [])),
-            "weaknesses": _to_list(evaluation.get("weaknesses", [])),
-            "missing_points": _to_list(evaluation.get("missing_points", evaluation.get("missingPoints", []))),
-            "feedback": evaluation.get("feedback", ""),
-            "improved_answer": evaluation.get("improved_answer", evaluation.get("improvedAnswer", "")),
-        }
+        "question": question.get("question", "").strip(),
+        "category": category,
+        "difficulty": question.get("difficulty", "Medium"),
+        "estimated_duration": question.get("estimated_duration", "2-3 minutes"),
+        "tech_skill": question.get("tech_skill", "").strip() or None,
+    }
+
+
+def _normalize_interview_payload(payload: dict):
+    return {
+        "candidate_type": payload.get("candidate_type", "FRESHER"),
+        "technical": [
+            _normalize_question(q, "technical") for q in payload.get("technical", [])
+        ],
+        "project": [
+            _normalize_question(q, "project") for q in payload.get("project", [])
+        ],
+        "experience": [
+            _normalize_question(q, "experience") for q in payload.get("experience", [])
+        ],
     }
 
 
 INTERVIEW_SCHEMA = {
+    "candidate_type": "FRESHER | EXPERIENCED",
     "technical": [
         {
             "question": "",
-            "difficulty": "Easy|Medium|Hard",
-            "tip": {"title": "AI Tip", "content": ""},
-            "answer": {"sample_answer": "", "duration": "2-3 minutes"},
-            "key_points": ["", ""],
-            "common_mistakes": ["", ""],
-            "follow_up_questions": ["", ""],
+            "category": "Technical",
+            "difficulty": "Easy",
+            "estimated_duration": "2-3 minutes",
+            "tech_skill": "Name of the technology/skill (e.g., Python, Docker, PostgreSQL, React, Git, etc.)",
         }
     ],
-    "hr": [],
-    "behavioral": [],
-    "coding": [],
-    "project": [],
+    "project": [
+        {
+            "question": "",
+            "category": "Project",
+            "difficulty": "Medium",
+            "estimated_duration": "3-5 minutes",
+        }
+    ],
+    "experience": [
+        {
+            "question": "",
+            "category": "Experience",
+            "difficulty": "Hard",
+            "estimated_duration": "5-7 minutes",
+        }
+    ],
 }
 
 
@@ -99,214 +115,336 @@ def generate_interview_questions(
     job_description: str,
 ):
     prompt = f"""
-    You are a Senior Technical Interviewer at top product companies like Google, Microsoft, Amazon, Adobe and Atlassian.
-    Your task is to generate personalized interview questions using BOTH the candidate's resume and the Job Description.
+    You are a Senior Software Engineering Interviewer at Google, Microsoft, Amazon and Atlassian.
+    Your task is to generate highly personalized interview questions based on BOTH the candidate's Resume and the target Job Description.
 
-    ##############################
-    CANDIDATE RESUME
-    ##############################
+    ## Candidate Resume
     {resume_text}
 
-    ##############################
-    JOB DESCRIPTION
-    ##############################
+    ## Job Description
     {job_description}
+    ---
 
-    ##############################
-    OBJECTIVE
-    ##############################
-    Generate realistic interview questions that an interviewer would ask this candidate.
-    Questions MUST be based on
-    • Candidate Resume
-    • Projects
-    • Skills
-    • Experience
-    • Job Description
+    STEP 1 - Candidate Analysis
+    Analyze the resume.
+    Determine whether the candidate is:
 
-    ##############################
-    QUESTION DISTRIBUTION
-    ##############################
-    Generate EXACTLY
-    8 Technical Questions
-    5 HR Questions
-    5 Behavioral Questions
-    4 Coding Questions
-    8 Project Questions
-    Total = 30 Questions
+    * FRESHER
+    * EXPERIENCED
 
-    ##############################
-    PROJECT QUESTIONS
-    ##############################
-    Project questions MUST come from the candidate's actual resume.
+    Treat only full-time professional work as experience.
+    Internships, freelance work, college projects and personal projects do NOT count as professional experience.
+
+    ---
+    STEP 2 - Skill Extraction
+    Extract all technical skills from the Resume.
+    Extract all technical skills from the Job Description.
+    Find all matching skills.
     Examples
-    Why did you choose React?
-    Explain your ResumeRAG architecture.
-    Why FastAPI?
-    How did you implement JWT?
-    How does your ATS Analysis work?
-    How did you parse PDF?
-    Explain authentication flow.
-    What challenges did you face?
-    Never ask questions about projects that do not exist.
-    
-    ##############################
-    CODING QUESTIONS
-    ##############################
-    Coding questions should be related to technologies in both the Resume and Job Description.
-    Examples
+
+    Resume
+
     React
     Python
     FastAPI
-    JavaScript
-    SQL
-    Algorithms
-    API Design
-    
-    ##############################
-    TECHNICAL QUESTIONS
-    ##############################
-    Questions should test
-    Architecture
+    PostgreSQL
+    Docker
+    Git
+
+    JD
+
+    React
+    Python
+    Docker
+    AWS
+    Git
+
+    Matched Skills
+    React
+    Python
+    Docker
+    Git
+
+    If very few matching skills exist, use remaining Resume skills.
+    Never generate questions for technologies that do not exist in the Resume.
+    ---
+    QUESTION DISTRIBUTION
+
+    For FRESHER
+    Generate EXACTLY
+    25 Technical Questions
+    15 Project Questions
+    Total = 40 Questions
+
+    For EXPERIENCED
+    Generate EXACTLY
+    20 Technical Questions
+    10 Experience Questions
+    10 Project Questions
+    Total = 40 Questions
+
+    ---
+
+    TECHNICAL QUESTION STRATEGY
+    Generate questions evenly across ALL matched skills.
+    Never focus on only one technology (e.g. React). You MUST generate questions for a variety of matched skills (e.g. Python, FastAPI, PostgreSQL, Docker, Git, etc.).
+    Every matched skill must have at least TWO interview questions.
+    For each technical question, you MUST populate the 'tech_skill' field with the exact name of the technology or skill the question is testing (e.g., "React", "Python", "FastAPI", "PostgreSQL", "Docker", "Git", etc.).
+    Question progression
+
+    Level 1
+    Definition
+
+    Example
+    What is React?
+    What is Python?
+    What is FastAPI?
+    What is Docker?
+    What is PostgreSQL?
+
+    Level 2
+
     Concepts
-    Frameworks
-    Libraries
-    Problem Solving
-    Best Practices
+    React Hooks
+    State vs Props
+    OOP
+    REST API
+    SQL Joins
+    Normalization
+    Dependency Injection
+    JWT Authentication
 
-    ##############################
-    HR QUESTIONS
-    ##############################
-    Examples
-    Tell me about yourself.
-    Why should we hire you?
-    Why this company?
-    Greatest strength?
-    Greatest weakness?
+    Level 3
 
-    ##############################
-    BEHAVIORAL QUESTIONS
-    ##############################
-    Use STAR style questions.
+    Practical
+    How would you optimize React?
+    How does FastAPI validate requests?
+    Explain JWT implementation.
+    Explain PostgreSQL indexing.
 
-    ##############################
-    DIFFICULTY
-    ##############################
-    Difficulty must be one of
-    Easy
-    Medium
-    Hard
-    
-    ##############################
-    EVERY QUESTION MUST CONTAIN
-    ##############################
-    Question
-    Difficulty
-    AI Tip
-    Sample Answer
-    Estiamted Duration
-    Key Points
-    Commom Mistakes
-    Follow-up Questions
+    Level 4
 
-    ##############################
-    STRICT RULES
-    ##############################
-    Never invent companies.
-    Never invent experience.
+    Scenario Based
+    How would you improve application performance?
+    How would you secure a REST API?
+    How would you design database relationships?
+    Distribute questions evenly.
+
+    Example
+
+    React → 5 Questions
+    Python → 5 Questions
+    FastAPI → 5 Questions
+    PostgreSQL → 5 Questions
+    Docker → 5 Questions
+    Git → 5 Questions
+
+    Do NOT generate 20 React questions while ignoring Python or FastAPI. Make sure you cover all matched skills.
+
+    ---
+
+    PROJECT QUESTIONS
+
+    Generate ONLY from projects present in the Resume.
     Never invent projects.
-    Never invent certifications. 
-    Use only resume information.
-    Return ONLY valid JSON.
-    No markdown.
-    No explanation.
-    No code block.  
+    Questions should cover
+    Architecture
+    Authentication
+    Database
+    Challenges
+    Libraries
+    Deployment
+    Project Decisions
 
-    ##############################
-    OUTPUT JSON
-    ##############################   
-    Return EXACTLY this JSON:
+    ---
+
+    EXPERIENCE QUESTIONS
+    Generate ONLY if professional experience exists.
+    Questions should come from
+    Responsibilities
+    Production Bugs
+    Optimization
+    Architecture
+    Deployment
+    Team Collaboration
+
+    ---
+
+    STRICT RULES
+    Never invent technologies.
+    Never invent companies.
+    Never invent projects.
+    Never invent work experience.
+    Never generate duplicate questions.
+    Questions must feel like they were written after carefully reading the Resume.
+
+    ---
+
+    OUTPUT
+    Return ONLY JSON.
     {json.dumps(INTERVIEW_SCHEMA, indent=2)}
     """
 
     response = call_llm_with_retry(prompt)
-    return extract_json(response)
+    payload = extract_json(response)
+    return _normalize_interview_payload(payload)
 
 
-def evaluate_interview_answer(
+DETAILS_SCHEMA = {
+    "tip": {"title": "AI Tip", "content": ""},
+    "answer": {"sample_answer": ""},
+    "key_points": [],
+    "common_mistakes": [],
+    "follow_up_questions": [],
+}
+
+
+def generate_question_details(
+    resume_text: str,
+    job_description: str,
     question: str,
-    ideal_answer: dict,
-    user_answer: str,
 ):
-
-    evaluation_schema = {
-        "evaluation": {
-            "overall": 0,
-            "technical": 0,
-            "communication": 0,
-            "confidence": 0,
-            "strengths": [""],
-            "weaknesses": [""],
-            "missing_points": [""],
-            "feedback": "",
-            "improved_answer": "",
-        }
-    }
-
     prompt = f"""
-    You are a Senior Software Engineering Interviewer.
-    Evaluate the candidate's interview answer.
+    You are a Senior Software Engineering Interviewer at Google.
+    Your task is to generate a detailed interview explanation for ONE interview question.
 
-    #####################################
-    QUESTION
-    #####################################
+    ########################################
+    CANDIDATE RESUME
+    ########################################
+    {resume_text}
+
+    ########################################
+    JOB DESCRIPTION
+    ########################################
+    {job_description}
+
+    ########################################
+    INTERVIEW QUESTION
+    ########################################
     {question}
 
-    #####################################
-    IDEAL ANSWER
-    #####################################
-    {json.dumps(ideal_answer, indent=2) if isinstance(ideal_answer, (dict, list)) else ideal_answer}
+    ########################################
+    YOUR TASK
+    ########################################
+    Generate:
 
-    #####################################
-    CANDIDATE ANSWER
-    #####################################
-    {user_answer}
+    1. AI Tip
+    2. Sample Interview Answer
+    3. Key Points
+    4. Common Mistakes
+    5. Follow-up Questions
 
-    #####################################
-    EVALUATION CRITERIA
-    #####################################
-    Evaluate the answer based on
-    1. Technical Accuracy
-    2. Communication
-    3. Confidence
-    4. Completeness
-    5. Clarity
+    The answer must be personalized according to the candidate's resume and the target Job Description.
 
-    #####################################
-    SCORING
-    #####################################
-    overall : 0-100
-    technical : 0-100
-    communication : 0-100
-    confidence : 0-100
+    ########################################
+    RULES
+    ########################################
+    - Never invent companies.
+    - Never invent projects.
+    - Never invent experience.
+    - Fully answer the question asked, explaining any technologies, concepts, or frameworks mentioned in the question itself.
+    - Keep the sample answer interview-ready.
+    - Keep the answer concise (150-250 words).
+    - Key points should be short bullet points.
+    - Common mistakes should be realistic.
+    - Follow-up questions should naturally continue the interview.
+    - Return ONLY valid JSON.
+    - No markdown.
+    - No explanation.
+    - No code block.
 
-    #####################################
-    RETURN
-    #####################################
-    Strengths
-    Weaknesses
-    Missing Points
-    Improved Answer
-    Actionable Feedback
-
-    #####################################
+    ########################################
     OUTPUT JSON
-    #####################################
-    {json.dumps(evaluation_schema, indent=2)}
-    Return ONLY valid JSON.
-    No markdown.
-    No explanation.
-    No code block.
-    """
+    ########################################
+    Return EXACTLY this structure:
 
+    {json.dumps(DETAILS_SCHEMA, indent=2)}
+    """
     response = call_llm_with_retry(prompt)
-    return _normalize_evaluation_payload(extract_json(response))
+    payload = extract_json(response)
+
+    return {
+        "tip": payload.get(
+            "tip",
+            {
+                "title": "AI Tip",
+                "content": "",
+            },
+        ),
+        "answer": payload.get(
+            "answer",
+            {
+                "sample_answer": "",
+            },
+        ),
+        "key_points": _to_list(payload.get("key_points", [])),
+        "common_mistakes": _to_list(payload.get("common_mistakes", [])),
+        "follow_up_questions": _to_list(payload.get("follow_up_questions", [])),
+    }
+
+
+def generate_sample_answer(
+    resume_text: str,
+    job_description: str,
+    question: str,
+):
+    prompt = f"""
+    You are a Senior Software Engineering Interviewer at Google.
+    Your task is to generate a personalized sample interview answer for ONE interview question.
+
+    ########################################
+    CANDIDATE RESUME
+    ########################################
+    {resume_text}
+
+    ########################################
+    JOB DESCRIPTION
+    ########################################
+    {job_description}
+
+    ########################################
+    INTERVIEW QUESTION
+    ########################################
+    {question}
+
+    ########################################
+    YOUR TASK
+    ########################################
+    Generate a personalized Sample Interview Answer according to the candidate's resume and the target Job Description.
+
+    ########################################
+    RULES
+    ########################################
+    - Never invent companies.
+    - Never invent projects.
+    - Never invent experience.
+    - Fully answer the question asked, explaining any technologies, concepts, or frameworks mentioned in the question itself.
+    - Keep the sample answer interview-ready.
+    - Keep the answer concise (150-250 words).
+    - Return ONLY valid JSON.
+    - No markdown.
+    - No explanation.
+    - No code block.
+
+    ########################################
+    OUTPUT JSON
+    ########################################
+    Return EXACTLY this structure:
+
+    {{
+      "answer": {{
+        "sample_answer": "your sample answer text here"
+      }}
+    }}
+    """
+    response = call_llm_with_retry(prompt)
+    payload = extract_json(response)
+
+    return {
+        "answer": payload.get(
+            "answer",
+            {
+                "sample_answer": "",
+            },
+        ),
+    }
