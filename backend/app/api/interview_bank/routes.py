@@ -21,8 +21,7 @@ from app.services.interview_bank_service import (
 from app.services.interview_retrieval_service import (
     extract_resume_skills,
     extract_jd_skills,
-    find_common_skills,
-    retrieve_questions,
+    retrieve_questions_rag,
 )
 
 
@@ -189,6 +188,7 @@ def delete_bank_question(
 )
 def retrieve_interview_questions(
     payload: InterviewRetrievalRequest,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -212,15 +212,11 @@ def retrieve_interview_questions(
         jd_skills = extract_jd_skills(
             payload.job_description,
         )
-        common_skills = find_common_skills(
-            resume_skills,
-            jd_skills,
-        )
-        if not common_skills:
-            common_skills = resume_skills
-        questions = retrieve_questions(
+        questions = retrieve_questions_rag(
             db,
-            common_skills,
+            resume_skills=resume_skills,
+            jd_skills=jd_skills,
+            limit=limit,
         )
         return questions
     except HTTPException:

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import {
   Bookmark, BookmarkCheck, ChevronDown, ChevronUp, Clock,
-  RefreshCw, Sparkles,
+  RefreshCw, Sparkles, Edit2, Trash2
 } from "lucide-react";
 import { DIFF_CFG, CAT_CFG } from "../../data/interviewConstants";
+import { useAuth } from "../../context/AuthContext";
 
 const formatDuration = (val) => {
   if (!val) return "3 min";
@@ -18,7 +19,24 @@ export default function QuestionCard({
   onToggleBookmark,
   loadingQuestionId,
   onExpand,
+  onEdit,
+  onDelete,
 }) {
+  const { user } = useAuth();
+  const isCreatedByCurrentUser = user && question.created_by === user.id;
+
+  if (loadingQuestionId === question.id && !open) {
+    return (
+      <div className="bg-card border border-border rounded-2xl p-5 animate-pulse space-y-3">
+        <div className="flex gap-3 items-center">
+          <div className="w-6 h-6 rounded-full bg-muted animate-pulse" />
+          <div className="flex-1 h-4 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="h-3 bg-muted rounded w-4/5 animate-pulse" />
+      </div>
+    );
+  }
+
   const toText = (value) => {
     if (typeof value === "string") return value;
     if (value == null) return "";
@@ -75,6 +93,11 @@ export default function QuestionCard({
               style={{ color: difficulty.color, backgroundColor: difficulty.bg, border: `1px solid ${difficulty.border}` }}>
               {question.difficulty}
             </span>
+            {question.skill && (
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {question.skill}
+              </span>
+            )}
             <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
               style={{ color: categoryCfg.color, backgroundColor: categoryCfg.bg, border: `1px solid ${categoryCfg.color}30` }}>
               {CategoryIcon && <CategoryIcon size={10} />}
@@ -110,20 +133,44 @@ export default function QuestionCard({
           {loadingQuestionId === question.id ? (
             <div className="flex flex-col items-center justify-center py-6 gap-2">
               <RefreshCw size={16} className="animate-spin text-primary" />
-              <p className="text-xs text-muted-foreground font-medium">Generating answer...</p>
+              <p className="text-xs text-muted-foreground font-medium">Processing...</p>
             </div>
           ) : (
-            sampleAnswerText && (
-              <div className="bg-card border border-border rounded-xl p-4 animate-in fade-in-50 duration-150">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <Sparkles size={10} />
-                  AI Sample Answer
-                </p>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {sampleAnswerText}
-                </p>
-              </div>
-            )
+            <div className="space-y-4">
+              {sampleAnswerText && (
+                <div className="bg-card border border-border rounded-xl p-4 animate-in fade-in-50 duration-150">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Sparkles size={10} />
+                    AI Sample Answer
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {sampleAnswerText}
+                  </p>
+                </div>
+              )}
+              {isCreatedByCurrentUser && (
+                <div className="flex items-center gap-3 pt-3 border-t border-border">
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onEdit(question);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-xl border border-primary/20 transition-all cursor-pointer"
+                  >
+                    <Edit2 size={11} /> Edit Question
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(question);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-xl border border-destructive/20 transition-all cursor-pointer"
+                  >
+                    <Trash2 size={11} /> Delete Question
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

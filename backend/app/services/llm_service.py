@@ -280,3 +280,34 @@ def generate_resume(resume_text, job_description):
 
     response = call_llm_with_retry(prompt)
     return extract_json(response)
+
+
+def generate_general_answer(
+    question: str, skill: str, category: str, experience_level: str
+) -> str:
+    prompt = f"""
+    You are a Senior Technical Interviewer.
+    Your task is to generate a comprehensive, interview-ready answer for the following question:
+
+    Question: {question}
+    Skill/Technology: {skill}
+    Category: {category}
+    Target Experience Level: {experience_level}
+
+    INSTRUCTIONS:
+    - Provide a clear, professional, and technical explanation.
+    - Keep the answer concise yet complete (typically 150-250 words).
+    - Fully explain any concepts, terms, or technologies involved.
+    - Return ONLY the text of the sample answer. Do not wrap in JSON, markdown code blocks, or include any extra commentary.
+    """
+    try:
+        response = call_llm_with_retry(prompt)
+        response = response.strip()
+        if response.startswith("```"):
+            lines = response.splitlines()
+            if len(lines) >= 2:
+                response = "\n".join(lines[1:-1])
+        return response.strip()
+    except Exception as e:
+        print(f"Failed to generate AI answer: {e}")
+        return f"AI generated sample answer for: {question}"

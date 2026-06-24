@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 class InterviewQuestionCreate(BaseModel):
     question: str
-    answer: str
+    answer: Optional[str] = None
 
     skill: str
     category: str
@@ -18,7 +18,6 @@ class InterviewQuestionCreate(BaseModel):
 
     @field_validator(
         "question",
-        "answer",
         "skill",
         "category",
         "experience_level",

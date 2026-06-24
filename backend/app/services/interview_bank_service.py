@@ -4,6 +4,8 @@ from app.schemas.interview_bank import (
     InterviewQuestionCreate,
     InterviewQuestionUpdate,
 )
+from app.services.qdrant_service import upsert_question
+from app.services.qdrant_service import delete_question_vector
 
 
 def create_question(
@@ -11,9 +13,19 @@ def create_question(
     payload: InterviewQuestionCreate,
     created_by: int | None = None,
 ):
+    answer_text = payload.answer
+    if not answer_text or not answer_text.strip():
+        from app.services.llm_service import generate_general_answer
+        answer_text = generate_general_answer(
+            question=payload.question,
+            skill=payload.skill,
+            category=payload.category,
+            experience_level=payload.experience_level,
+        )
+
     question = InterviewQuestionBank(
         question=payload.question,
-        answer=payload.answer,
+        answer=answer_text,
         skill=payload.skill,
         category=payload.category,
         experience_level=payload.experience_level,
@@ -27,6 +39,11 @@ def create_question(
     db.add(question)
     db.commit()
     db.refresh(question)
+
+    try:
+        upsert_question(question)
+    except Exception as e:
+        print(f"Qdrant sync failed: {e}")
 
     return question
 
@@ -57,14 +74,6 @@ def get_question_by_id(
     )
 
 
-def delete_question(
-    db: Session,
-    question: InterviewQuestionBank,
-):
-    db.delete(question)
-    db.commit()
-
-
 def update_question(
     db: Session,
     question: InterviewQuestionBank,
@@ -78,7 +87,19 @@ def update_question(
     db.commit()
     db.refresh(question)
 
+    upsert_question(question)
+
     return question
+
+
+def delete_question(
+    db: Session,
+    question: InterviewQuestionBank,
+):
+    question_id = question.id
+    db.delete(question)
+    db.commit()
+    delete_question_vector(question_id)
 
 
 def list_questions(

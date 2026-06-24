@@ -1,234 +1,160 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { SearchIcon, BrainCircuit, X } from "lucide-react";
-import { CAT_CFG, DIFF_CFG } from "../../data/interviewConstants";
-import {
-  retrieveInterviewQuestions,
-  getAllInterviewQuestions,
-} from "../../services/interviewBankService";
+import { SearchIcon, BrainCircuit, X, Plus } from "lucide-react";
+import { DIFF_CFG } from "../../data/interviewConstants";
 
-import QuestionCard from "../../components/interview/QuestionCard";
+import { useInterviewQuestions } from "../../hooks/useInterviewQuestions";
+import { useQuestionFilters } from "../../hooks/useQuestionFilters";
+
+import { QuestionGroup } from "../../components/interviewPrep/QuestionGroup";
+import { SkillFilter } from "../../components/interviewPrep/SkillFilter";
+import { SearchBar } from "../../components/interviewPrep/SearchBar";
+import QuestionForm from "../../components/interviewPrep/QuestionForm";
+import EmptyState from "../../components/interviewPrep/EmptyState";
+import LoadingState from "../../components/interviewPrep/LoadingState";
+
 import AISidebar from "../../components/interview/AISidebar";
-import LoadingState from "../../components/interview/LoadingState";
-import EmptyState from "../../components/interview/EmptyState";
 import HeroCard from "../../components/interview/HeroCard";
 import StatsRow from "../../components/interview/StatsRow";
-import Toolbar from "../../components/interview/Toolbar";
-import SectionCollapsible from "../../components/interview/SectionCollapsible";
-
-import {
-  asText,
-  estimateMinutes,
-} from "../../utils/interviewUtils";
+import DeleteConfirmModal from "../../components/interview/DeleteConfirmModal";
 
 export default function InterviewPrep() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [viewState, setViewState] = useState("loading");
-  const [questions, setQuestions] = useState([]);
-  const [session, setSession] = useState(null);
-  const [search, setSearch] = useState("");
-  const [diffFilter, setDiffFilter] = useState("");
-  const [bookmarkOnly, setBookmarkOnly] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [loadingQuestionId, setLoadingQuestionId] = useState(null);
-  const [error, setError] = useState("");
-  const loadSession = useCallback(async () => {
-    try {
-      setError("");
-      setViewState("loading");
+  const {
+    questions,
+    setQuestions,
+    session,
+    viewState,
+    error,
+    setError,
+    success,
+    setSuccess,
+    fetching,
+    setFetching,
+    loadingQuestionId,
+    loadSession,
+    handleToggleBookmark,
+    handleQuestionExpand,
+    handleDeleteQuestion,
+    handleSaveQuestion,
+    mapExperienceToDifficulty,
+  } = useInterviewQuestions(location.state);
 
-      const resumeId = location.state?.resumeId || localStorage.getItem("last_resume_id");
-      const jd = location.state?.jobDescription || localStorage.getItem("last_job_description");
-
-      const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
-
-      if (!resumeId || !jd) {
-
-        const res = await getAllInterviewQuestions();
-        const data = res.data || [];
-
-        const transformed = data.map((q) => ({
-          ...q,
-          bookmarked: savedBookmarks.includes(q.id),
-          sampleAnswer: asText(q.answer),
-          estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
-        }));
-
-        setQuestions(transformed);
-
-        if (transformed.length > 0) {
-          setSession({
-            company: "Interview Bank",
-            role: "Software Engineer",
-            companyLogo: "B",
-            logoColor: "#7C3AED",
-            resumeUsed: "None",
-            generatedAt: new Date().toLocaleDateString(),
-            questionCount: transformed.length,
-            difficulty: {
-              easy: transformed.filter((q) => q.difficulty === "Easy").length,
-              medium: transformed.filter((q) => q.difficulty === "Medium").length,
-              hard: transformed.filter((q) => q.difficulty === "Hard").length,
-            },
-            status: "Ready",
-          });
-          setViewState("active");
-        } else {
-          setViewState("empty");
-        }
-        return;
-      }
-
-      const res = await retrieveInterviewQuestions({
-        resume_id: parseInt(resumeId, 10),
-        job_description: jd,
-      });
-
-      const data = res.data || [];
-      const transformed = data.map((q) => ({
-        ...q,
-        bookmarked: savedBookmarks.includes(q.id),
-        sampleAnswer: asText(q.answer),
-        estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
-      }));
-
-      setQuestions(transformed);
-
-      if (transformed.length > 0) {
-        setSession({
-          company: "Personalized Prep",
-          role: "Interview Candidate",
-          companyLogo: "P",
-          logoColor: "#635BFF",
-          resumeUsed: "Selected Resume",
-          generatedAt: new Date().toLocaleDateString(),
-          questionCount: transformed.length,
-          difficulty: {
-            easy: transformed.filter((q) => q.difficulty === "Easy").length,
-            medium: transformed.filter((q) => q.difficulty === "Medium").length,
-            hard: transformed.filter((q) => q.difficulty === "Hard").length,
-          },
-          status: "Ready",
-        });
-        setViewState("active");
-      } else {
-
-        const allRes = await getAllInterviewQuestions();
-        const allData = allRes.data || [];
-        const allTransformed = allData.map((q) => ({
-          ...q,
-          bookmarked: savedBookmarks.includes(q.id),
-          sampleAnswer: asText(q.answer),
-          estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
-        }));
-
-        setQuestions(allTransformed);
-
-        if (allTransformed.length > 0) {
-          setSession({
-            company: "Interview Bank",
-            role: "Software Engineer",
-            companyLogo: "B",
-            logoColor: "#7C3AED",
-            resumeUsed: "None",
-            generatedAt: new Date().toLocaleDateString(),
-            questionCount: allTransformed.length,
-            difficulty: {
-              easy: allTransformed.filter((q) => q.difficulty === "Easy").length,
-              medium: allTransformed.filter((q) => q.difficulty === "Medium").length,
-              hard: allTransformed.filter((q) => q.difficulty === "Hard").length,
-            },
-            status: "Ready",
-          });
-          setViewState("active");
-        } else {
-          setViewState("empty");
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load session:", err);
-      const detail = err.response?.data?.detail || err.message || "An unexpected error occurred.";
-      setError(detail);
-      setViewState("empty");
-      setSession(null);
-      setQuestions([]);
-    }
-  }, [location.state, navigate]);
-
-  useEffect(() => {
-    loadSession();
-  }, [loadSession]);
-
-  const handleToggleBookmark = (questionId) => {
-    setQuestions((prev) =>
-      prev.map((q) => {
-        if (q.id === questionId) {
-          const nextBookmarked = !q.bookmarked;
-          const saved = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
-
-          if (nextBookmarked) {
-            if (!saved.includes(questionId)) {
-              saved.push(questionId);
-            }
-          } else {
-            const idx = saved.indexOf(questionId);
-            if (idx > -1) {
-              saved.splice(idx, 1);
-            }
-          }
-
-          localStorage.setItem("bookmarked_questions", JSON.stringify(saved));
-          return { ...q, bookmarked: nextBookmarked };
-        }
-        return q;
-      })
-    );
-  };
-
-  const handleQuestionExpand = (questionId) => {
-
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, details_generated: true } : q))
-    );
-  };
-
-  const filteredQuestions = questions.filter((q) => {
-    if (bookmarkOnly && !q.bookmarked) return false;
-    if (diffFilter && q.difficulty !== diffFilter) return false;
-
-    if (activeFilter !== "All") {
-      let qSkill = q.skill || "General";
-      if (q.category === "Behavioral") qSkill = "Behavioral";
-      if (q.category === "Project") qSkill = "Projects";
-
-      if (qSkill.toLowerCase() !== activeFilter.toLowerCase()) {
-        return false;
-      }
-    }
-    if (search) {
-      const query = search.toLowerCase();
-      const matchQuestion = q.question?.toLowerCase().includes(query);
-      const matchSkill = q.skill?.toLowerCase().includes(query);
-
-      let matchTags = false;
-      if (Array.isArray(q.tags)) {
-        matchTags = q.tags.some((tag) => tag.toLowerCase().includes(query));
-      } else if (typeof q.tags === "string") {
-        matchTags = q.tags.toLowerCase().includes(query);
-      }
-
-      if (!matchQuestion && !matchSkill && !matchTags) {
-        return false;
-      }
-    }
-
-    return true;
+  const {
+    search,
+    setSearch,
+    diffFilter,
+    setDiffFilter,
+    bookmarkOnly,
+    setBookmarkOnly,
+    activeFilter,
+    setActiveFilter,
+    filteredQuestions,
+  } = useQuestionFilters({
+    questions,
+    setQuestions,
+    viewState,
+    setFetching,
+    setError,
+    locationState: location.state,
+    mapExperienceToDifficulty,
   });
 
-  const jumpToNext = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    question: "",
+    answer: "",
+    skill: "",
+    category: "Technical",
+    experience_level: "Fresher",
+    tags: "",
+  });
+  const [formError, setFormError] = useState("");
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const handleEditClick = useCallback((q) => {
+    setEditingQuestion(q);
+    setFormData({
+      question: q.question,
+      answer: q.sampleAnswer || q.answer || "",
+      skill: q.skill || "",
+      category: q.category || "Technical",
+      experience_level: q.experience_level || "Fresher",
+      tags: Array.isArray(q.tags) ? q.tags.join(", ") : typeof q.tags === "string" ? q.tags : "",
+    });
+    setFormError("");
+    setShowModal(true);
+  }, []);
+
+  const handleDeleteClick = useCallback((q) => {
+    setQuestionToDelete(q);
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!questionToDelete) return;
+    setDeleting(true);
+    const ok = await handleDeleteQuestion(questionToDelete.id);
+    setDeleting(false);
+    if (ok) {
+      setShowDeleteConfirm(false);
+      setQuestionToDelete(null);
+    }
+  }, [questionToDelete, handleDeleteQuestion]);
+
+  const handleFormSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setFormError("");
+
+    try {
+      const tagsArray = formData.tags
+        ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+
+      const payload = {
+        question: formData.question,
+        answer: formData.answer,
+        skill: formData.skill,
+        category: formData.category,
+        experience_level: formData.experience_level,
+        tags: tagsArray,
+      };
+
+      const ok = await handleSaveQuestion(payload, editingQuestion?.id);
+      if (ok) {
+        setShowModal(false);
+      }
+    } catch (err) {
+      setFormError(err.response?.data?.detail || err.message || "Failed to save question.");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [formData, editingQuestion, handleSaveQuestion]);
+
+  const handleShareClick = useCallback(() => {
+    setEditingQuestion(null);
+    setFormData({
+      question: "",
+      answer: "",
+      skill: "",
+      category: "Technical",
+      experience_level: "Fresher",
+      tags: "",
+    });
+    setFormError("");
+    setShowModal(true);
+  }, []);
+
+  const jumpToNext = useCallback(() => {
     const next = questions[0];
     if (next) {
       setTimeout(
@@ -236,61 +162,76 @@ export default function InterviewPrep() {
         100
       );
     }
-  };
+  }, [questions]);
 
-  const jumpToRandom = () => {
+  const jumpToRandom = useCallback(() => {
     if (!questions.length) return;
     const q = questions[Math.floor(Math.random() * questions.length)];
     document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
+  }, [questions]);
 
-  const groupedSections = {};
-  filteredQuestions.forEach((q) => {
-    let skillGroup = q.skill || "General";
+  const sortedSections = useMemo(() => {
+    const groupedSections = {};
+    filteredQuestions.forEach((q) => {
+      let skillGroup = q.skill || "General";
 
-    if (skillGroup.toLowerCase() === "react") skillGroup = "React";
-    else if (skillGroup.toLowerCase() === "python") skillGroup = "Python";
-    else if (skillGroup.toLowerCase() === "fastapi") skillGroup = "FastAPI";
-    else if (skillGroup.toLowerCase() === "postgresql") skillGroup = "PostgreSQL";
-    else if (skillGroup.toLowerCase() === "javascript") skillGroup = "JavaScript";
-    else if (skillGroup.toLowerCase() === "projects" || q.category === "Project") skillGroup = "Projects";
-    else if (skillGroup.toLowerCase() === "behavioral" || q.category === "Behavioral") skillGroup = "Behavioral";
+      if (skillGroup.toLowerCase() === "react") skillGroup = "React";
+      else if (skillGroup.toLowerCase() === "python") skillGroup = "Python";
+      else if (skillGroup.toLowerCase() === "fastapi") skillGroup = "FastAPI";
+      else if (skillGroup.toLowerCase() === "postgresql") skillGroup = "PostgreSQL";
+      else if (skillGroup.toLowerCase() === "javascript") skillGroup = "JavaScript";
+      else if (skillGroup.toLowerCase() === "projects" || q.category === "Project") skillGroup = "Projects";
+      else if (skillGroup.toLowerCase() === "behavioral" || q.category === "Behavioral") skillGroup = "Behavioral";
 
-    if (!groupedSections[skillGroup]) {
-      groupedSections[skillGroup] = [];
-    }
-    groupedSections[skillGroup].push(q);
-  });
-  const sortedSections = Object.entries(groupedSections).map(([title, qs]) => ({
-    id: `skill-${title}`,
-    title,
-    count: qs.length,
-    questions: qs,
-  })).sort((a, b) => {
-    if (a.title === "Projects") return 1;
-    if (b.title === "Projects") return -1;
-    if (a.title === "Behavioral") return 1;
-    if (b.title === "Behavioral") return -1;
-    return a.title.localeCompare(b.title);
-  });
+      if (!groupedSections[skillGroup]) {
+        groupedSections[skillGroup] = [];
+      }
+      groupedSections[skillGroup].push(q);
+    });
+
+    return Object.entries(groupedSections).map(([title, qs]) => ({
+      title,
+      questions: qs,
+    })).sort((a, b) => a.title.localeCompare(b.title));
+  }, [filteredQuestions]);
 
   return (
-    <div className="bg-background">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6 space-y-5">
+    <div className="min-h-screen bg-background pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
+              <BrainCircuit className="text-primary" size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Interview Prep</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">Master role-specific questions and technical concepts.</p>
+            </div>
+          </div>
 
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-foreground">Interview Prep</h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-lg">
-              Practice personalized interview questions generated from your resume and job description.
-            </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShareClick}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/95 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus size={13} /> Share Question
+            </button>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between">
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
             <span>{error}</span>
             <button onClick={() => setError("")} className="text-red-500 hover:text-red-600 transition-colors cursor-pointer">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {success && (
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
+            <span>{success}</span>
+            <button onClick={() => setSuccess("")} className="text-emerald-500 hover:text-emerald-600 transition-colors cursor-pointer">
               <X size={16} />
             </button>
           </div>
@@ -302,49 +243,31 @@ export default function InterviewPrep() {
 
         {viewState === "active" && session && (
           <div className="space-y-5">
-
-            <HeroCard session={session}
+            <HeroCard
+              session={session}
               setShowSidebar={setShowSidebar}
               questions={questions}
               jumpToNext={jumpToNext}
-              DIFF_CFG={DIFF_CFG} />
+              DIFF_CFG={DIFF_CFG}
+            />
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatsRow
-                session={session}
-                questions={questions} />
+              <StatsRow session={session} questions={questions} />
             </div>
 
             <div className="flex gap-5 items-start">
               <div className="flex-1 min-w-0 space-y-4">
-
-                <Toolbar
+                <SearchBar
                   search={search}
                   setSearch={setSearch}
-                  setBookmarkOnly={setBookmarkOnly}
                   bookmarkOnly={bookmarkOnly}
+                  setBookmarkOnly={setBookmarkOnly}
                   diffFilter={diffFilter}
                   setDiffFilter={setDiffFilter}
-                  filteredQuestions={filteredQuestions} />
+                  filteredCount={filteredQuestions.length}
+                />
 
-                {/* Filter Chips */}
-                <div className="flex flex-wrap gap-2 py-1">
-                  {["All", "React", "Python", "FastAPI", "JavaScript", "PostgreSQL", "Projects", "Behavioral"].map((chip) => {
-                    const active = activeFilter === chip;
-                    return (
-                      <button
-                        key={chip}
-                        onClick={() => setActiveFilter(chip)}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${active
-                          ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
-                          : "bg-card border-border text-muted-foreground hover:bg-muted hover:border-primary/20"
-                          }`}
-                      >
-                        {chip}
-                      </button>
-                    );
-                  })}
-                </div>
+                <SkillFilter activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
 
                 {sortedSections.length === 0 ? (
                   <div className="flex flex-col items-center py-16 text-center bg-card border border-border rounded-2xl">
@@ -364,25 +287,15 @@ export default function InterviewPrep() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {sortedSections.map((section) => (
-                      <SectionCollapsible
-                        key={section.id}
-                        title={section.title}
-                        count={section.count}
-                      >
-                        <div className="space-y-3">
-                          {section.questions.map((q, i) => (
-                            <QuestionCard
-                              key={q.id}
-                              question={q}
-                              index={i}
-                              onToggleBookmark={handleToggleBookmark}
-                              loadingQuestionId={loadingQuestionId}
-                              onExpand={() => handleQuestionExpand(q.id)}
-                            />
-                          ))}
-                        </div>
-                      </SectionCollapsible>
+                    {sortedSections.map(({ title, questions: sectionQs }) => (
+                      <QuestionGroup
+                        key={title}
+                        title={title}
+                        questions={sectionQs}
+                        onToggleBookmark={handleToggleBookmark}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                      />
                     ))}
                   </div>
                 )}
@@ -425,6 +338,24 @@ export default function InterviewPrep() {
           </div>
         </>
       )}
+
+      <QuestionForm
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleFormSubmit}
+        editingQuestion={editingQuestion}
+        formData={formData}
+        setFormData={setFormData}
+        formError={formError}
+        submitting={submitting}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        deleting={deleting}
+      />
     </div>
   );
 }
