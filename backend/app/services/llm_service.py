@@ -23,7 +23,7 @@ def call_llm_with_retry(
         try:
 
             response = client.chat.completions.create(
-                model="google/gemma-4-26b-a4b-it:free",
+                model="google/gemma-4-31b-it:free",
                 messages=[
                     {
                         "role": "system",

@@ -1,72 +1,58 @@
-import { BarChart3, Play } from "lucide-react";
+import { FileText } from "lucide-react";
 
-export default function HeroCard({ session, setShowSidebar, questions, jumpToNext, DIFF_CFG }) {
-    const bookmarkedCount = questions?.filter((q) => q.bookmarked).length || 0;
+export default function HeroCard({ session }) {
+    if (!session) return null;
+
+    const logoText = session.companyLogo || (session.company ? session.company[0].toUpperCase() : "P");;
 
     return (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-[var(--shadow-sm)] relative">
-            <div className="h-0.5 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
-            <div className="p-5 md:p-6">
-                <div className="flex items-start gap-5 flex-wrap">
+        <div className="bg-card border border-border rounded-2xl p-5 md:p-6 hover:shadow-(--shadow-sm) transition-all">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="flex items-start gap-4">
                     <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold text-white shadow-md flex-shrink-0"
-                        style={{ backgroundColor: session.logoColor }}
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold text-white shadow-md shadow-primary/10 shrink-0"
+                        style={{ backgroundColor: session.logoColor || "#635BFF" }}
                     >
-                        {session.companyLogo}
+                        {logoText}
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap mb-1">
-                            <h2 className="text-foreground text-lg">{session.company || "Company"}</h2>
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Ready to Practice
+                    <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-xl font-bold text-foreground tracking-tight">{session.company || "Company"}</h2>
+                            <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Ready
                             </span>
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">{session.role || "Role"}</p>
+                        <p className="text-sm font-semibold text-muted-foreground mt-0.5">{session.role || "Role"}</p>
+                        <div className="flex items-center gap-x-3 gap-y-1 mt-2.5 flex-wrap text-xs text-muted-foreground font-medium">
+                            <span className="flex items-center gap-1">
+                                <FileText size={12} /> {session.resumeUsed || "Selected Resume"}
+                            </span>
+
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
+                </div>
+
+                <div className="flex items-center gap-4 flex-wrap">
+
+                    <div className="flex items-center gap-1 px-4 py-3 bg-muted/40 border border-border rounded-xl">
                         {[
-                            { label: "Questions", value: session.questionCount || 0, color: "text-primary" },
-                            { label: "Bookmarked", value: bookmarkedCount, color: "text-amber-500" },
-                        ].map((s) => (
-                            <div key={s.label} className="text-center px-4 py-2.5 bg-muted/40 rounded-xl border border-border">
-                                <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-                                <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                            { val: session.questionCount || 0, label: "Questions", color: "text-primary" },
+                            { val: session.difficulty?.easy || 0, label: "Easy", color: "text-emerald-500" },
+                            { val: session.difficulty?.medium || 0, label: "Medium", color: "text-amber-500" },
+                            { val: session.difficulty?.hard || 0, label: "Hard", color: "text-red-500" },
+                        ].map((m, i) => (
+                            <div key={m.label} className="flex items-center">
+                                {i > 0 && <span className="text-muted-foreground/30 text-xs mx-2">|</span>}
+                                <div className="text-center min-w-10">
+                                    <p className={`text-base font-bold leading-none ${m.color}`}>{m.val}</p>
+                                    <p className="text-[10px] text-muted-foreground font-medium mt-1 leading-none">{m.label}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                            onClick={jumpToNext}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/20"
-                        >
-                            <Play size={14} /> Start Practice
-                        </button>
-                        <button
-                            onClick={() => setShowSidebar(true)}
-                            className="lg:hidden flex items-center justify-center w-9 h-9 border border-border rounded-xl text-muted-foreground hover:bg-muted transition-all"
-                        >
-                            <BarChart3 size={14} />
-                        </button>
-                    </div>
-                </div>
 
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-                    <span className="text-[11px] text-muted-foreground font-medium">Difficulty mix:</span>
-                    {[
-                        { label: "Easy", count: session.difficulty?.easy || 0, ...DIFF_CFG["Easy"] },
-                        { label: "Medium", count: session.difficulty?.medium || 0, ...DIFF_CFG["Medium"] },
-                        { label: "Hard", count: session.difficulty?.hard || 0, ...DIFF_CFG["Hard"] },
-                    ].map((d) => (
-                        <span
-                            key={d.label}
-                            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ color: d.color, backgroundColor: d.bg, border: `1px solid ${d.border}` }}
-                        >
-                            {d.count} {d.label}
-                        </span>
-                    ))}
                 </div>
             </div>
         </div>
-    )
+    );
 }

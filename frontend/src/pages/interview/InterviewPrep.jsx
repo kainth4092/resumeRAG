@@ -1,22 +1,19 @@
-import React, { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { SearchIcon, BrainCircuit, X, Plus } from "lucide-react";
-import { DIFF_CFG } from "../../data/interviewConstants";
+import { SearchIcon, BrainCircuit, X, Plus, History, Sparkles } from "lucide-react";
 
 import { useInterviewQuestions } from "../../hooks/useInterviewQuestions";
 import { useQuestionFilters } from "../../hooks/useQuestionFilters";
-
-import { QuestionGroup } from "../../components/interviewPrep/QuestionGroup";
-import { SkillFilter } from "../../components/interviewPrep/SkillFilter";
-import { SearchBar } from "../../components/interviewPrep/SearchBar";
+import { QuestionGroup, getCategoryTheme } from "../../components/interviewPrep/QuestionGroup";
 import QuestionForm from "../../components/interviewPrep/QuestionForm";
 import EmptyState from "../../components/interviewPrep/EmptyState";
 import LoadingState from "../../components/interviewPrep/LoadingState";
 
 import AISidebar from "../../components/interview/AISidebar";
 import HeroCard from "../../components/interview/HeroCard";
-import StatsRow from "../../components/interview/StatsRow";
 import DeleteConfirmModal from "../../components/interview/DeleteConfirmModal";
+import HistoryDrawer from "../../components/interview/HistoryDrawer";
+import { SearchBar } from "../../components/interviewPrep/SearchBar";
 
 export default function InterviewPrep() {
   const navigate = useNavigate();
@@ -31,12 +28,8 @@ export default function InterviewPrep() {
     setError,
     success,
     setSuccess,
-    fetching,
     setFetching,
-    loadingQuestionId,
-    loadSession,
     handleToggleBookmark,
-    handleQuestionExpand,
     handleDeleteQuestion,
     handleSaveQuestion,
     mapExperienceToDifficulty,
@@ -49,7 +42,6 @@ export default function InterviewPrep() {
     setDiffFilter,
     bookmarkOnly,
     setBookmarkOnly,
-    activeFilter,
     setActiveFilter,
     filteredQuestions,
   } = useQuestionFilters({
@@ -79,6 +71,56 @@ export default function InterviewPrep() {
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [expandedQuestionId, setExpandedQuestionId] = useState(null);
+
+  const getQuestionTabCategory = useCallback((q) => {
+    let cat = q.skill || q.category || "General";
+    const lower = cat.toLowerCase();
+
+    if (lower === "hr") {
+      cat = "Behavioral";
+    } else if (lower === "react") {
+      cat = "React";
+    } else if (lower === "python") {
+      cat = "Python";
+    } else if (lower === "fastapi") {
+      cat = "FastAPI";
+    } else if (lower === "postgresql") {
+      cat = "PostgreSQL";
+    } else if (lower === "javascript") {
+      cat = "JavaScript";
+    } else if (lower === "project" || lower === "projects") {
+      cat = "Project";
+    } else if (lower === "behavioral") {
+      cat = "Behavioral";
+    } else if (lower === "technical") {
+      cat = "Technical";
+    } else if (lower === "coding") {
+      cat = "Coding";
+    } else {
+      cat = cat.charAt(0).toUpperCase() + cat.slice(1);
+    }
+    return cat;
+  }, []);
+
+  const finalFilteredQuestions = filteredQuestions;
+
+  const groupedQuestions = useMemo(() => {
+    const groups = {};
+    finalFilteredQuestions.forEach((q) => {
+      const cat = getQuestionTabCategory(q);
+      if (!groups[cat]) {
+        groups[cat] = [];
+      }
+      groups[cat].push(q);
+    });
+    return groups;
+  }, [finalFilteredQuestions, getQuestionTabCategory]);
+
+  const sortedGroupedCategories = useMemo(() => {
+    return Object.entries(groupedQuestions).sort(([a], [b]) => a.localeCompare(b));
+  }, [groupedQuestions]);
 
   const handleEditClick = useCallback((q) => {
     setEditingQuestion(q);
@@ -155,49 +197,27 @@ export default function InterviewPrep() {
   }, []);
 
   const jumpToNext = useCallback(() => {
-    const next = questions[0];
+    const next = finalFilteredQuestions[0];
     if (next) {
       setTimeout(
         () => document.getElementById(`q-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
         100
       );
     }
-  }, [questions]);
+  }, [finalFilteredQuestions]);
 
   const jumpToRandom = useCallback(() => {
-    if (!questions.length) return;
-    const q = questions[Math.floor(Math.random() * questions.length)];
-    document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [questions]);
-
-  const sortedSections = useMemo(() => {
-    const groupedSections = {};
-    filteredQuestions.forEach((q) => {
-      let skillGroup = q.skill || "General";
-
-      if (skillGroup.toLowerCase() === "react") skillGroup = "React";
-      else if (skillGroup.toLowerCase() === "python") skillGroup = "Python";
-      else if (skillGroup.toLowerCase() === "fastapi") skillGroup = "FastAPI";
-      else if (skillGroup.toLowerCase() === "postgresql") skillGroup = "PostgreSQL";
-      else if (skillGroup.toLowerCase() === "javascript") skillGroup = "JavaScript";
-      else if (skillGroup.toLowerCase() === "projects" || q.category === "Project") skillGroup = "Projects";
-      else if (skillGroup.toLowerCase() === "behavioral" || q.category === "Behavioral") skillGroup = "Behavioral";
-
-      if (!groupedSections[skillGroup]) {
-        groupedSections[skillGroup] = [];
-      }
-      groupedSections[skillGroup].push(q);
-    });
-
-    return Object.entries(groupedSections).map(([title, qs]) => ({
-      title,
-      questions: qs,
-    })).sort((a, b) => a.title.localeCompare(b.title));
-  }, [filteredQuestions]);
+    if (!finalFilteredQuestions.length) return;
+    const q = finalFilteredQuestions[Math.floor(Math.random() * finalFilteredQuestions.length)];
+    setExpandedQuestionId(q.id);
+    setTimeout(() => {
+      document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+  }, [finalFilteredQuestions]);
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
@@ -211,8 +231,20 @@ export default function InterviewPrep() {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setHistoryOpen(true)}
+              className="flex items-center gap-1.5 h-9 px-3.5 border border-border rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+            >
+              <History size={13} /> History
+            </button>
+            <button
+              onClick={() => navigate("/generator")}
+              className="flex items-center gap-1.5 h-9 px-3.5 border border-border rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+            >
+              <Sparkles size={13} /> Regenerate
+            </button>
+            <button
               onClick={handleShareClick}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/95 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-1.5 h-9 px-3.5 bg-primary hover:bg-primary/95 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
             >
               <Plus size={13} /> Share Question
             </button>
@@ -248,12 +280,8 @@ export default function InterviewPrep() {
               setShowSidebar={setShowSidebar}
               questions={questions}
               jumpToNext={jumpToNext}
-              DIFF_CFG={DIFF_CFG}
             />
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatsRow session={session} questions={questions} />
-            </div>
 
             <div className="flex gap-5 items-start">
               <div className="flex-1 min-w-0 space-y-4">
@@ -264,12 +292,10 @@ export default function InterviewPrep() {
                   setBookmarkOnly={setBookmarkOnly}
                   diffFilter={diffFilter}
                   setDiffFilter={setDiffFilter}
-                  filteredCount={filteredQuestions.length}
+                  filteredCount={finalFilteredQuestions.length}
                 />
 
-                <SkillFilter activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
-
-                {sortedSections.length === 0 ? (
+                {finalFilteredQuestions.length === 0 ? (
                   <div className="flex flex-col items-center py-16 text-center bg-card border border-border rounded-2xl">
                     <SearchIcon size={22} className="text-muted-foreground/30 mb-2" />
                     <p className="text-sm font-semibold text-foreground mb-1">No questions match</p>
@@ -280,28 +306,29 @@ export default function InterviewPrep() {
                         setBookmarkOnly(false);
                         setActiveFilter("All");
                       }}
-                      className="text-xs text-primary hover:text-primary/80 font-semibold mt-2"
+                      className="text-xs text-primary hover:text-primary/80 font-semibold mt-2 cursor-pointer"
                     >
                       Clear filters →
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {sortedSections.map(({ title, questions: sectionQs }) => (
+                  <div className="space-y-6 animate-in fade-in-50 duration-200">
+                    {sortedGroupedCategories.map(([catName, catQuestions]) => (
                       <QuestionGroup
-                        key={title}
-                        title={title}
-                        questions={sectionQs}
+                        key={catName}
+                        categoryName={catName}
+                        questions={catQuestions}
                         onToggleBookmark={handleToggleBookmark}
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
+                        expandedQuestionId={expandedQuestionId}
                       />
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="hidden lg:block w-72 xl:w-80 flex-shrink-0 sticky top-6 h-fit">
+              <div className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-6 h-fit">
                 <AISidebar
                   questions={questions}
                   session={session}
@@ -316,7 +343,7 @@ export default function InterviewPrep() {
       {showSidebar && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setShowSidebar(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border rounded-t-3xl shadow-[var(--shadow-lg)] max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border rounded-t-3xl shadow-(--shadow-lg) max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
             <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-border bg-card">
               <p className="font-semibold text-foreground">AI Assistant</p>
               <button onClick={() => setShowSidebar(false)} className="text-muted-foreground hover:text-foreground">
@@ -355,6 +382,15 @@ export default function InterviewPrep() {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteConfirm}
         deleting={deleting}
+      />
+
+      <HistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelectSession={(id) => {
+          navigate(".", { state: { sessionId: id }, replace: true });
+        }}
+        activeSessionId={location.state?.sessionId}
       />
     </div>
   );

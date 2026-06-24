@@ -31,7 +31,7 @@ export default function Select({ options = [], value, onChange, placeholder = "S
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-1.5 bg-popover border border-border rounded-xl shadow-[var(--shadow-lg)] z-50 py-1 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
+        <div className="absolute left-0 right-0 mt-1.5 bg-popover border border-border rounded-xl shadow-(--shadow-lg) z-50 py-1 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100">
           {options.map((opt) => (
             <button
               key={opt.value}

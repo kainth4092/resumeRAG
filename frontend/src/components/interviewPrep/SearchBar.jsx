@@ -14,7 +14,7 @@ export const SearchBar = memo(function SearchBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 pb-0.5">
-      <div className="relative flex-shrink-0 w-48">
+      <div className="relative shrink-0 w-48">
         <SearchIcon
           size={13}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -26,7 +26,7 @@ export const SearchBar = memo(function SearchBar({
           className="w-full h-9 pl-9 pr-3 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
         />
       </div>
-      <div className="w-44 flex-shrink-0">
+      <div className="w-44 shrink-0">
         <Select
           options={DIFF_OPTS}
           value={diffFilter}
@@ -36,7 +36,7 @@ export const SearchBar = memo(function SearchBar({
       </div>
       <button
         onClick={() => setBookmarkOnly((b) => !b)}
-        className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border text-sm font-semibold transition-all flex-shrink-0 ${bookmarkOnly
+        className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border text-sm font-semibold transition-all shrink-0 ${bookmarkOnly
           ? "bg-amber-500/10 border-amber-500/30 text-amber-600"
           : "border-border text-muted-foreground hover:bg-muted"
           }`}
@@ -45,9 +45,6 @@ export const SearchBar = memo(function SearchBar({
         <span className="hidden sm:inline">Saved</span>
       </button>
 
-      <span className="text-xs text-muted-foreground ml-auto flex-shrink-0">
-        {filteredCount} questions
-      </span>
     </div>
   );
 });

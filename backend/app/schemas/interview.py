@@ -66,6 +66,7 @@ class InterviewSessionResponse(BaseModel):
     candidate_type: str
     job_description: str
     created_at: datetime
+    resume_title: Optional[str] = None
     questions: List[InterviewQuestionResponse] = []
     model_config = ConfigDict(from_attributes=True)
 

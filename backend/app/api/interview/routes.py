@@ -150,6 +150,7 @@ def get_interview_session(
     try:
         session = (
             db.query(InterviewSession)
+            .options(joinedload(InterviewSession.resume))
             .filter(
                 InterviewSession.id == session_id,
                 InterviewSession.user_id == current_user.id,

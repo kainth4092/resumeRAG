@@ -1,53 +1,28 @@
-import { ArrowRight, BrainCircuit, Mic, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
+import { BrainCircuit, Sparkles } from "lucide-react";
 
-export default function EmptyState({ onGoGenerate }) {
+export default function EmptyState({ onAction, onGoGenerate }) {
+  const handleAction = onAction || onGoGenerate;
+
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-      <div className="relative mb-8">
-        <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shadow-[var(--shadow-md)]">
-          <BrainCircuit size={44} className="text-primary" strokeWidth={1.5} />
+    <div className="flex flex-col items-center justify-center py-20 text-center px-4 max-w-xl mx-auto">
+      <div className="relative mb-6">
+        <div className="w-24 h-24 rounded-3xl bg-linear-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shadow-lg shadow-primary/5">
+          <BrainCircuit size={40} className="text-primary animate-pulse" strokeWidth={1.5} />
         </div>
         {[
-          { size: 8, top: -4, right: 12, bg: "#10b981", delay: "0s" },
-          { size: 6, bottom: 4, left: -8, bg: "#f59e0b", delay: "0.7s" },
-          { size: 5, top: 10, left: -10, bg: "#7C3AED", delay: "1.4s" },
+          { size: "w-2.5 h-2.5", top: "-top-2", right: "right-3", bg: "bg-emerald-500", delay: "delay-0" },
+          { size: "w-2 h-2", bottom: "bottom-1", left: "-left-2", bg: "bg-amber-500", delay: "delay-300" },
+          { size: "w-1.5 h-1.5", top: "top-8", left: "-left-2.5", bg: "bg-primary", delay: "delay-700" },
         ].map((d, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full animate-bounce"
-            style={{
-              width: d.size,
-              height: d.size,
-              backgroundColor: d.bg,
-              top: d.top,
-              right: d.right,
-              bottom: d.bottom,
-              left: d.left,
-              animationDelay: d.delay,
-              animationDuration: "2.5s",
-            }}
-          />
+          <div key={i} className={`absolute ${d.size} ${d.bg} rounded-full animate-bounce ${d.delay} ${d.top || ""} ${d.right || ""} ${d.bottom || ""} ${d.left || ""}`} />
         ))}
       </div>
-      <h2 className="text-xl font-bold text-foreground mb-3">No Interview Questions Found</h2>
-      <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-8">
-        No interview session has been generated yet. Create one from the generator after uploading a resume and adding a job description.
+      <h2 className="text-2xl font-bold text-foreground tracking-tight mb-2.5">No Questions Found</h2>
+      <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+        We couldn't find any questions matching your current filters. Try resetting the filters or generate a new batch of questions from your resume and job description.
       </p>
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {[
-          { icon: Sparkles, label: "AI-Matched Questions" },
-          { icon: Target, label: "Role-Specific" },
-          { icon: TrendingUp, label: "Score Tracking" },
-          { icon: Mic, label: "Voice Practice" },
-        ].map((f) => (
-          <span key={f.label} className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-full text-xs font-medium text-muted-foreground">
-            <f.icon size={11} className="text-primary" strokeWidth={2} />
-            {f.label}
-          </span>
-        ))}
-      </div>
-      <button onClick={onGoGenerate} className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20">
-        <Zap size={15} /> Generate Resume <ArrowRight size={14} />
+      <button onClick={handleAction} className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-md shadow-primary/20 cursor-pointer">
+        <Sparkles size={14} /> Generate Questions
       </button>
     </div>
   );

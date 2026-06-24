@@ -6,6 +6,7 @@ import {
   updateInterviewQuestion,
   deleteInterviewQuestion,
 } from "../services/interviewBankApi";
+import { getInterviewSession } from "../services/interviewService";
 import { asText, estimateMinutes } from "../utils/interviewUtils";
 
 const mapExperienceToDifficulty = (exp) => {
@@ -33,6 +34,38 @@ export function useInterviewQuestions(locationState) {
     try {
       setError("");
       setViewState("loading");
+
+      const sessionId = locationState?.sessionId;
+      if (sessionId) {
+        const res = await getInterviewSession(sessionId);
+        const transformed = (res.questions || []).map((q) => ({
+          ...q,
+          difficulty: q.difficulty || mapExperienceToDifficulty(q.experience_level),
+          bookmarked: q.bookmarked,
+          sampleAnswer: asText(q.answer),
+          estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
+        }));
+
+        setQuestions(transformed);
+
+        setSession({
+          company: res.company || "Interview Prep",
+          role: res.role || "Software Engineer",
+          companyLogo: res.company ? res.company[0].toUpperCase() : "P",
+          logoColor: "#635BFF",
+          resumeUsed: res.resume_title || "Selected Resume",
+          generatedAt: new Date(res.created_at).toLocaleDateString(),
+          questionCount: transformed.length,
+          difficulty: {
+            easy: transformed.filter((q) => q.difficulty === "Easy").length,
+            medium: transformed.filter((q) => q.difficulty === "Medium").length,
+            hard: transformed.filter((q) => q.difficulty === "Hard").length,
+          },
+          status: "Ready",
+        });
+        setViewState("active");
+        return;
+      }
 
       const resumeId = locationState?.resumeId || localStorage.getItem("last_resume_id");
       const jd = locationState?.jobDescription || localStorage.getItem("last_job_description");
@@ -92,12 +125,16 @@ export function useInterviewQuestions(locationState) {
       setQuestions(transformed);
 
       if (transformed.length > 0) {
+        const savedResumes = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+        const matchingResume = savedResumes.find(r => r.id === parseInt(resumeId, 10));
+        const resumeName = matchingResume ? matchingResume.title : "Selected Resume";
+
         setSession({
           company: "Personalized Prep",
           role: "Interview Candidate",
           companyLogo: "P",
           logoColor: "#635BFF",
-          resumeUsed: "Selected Resume",
+          resumeUsed: resumeName,
           generatedAt: new Date().toLocaleDateString(),
           questionCount: transformed.length,
           difficulty: {

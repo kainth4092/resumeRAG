@@ -39,10 +39,15 @@ class InterviewSession(Base):
         back_populates="session",
         cascade="all, delete-orphan",
     )
+    resume = relationship("Resume")
 
     @property
     def questions_count(self) -> int:
         return len(self.questions)
+
+    @property
+    def resume_title(self) -> str:
+        return self.resume.title if self.resume else "None"
 
 
 class InterviewQuestion(Base):
