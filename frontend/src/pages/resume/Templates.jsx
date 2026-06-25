@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LayoutTemplate, Sparkles, Check, Clock } from "lucide-react";
+import { LayoutTemplate, Sparkles, Clock } from "lucide-react";
 
 export default function Templates() {
     const navigate = useNavigate();

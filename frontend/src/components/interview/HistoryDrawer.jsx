@@ -11,12 +11,6 @@ export default function HistoryDrawer({
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      fetchHistory();
-    }
-  }, [open]);
-
   const fetchHistory = async () => {
     try {
       setLoading(true);
@@ -28,6 +22,13 @@ export default function HistoryDrawer({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchHistory();
+    }
+  }, [open]);
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();

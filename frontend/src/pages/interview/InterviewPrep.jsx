@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SearchIcon, BrainCircuit, X, Plus, History, Sparkles } from "lucide-react";
 
 import { useInterviewQuestions } from "../../hooks/useInterviewQuestions";
 import { useQuestionFilters } from "../../hooks/useQuestionFilters";
-import { QuestionGroup, getCategoryTheme } from "../../components/interviewPrep/QuestionGroup";
+import { QuestionGroup } from "../../components/interviewPrep/QuestionGroup";
 import QuestionForm from "../../components/interviewPrep/QuestionForm";
 import EmptyState from "../../components/interviewPrep/EmptyState";
 import LoadingState from "../../components/interviewPrep/LoadingState";

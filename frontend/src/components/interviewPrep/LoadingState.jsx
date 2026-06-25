@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { BrainCircuit, CheckCircle2 } from "lucide-react";
 
+const steps = [
+  "Analyzing resume details...",
+  "Correlating with job description...",
+  "Injecting RAG context...",
+  "Synthesizing customized questions...",
+  "Ready!"
+];
+
 export default function LoadingState() {
   const [step, setStep] = useState(0);
-  const steps = [
-    "Analyzing resume details...",
-    "Correlating with job description...",
-    "Injecting RAG context...",
-    "Synthesizing customized questions...",
-    "Ready!"
-  ];
 
   useEffect(() => {
     const t = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 800);

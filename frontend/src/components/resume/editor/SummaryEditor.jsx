@@ -1,4 +1,4 @@
-import { Sparkles, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import EditorSection, { Label, Textarea } from "./EditorSection";
 
 export default function SummaryEditor({ summary = {}, onChange }) {

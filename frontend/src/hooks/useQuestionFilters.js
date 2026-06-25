@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getAllInterviewQuestions } from "../services/interviewBankApi";
 import { asText, estimateMinutes } from "../utils/interviewUtils";
+import { useAuth } from "../context/AuthContext";
 
 export function useQuestionFilters({
   questions,
@@ -11,6 +12,11 @@ export function useQuestionFilters({
   locationState,
   mapExperienceToDifficulty,
 }) {
+  const { user } = useAuth();
+  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
+  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
+  const bookmarkedQuestionsKey = user?.email ? `bookmarked_questions_${user.email}` : "bookmarked_questions";
+
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [diffFilter, setDiffFilter] = useState("");
@@ -26,9 +32,10 @@ export function useQuestionFilters({
 
   useEffect(() => {
     if (viewState === "loading") return;
+    if (!user) return;
 
-    const resumeId = locationState?.resumeId || localStorage.getItem("last_resume_id");
-    const jd = locationState?.jobDescription || localStorage.getItem("last_job_description");
+    const resumeId = locationState?.resumeId || localStorage.getItem(lastResumeIdKey);
+    const jd = locationState?.jobDescription || localStorage.getItem(lastJobDescKey);
     if (resumeId && jd) return;
 
     const fetchFilteredQuestions = async () => {
@@ -42,7 +49,7 @@ export function useQuestionFilters({
 
         const res = await getAllInterviewQuestions(params);
         const data = res.data || [];
-        const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+        const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
 
         const transformed = data.map((q) => ({
           ...q,
@@ -62,7 +69,7 @@ export function useQuestionFilters({
     };
 
     fetchFilteredQuestions();
-  }, [debouncedSearch, activeFilter, diffFilter, locationState, viewState, setQuestions, setFetching, setError, mapExperienceToDifficulty]);
+  }, [debouncedSearch, activeFilter, diffFilter, locationState, viewState, setQuestions, setFetching, setError, mapExperienceToDifficulty, user, lastResumeIdKey, lastJobDescKey, bookmarkedQuestionsKey]);
 
   const filteredQuestions = questions.filter((q) => {
     if (bookmarkOnly && !q.bookmarked) return false;

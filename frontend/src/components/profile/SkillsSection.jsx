@@ -9,23 +9,22 @@ import {
 
 export default function SkillSection() {
   const [skills, setSkills] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [newSkill, setNewSkill] = useState("");
   const [skillError, setSkillError] = useState(null);
 
-  useEffect(() => {
-    loadSkills();
-  }, []);
-
   const loadSkills = async () => {
     try {
-      setLoading(true);
       const response = await getSkills();
       setSkills(response.data);
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error(err);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSkills();
+  }, []);
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
@@ -46,15 +45,6 @@ export default function SkillSection() {
     await deleteSkill(id);
 
     setSkills((prev) => prev.filter((skill) => skill.id !== id));
-  };
-
-  const handleUpdateSkill = async (id, skill_name) => {
-    const response = await updateSkill(id, {
-      skill_name,
-    });
-    setSkills((prev) =>
-      prev.map((skill) => (skill.id !== id ? response.data : skill)),
-    );
   };
 
   return (

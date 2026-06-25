@@ -1,4 +1,4 @@
-import { BrainCircuit, Briefcase, Code2, FolderOpen, Users } from "lucide-react";
+import { BrainCircuit, Code2, FolderOpen, Users, CheckCircle2, Trophy, BookmarkCheck } from "lucide-react";
 
 export const CAT_CFG = {
   Technical: { icon: Code2, color: "#7C3AED", bg: "#f5f3ff" },

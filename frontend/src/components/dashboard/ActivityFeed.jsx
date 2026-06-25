@@ -1,13 +1,16 @@
 import { Clock } from "lucide-react";
 import Skeleton from "./Skeleton";
 import { activities } from "../../data/dashboardData";
+import { useNavigate } from "react-router-dom";
 
 export default function ActivityFeed({ loading }) {
+    const navigate = useNavigate();
+
     return (
         < div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5 flex flex-col" >
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-foreground">Recent Activity</h3>
-                <button onClick={() => navigate("analytics")} className="text-xs text-primary hover:text-primary/80 font-semibold transition-colors">View all →</button>
+                <button onClick={() => navigate("/analytics")} className="text-xs text-primary hover:text-primary/80 font-semibold transition-colors">View all →</button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-52">
                 {loading

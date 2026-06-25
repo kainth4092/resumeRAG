@@ -4,7 +4,7 @@ export default function AISuggestions({ analysis }) {
     const suggestions = analysis?.suggestions || [];
 
     const typedSuggestions = suggestions.map((text, idx) => {
-        let type = "warning";
+        let type;
         const lower = text.toLowerCase();
         if (
             lower.includes("missing") ||

@@ -58,26 +58,12 @@ export default function AddJobModal({ onClose, onAdd }) {
       }
 
       onAdd();
-    } catch (e) {
+    } catch {
       // Failed silently as requested
     } finally {
       setSaving(false);
     }
   };
-
-  const InputField = ({ label, value, onChange, placeholder }) => (
-    <div>
-      <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
-        {label}
-      </label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full h-10 px-3.5 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
-      />
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
@@ -189,3 +175,17 @@ export default function AddJobModal({ onClose, onAdd }) {
     </div>
   );
 }
+
+const InputField = ({ label, value, onChange, placeholder }) => (
+  <div>
+    <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
+      {label}
+    </label>
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full h-10 px-3.5 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+    />
+  </div>
+);

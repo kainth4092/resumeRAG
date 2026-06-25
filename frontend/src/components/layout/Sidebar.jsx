@@ -1,12 +1,30 @@
+import { useState, useEffect } from "react";
 import { PanelLeftClose, PanelLeftOpen, LogOut, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { NAV_SECTIONS } from "../../data/navigation";
+import { getTrackedJobs } from "../../services/jobs.service";
 
 export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout: authLogout } = useAuth();
+  const [jobCount, setJobCount] = useState(null);
+
+  useEffect(() => {
+    getTrackedJobs()
+      .then((data) => {
+        if (data) setJobCount(data.length);
+      })
+      .catch(() => {});
+
+    const handleUpdate = (e) => {
+      setJobCount(e.detail);
+    };
+    window.addEventListener("tracker-updated", handleUpdate);
+    return () => window.removeEventListener("tracker-updated", handleUpdate);
+  }, []);
+
 
   const currentPage = location.pathname.split("/")[1] || "dashboard";
 
@@ -96,7 +114,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                         <span className="flex-1 text-left truncate">
                           {item.label}
                         </span>
-                        {item.badge && (
+                        {((item.id === "tracker" && jobCount !== null) ? String(jobCount) : item.badge) && (
                           <span
                             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                               item.badge === "New"
@@ -104,12 +122,12 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                                 : "bg-muted text-muted-foreground"
                             }`}
                           >
-                            {item.badge}
+                            {item.id === "tracker" && jobCount !== null ? jobCount : item.badge}
                           </span>
                         )}
                       </>
                     )}
-                    {collapsed && item.badge && (
+                    {collapsed && ((item.id === "tracker" && jobCount !== null) ? jobCount > 0 : item.badge) && (
                       <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
                     )}
 

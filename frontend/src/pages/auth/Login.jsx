@@ -8,7 +8,7 @@ import LoginForm from "../../components/auth/LoginForm";
 import { AuthAlert } from "./AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 
-export default function Login({ onNavigate }) {
+export default function Login() {
   const navigate = useNavigate();
   const { fetchUser } = useAuth();
   const [email, setEmail] = useState("");
@@ -16,7 +16,6 @@ export default function Login({ onNavigate }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [alert, setAlert] = useState(null);
-  const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +72,6 @@ export default function Login({ onNavigate }) {
           setPassword={setPassword}
           errors={errors}
           setErrors={setErrors}
-          success={success}
           handleSubmit={handleSubmit}
         />
 

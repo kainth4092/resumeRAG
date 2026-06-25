@@ -17,10 +17,6 @@ export default function ProfileCard({ setProfileSaved }) {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
   const loadProfile = async () => {
     try {
       setLoading(true);
@@ -61,16 +57,19 @@ export default function ProfileCard({ setProfileSaved }) {
     }
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadProfile();
+  }, []);
+
   const saveProfile = async () => {
     try {
       setProfileSaving(true);
 
-      let response;
-
       if (profile?.id) {
-        response = await updateProfile(profileDraft);
+        await updateProfile(profileDraft);
       } else {
-        response = await createProfile(profileDraft);
+        await createProfile(profileDraft);
       }
       await loadProfile();
       setEditingProfile(false);

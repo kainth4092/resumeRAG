@@ -63,3 +63,41 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail="Database error occurred.")
 
     return {"message": "Resume uploaded", "resume_id": resume.id}
+
+
+@router.post("/{resume_id}/active")
+def set_active_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    resume = db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == current_user.id).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found.")
+    
+    db.query(Resume).filter(Resume.user_id == current_user.id).update({Resume.is_active: False})
+    resume.is_active = True
+    
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to update active status.")
+        
+    return {"message": "Resume set as active", "resume_id": resume.id}
+
+
+@router.get("/active")
+def get_active_resume(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    resume = db.query(Resume).filter(Resume.user_id == current_user.id, Resume.is_active == True).first()
+    if not resume:
+        return {"active_resume_id": None}
+    return {
+        "active_resume_id": resume.id,
+        "title": resume.title,
+        "original_filename": resume.original_filename,
+    }
+

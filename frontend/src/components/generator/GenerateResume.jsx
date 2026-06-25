@@ -22,7 +22,7 @@ export default function GenerateResume({ analysis, generating, handleGenerate, g
                     </button>
                     {generating && (
                         <div className="space-y-2">
-                            {["Analyzing keywords...", "Restructuring experience...", "Optimizing ATS score..."].map((step, i) => (
+                            {["Analyzing keywords...", "Restructuring experience...", "Optimizing ATS score..."].map((step) => (
                                 <div key={step} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                                     <Loader2 size={11} className="animate-spin text-primary flex-shrink-0" />
                                     {step}

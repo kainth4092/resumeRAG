@@ -30,7 +30,20 @@ export default function ExperienceSection() {
   const [expSaving, setExpSaving] = useState(false);
   const [expError, setExpError] = useState(null);
 
+  const loadExperiences = async () => {
+    try {
+      setLoading(true);
+      const response = await getExperiences();
+      setExperiences(response.data);
+    } catch (err) {
+      console.error("Failed to load experiences", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadExperiences();
   }, []);
 
@@ -64,18 +77,6 @@ export default function ExperienceSection() {
     });
     setExpError(null);
     setExpModal(true);
-  };
-
-  const loadExperiences = async () => {
-    try {
-      setLoading(true);
-      const response = await getExperiences();
-      setExperiences(response.data);
-    } catch (err) {
-      console.error("Failed to load experiences", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const saveExperience = async () => {

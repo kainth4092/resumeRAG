@@ -54,7 +54,11 @@ async def recommended_jobs(
             skills = [s.skill_name for s in user_skills]
 
        
-        latest_resume = db.query(Resume).filter(Resume.user_id == current_user.id).order_by(Resume.created_at.desc()).first()
+        # Get active resume or fallback to latest resume
+        latest_resume = db.query(Resume).filter(Resume.user_id == current_user.id, Resume.is_active == True).first()
+        if not latest_resume:
+            latest_resume = db.query(Resume).filter(Resume.user_id == current_user.id).order_by(Resume.created_at.desc()).first()
+
         if latest_resume:
             if not headline:
                 filename = latest_resume.title

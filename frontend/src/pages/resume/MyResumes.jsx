@@ -7,9 +7,15 @@ import SearchFilter from "../../components/resume/dashboard/SearchFilter";
 import ResumeTable from "../../components/resume/dashboard/ResumeTable";
 import ResumePreviewModal from "../../components/resume/dashboard/ResumePreviewModal";
 import DeleteDialog from "../../components/resume/dashboard/DeleteDialog";
+import { setActiveResume } from "../../services/resumeService";
+import { useAuth } from "../../context/AuthContext";
 
 export default function MyResumes() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
+  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
+
   const [resumes, setResumes] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -33,30 +39,46 @@ export default function MyResumes() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
-    const mapped = saved.map((item) => ({
-      id: item.id,
-      name: item.title || "Untitled Resume",
-      role: item.resume?.personal_info?.title || item.resume?.headline || "Software Engineer",
-      company: item.resume?.work_experience?.[0]?.company || "",
-      score: item.score || item.resume?.score || 85,
-      status: item.status || "Active",
-      updated: item.updatedAt || "Just now",
-      pages: item.pages || 1,
-      version: item.version || "v1",
-      starred: item.starred || false,
-      template: item.template || "Professional",
-      color: item.color || "#7C3AED",
-      resume: item.resume,
-    }));
+    if (!user) return;
+    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+    const mapped = saved.map((item) => {
+      let score = item.score || item.resume?.score;
+      if (!score) {
+        const str = String(item.id || item.title || "");
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        score = 75 + (Math.abs(hash) % 20);
+      }
+      return {
+        id: item.id,
+        name: item.title || "Untitled Resume",
+        role:
+          item.resume?.personal_info?.title ||
+          item.resume?.headline ||
+          "Software Engineer",
+        company: item.resume?.work_experience?.[0]?.company || "",
+        score: score,
+        status: item.status || "Active",
+        updated: item.updatedAt || "Just now",
+        pages: item.pages || 1,
+        version: item.version || "v1",
+        starred: item.starred || false,
+        template: item.template || "Professional",
+        color: item.color || "#7C3AED",
+        resume: item.resume,
+      };
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResumes(mapped);
-  }, []);
+  }, [user, resumesKey]);
 
   const filtered = resumes
     .filter((r) => {
-      if (search && !r.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !r.name.toLowerCase().includes(search.toLowerCase()))
+        return false;
       if (statusFilter !== "All" && r.status !== statusFilter) return false;
       if (starredFilter && !r.starred) return false;
       return true;
@@ -69,17 +91,45 @@ export default function MyResumes() {
 
   const toggleStar = (id) => {
     setResumes((prev) => {
-      const next = prev.map((r) => (r.id === id ? { ...r, starred: !r.starred } : r));
-      const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+      const next = prev.map((r) =>
+        r.id === id ? { ...r, starred: !r.starred } : r,
+      );
+      const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
       const updatedSaved = saved.map((item) => {
         if (item.id === id) {
           return { ...item, starred: !item.starred };
         }
         return item;
       });
-      localStorage.setItem("saved_resumes", JSON.stringify(updatedSaved));
+      localStorage.setItem(resumesKey, JSON.stringify(updatedSaved));
       return next;
     });
+  };
+
+  const handleSetActive = async (id) => {
+    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+    const updated = saved.map((item) => ({
+      ...item,
+      status: String(item.id) === String(id) ? "Active" : "Draft",
+    }));
+    localStorage.setItem(resumesKey, JSON.stringify(updated));
+    localStorage.setItem(lastResumeIdKey, id);
+
+    setResumes((prev) =>
+      prev.map((r) => ({
+        ...r,
+        status: String(r.id) === String(id) ? "Active" : "Draft",
+      })),
+    );
+
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId)) {
+      try {
+        await setActiveResume(numericId);
+      } catch (err) {
+        console.error("Failed to sync active status to backend:", err);
+      }
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -87,11 +137,11 @@ export default function MyResumes() {
     const id = deleteTarget.id;
     setDeleteTarget(null);
     setRemovingId(id);
-    await new Promise((r) => setTimeout(r, 350)); // let exit anim play
+    await new Promise((r) => setTimeout(r, 350));
 
-    const saved = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
     const updated = saved.filter((r) => r.id !== id);
-    localStorage.setItem("saved_resumes", JSON.stringify(updated));
+    localStorage.setItem(resumesKey, JSON.stringify(updated));
 
     setResumes((prev) => prev.filter((r) => r.id !== id));
     setRemovingId(null);
@@ -100,7 +150,7 @@ export default function MyResumes() {
 
   const handleEdit = (r) => {
     setPreviewResume(null);
-    navigate("/resume/editor", { state: { resume: r.resume } });
+    navigate("/resume/editor", { state: { resume: r } });
   };
 
   const statusOpts = [
@@ -141,7 +191,6 @@ export default function MyResumes() {
           </div>
         ) : (
           <>
-
             <StatsCards resumes={resumes} />
 
             <SearchFilter
@@ -168,6 +217,7 @@ export default function MyResumes() {
               menuRef={menuRef}
               setDeleteTarget={setDeleteTarget}
               navigate={navigate}
+              handleSetActive={handleSetActive}
             />
           </>
         )}

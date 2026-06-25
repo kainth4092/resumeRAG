@@ -25,7 +25,20 @@ export default function EducationSection() {
   const [eduSaving, setEduSaving] = useState(false);
   const [eduError, setEduError] = useState(null);
 
+  const loadEducations = async () => {
+    try {
+      setLoading(true);
+      const response = await getEducation();
+      setEducation(response.data);
+    } catch (err) {
+      console.error("Failed to load education", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEducations();
   }, []);
 
@@ -50,18 +63,6 @@ export default function EducationSection() {
     });
     setEduError(null);
     setEduModal(true);
-  };
-
-  const loadEducations = async () => {
-    try {
-      setLoading(true);
-      const response = await getEducation();
-      setEducation(response.data);
-    } catch (err) {
-      console.error("Failed to load education", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const saveEducation = async () => {

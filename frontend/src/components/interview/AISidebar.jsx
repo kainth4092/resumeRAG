@@ -1,4 +1,4 @@
-import { Shuffle, FileText, Compass, Clock } from "lucide-react";
+import { Shuffle, FileText } from "lucide-react";
 import { CAT_CFG } from "../../data/interviewConstants";
 
 export default function AISidebar({

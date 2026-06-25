@@ -1,5 +1,4 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 
 export const downloadPDF = (resumeData, filename = "Resume.pdf") => {

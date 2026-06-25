@@ -25,7 +25,7 @@ export default function ExperienceEditor({ experience = [], onChange, accentColo
   return (
     <EditorSection title="Work Experience" icon={Briefcase} badge={`${experience.length}`} defaultOpen={false}>
       <div className="space-y-5 text-left">
-        {experience.map((exp, ei) => (
+        {experience.map((exp) => (
           <div key={exp.id} className="p-4 border border-border rounded-xl bg-background/50 space-y-3 relative group">
             <button
               onClick={() => onChange(experience.filter(e => e.id !== exp.id))}

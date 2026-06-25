@@ -8,7 +8,6 @@ import {
   updateJobStatus,
   deleteTrackedJob,
 } from "../services/jobs.service";
-import { exportToCSV } from "../utils/jobs.utils";
 
 export function useJobTracker() {
   const [tab, setTab] = useState("discover");
@@ -40,7 +39,7 @@ export function useJobTracker() {
     try {
       const data = await recommendedJobs();
       setJobs(data || []);
-    } catch (e) {
+    } catch {
       // Failed silently
     } finally {
       setLoading(false);
@@ -51,32 +50,37 @@ export function useJobTracker() {
     try {
       const data = await getTrackedJobs();
       setTrackedJobs(data || []);
-    } catch (e) {
+      window.dispatchEvent(new CustomEvent("tracker-updated", { detail: data?.length || 0 }));
+    } catch {
       // Failed silently
     }
   }, []);
 
-  // Fetch Recommended and Tracked Jobs on mount
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadRecommended();
     loadTrackedJobs();
   }, [loadRecommended, loadTrackedJobs]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleSearch = useCallback(async (queryStr) => {
-    if (!queryStr.trim()) {
-      loadRecommended();
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = await searchJobs(queryStr);
-      setJobs(data || []);
-    } catch (e) {
-      // Failed silently
-    } finally {
-      setLoading(false);
-    }
-  }, [loadRecommended]);
+  const handleSearch = useCallback(
+    async (queryStr) => {
+      if (!queryStr.trim()) {
+        loadRecommended();
+        return;
+      }
+      setLoading(true);
+      try {
+        const data = await searchJobs(queryStr);
+        setJobs(data || []);
+      } catch {
+        // Failed silently
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadRecommended],
+  );
 
   const handleViewDetails = useCallback(async (job) => {
     const jobId = job.job_id || job.id;
@@ -85,75 +89,80 @@ export function useJobTracker() {
       const detailedJob = await getJob(jobId);
       setSelectedJob(detailedJob);
       setDrawerOpen(true);
-    } catch (e) {
+    } catch {
       // Failed silently
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const handleSaveJob = useCallback(async (job) => {
-    setSaving(true);
-    const jobId = job.job_id || job.id;
-    try {
-      const isSaved = trackedJobs.some((tj) => tj.job_id === jobId);
-      if (isSaved) {
-        return;
+  const handleSaveJob = useCallback(
+    async (job) => {
+      setSaving(true);
+      const jobId = job.job_id || job.id;
+      try {
+        const isSaved = trackedJobs.some((tj) => tj.job_id === jobId);
+        if (isSaved) {
+          return;
+        }
+
+        const payload = {
+          job_id: jobId,
+          company_name: job.company_name || job.company || "Unknown Company",
+          job_title: job.job_title || job.title || "Job Opportunity",
+          company_logo: job.company_logo || null,
+          location: job.location || "Remote",
+          employment_type: job.employment_type || job.type || "Full-time",
+          apply_url: job.apply_url || job.jobLink || null,
+          posted_at: job.posted_at || job.postedAgo || "Recently",
+        };
+
+        await saveJob(payload);
+        loadTrackedJobs();
+      } catch {
+        // Failed silently
+      } finally {
+        setSaving(false);
       }
+    },
+    [trackedJobs, loadTrackedJobs],
+  );
 
-      const payload = {
-        job_id: jobId,
-        company_name: job.company_name || job.company || "Unknown Company",
-        job_title: job.job_title || job.title || "Job Opportunity",
-        company_logo: job.company_logo || null,
-        location: job.location || "Remote",
-        employment_type: job.employment_type || job.type || "Full-time",
-        apply_url: job.apply_url || job.jobLink || null,
-        posted_at: job.posted_at || job.postedAgo || "Recently",
-      };
+  const handleStatusChange = useCallback(
+    async (jobId, newStatus) => {
+      try {
+        await updateJobStatus(jobId, newStatus);
+        loadTrackedJobs();
+        setSelectedApp((prev) => {
+          if (prev && prev.job_id === jobId) {
+            return { ...prev, status: newStatus };
+          }
+          return prev;
+        });
+      } catch (e) {
+        console.error("Failed to update status:", e);
+      }
+    },
+    [loadTrackedJobs],
+  );
 
-      await saveJob(payload);
-      loadTrackedJobs();
-    } catch (e) {
-      // Failed silently
-    } finally {
-      setSaving(false);
-    }
-  }, [trackedJobs, loadTrackedJobs]);
-
-  const handleStatusChange = useCallback(async (jobId, newStatus) => {
-    try {
-      await updateJobStatus(jobId, newStatus);
-      loadTrackedJobs();
-      setSelectedApp((prev) => {
-        if (prev && prev.job_id === jobId) {
-          return { ...prev, status: newStatus };
-        }
-        return prev;
-      });
-    } catch (e) {
-      // Failed silently
-    }
-  }, [loadTrackedJobs]);
-
-  const handleDeleteTracked = useCallback(async (jobId) => {
-    try {
-      await deleteTrackedJob(jobId);
-      loadTrackedJobs();
-      setSelectedApp((prev) => {
-        if (prev && prev.job_id === jobId) {
-          return null;
-        }
-        return prev;
-      });
-    } catch (e) {
-      // Failed silently
-    }
-  }, [loadTrackedJobs]);
-
-  const handleExportCSV = useCallback(() => {
-    exportToCSV(trackedJobs);
-  }, [trackedJobs]);
+  const handleDeleteTracked = useCallback(
+    async (jobId) => {
+      try {
+        await deleteTrackedJob(jobId);
+        loadTrackedJobs();
+        setSelectedApp((prev) => {
+          if (prev && prev.job_id === jobId) {
+            return null;
+          }
+          return prev;
+        });
+      } catch (e) {
+        console.error("Failed to delete tracked job:", e);
+      }
+    },
+    [loadTrackedJobs],
+  );
 
   return {
     tab,
@@ -193,6 +202,5 @@ export function useJobTracker() {
     handleSaveJob,
     handleStatusChange,
     handleDeleteTracked,
-    handleExportCSV,
   };
 }

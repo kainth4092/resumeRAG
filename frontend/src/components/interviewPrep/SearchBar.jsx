@@ -10,7 +10,6 @@ export const SearchBar = memo(function SearchBar({
   setBookmarkOnly,
   diffFilter,
   setDiffFilter,
-  filteredCount,
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2 pb-0.5">

@@ -123,10 +123,11 @@ export const QuestionCard = memo(function QuestionCard({
   const { user } = useAuth();
   const isCreatedByCurrentUser = user && question.created_by === user.id;
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(isInitiallyExpanded);
 
   useEffect(() => {
     if (isInitiallyExpanded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(true);
     }
   }, [isInitiallyExpanded]);

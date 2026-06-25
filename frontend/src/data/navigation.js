@@ -1,4 +1,4 @@
-import { BarChart3, Briefcase, FileText, LayoutDashboard, LayoutTemplate, Map, MessageSquare, Settings, User, Zap } from "lucide-react";
+import { Briefcase, FileText, LayoutDashboard, LayoutTemplate, MessageSquare, Settings, User, Zap } from "lucide-react";
 
 export const NAV_SECTIONS = [
     {

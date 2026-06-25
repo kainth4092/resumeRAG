@@ -1,4 +1,4 @@
-import { Bell, Mail, Menu, Moon, Search, X } from "lucide-react";
+import { Bell, Mail, Menu, Moon, X } from "lucide-react";
 import { notifications } from "../../data/navigation";
 
 

@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  X,
-  ChevronDown,
-  Zap,
-  MessageSquare,
-  ExternalLink,
-} from "lucide-react";
-import StatusBadge, { STATUS_CFG } from "./StatusBadge";
-import { ALL_STATUSES } from "../../constants/jobs.constants";
+import { X, ChevronDown, Zap, MessageSquare, ExternalLink } from "lucide-react";
+import StatusBadge from "./StatusBadge";
+import { ALL_STATUSES, STATUS_CFG } from "../../constants/jobs.constants";
 
 export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
   const navigate = useNavigate();
@@ -16,11 +10,13 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
   const [notes, setNotes] = useState("");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const savedNotes = localStorage.getItem(`notes_${app.job_id}`) || "";
     setNotes(savedNotes);
     setStatus(app.status);
   }, [app]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleNotesChange = (val) => {
     setNotes(val);
@@ -29,16 +25,16 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
 
   const appliedDateStr = app.applied_at
     ? new Date(app.applied_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-    : app.created_at
-      ? new Date(app.created_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       })
+    : app.created_at
+      ? new Date(app.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
       : "Recently";
 
   return (
@@ -47,22 +43,24 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
         className="fixed inset-0 bg-black/40 z-40 lg:hidden"
         onClick={onClose}
       />
-      <div className=" right-0 top-0 bottom-0 w-full max-w-[420px] bg-card border-l border-border z-50 flex flex-col shadow-[var(--shadow-lg)] animate-in slide-in-from-right-4 duration-300">
-        <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-[420px] bg-card border-l border-border z-50 flex flex-col shadow-(--shadow-lg) animate-in slide-in-from-right-4 duration-300 lg:static lg:h-full lg:max-w-none lg:border-none lg:shadow-none min-h-0">
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold bg-primary/10 text-primary flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold bg-primary/10 text-primary shrink-0">
               {app.company_name?.charAt(0).toUpperCase() || "J"}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-foreground truncate">
                 {app.job_title}
               </p>
-              <p className="text-xs text-muted-foreground">{app.company_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {app.company_name}
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -83,7 +81,7 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
                   <ChevronDown size={13} className="text-muted-foreground" />
                 </button>
                 {statusMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-44 bg-popover border border-border rounded-2xl shadow-[var(--shadow-lg)] z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-popover border border-border rounded-2xl shadow-(--shadow-lg) z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
                     <div className="py-1.5">
                       {ALL_STATUSES.map((s) => (
                         <button
@@ -93,12 +91,15 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
                             onStatusChange(app.job_id, s);
                             setStatusMenuOpen(false);
                           }}
-                          className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer ${s === status ? "bg-primary/5" : ""
-                            }`}
+                          className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-muted transition-colors cursor-pointer ${
+                            s === status ? "bg-primary/5" : ""
+                          }`}
                         >
                           <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: STATUS_CFG[s]?.dot || "#6b7280" }}
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: STATUS_CFG[s]?.dot || "#6b7280",
+                            }}
                           />
                           <span
                             className={
@@ -153,7 +154,7 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
           </div>
         </div>
 
-        <div className="flex-shrink-0 p-5 border-t border-border space-y-2 bg-muted/20">
+        <div className="shrink-0 p-5 border-t border-border space-y-2 bg-muted/20">
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => {

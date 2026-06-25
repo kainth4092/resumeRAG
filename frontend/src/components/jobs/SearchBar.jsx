@@ -32,13 +32,14 @@ export default function SearchBar({
     return () => {
       clearTimeout(handler);
     };
-  }, [inputValue]);
+  }, [inputValue, onSearch, setQuery]);
 
   useEffect(() => {
     if (query !== inputValue) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInputValue(query);
     }
-  }, [query]);
+  }, [query, inputValue]);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {

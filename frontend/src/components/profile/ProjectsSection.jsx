@@ -26,7 +26,20 @@ export default function ProjectSection() {
   const [projSaving, setProjSaving] = useState(false);
   const [projError, setProjError] = useState(null);
 
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await getProject();
+      setProjects(response.data);
+    } catch (err) {
+      console.error("Failed to load project", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProjects();
   }, []);
 
@@ -53,18 +66,6 @@ export default function ProjectSection() {
     });
     setProjError(null);
     setProjModal(true);
-  };
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await getProject();
-      setProjects(response.data);
-    } catch (err) {
-      console.error("Failed to load project", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const saveProject = async () => {

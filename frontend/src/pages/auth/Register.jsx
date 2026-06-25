@@ -7,14 +7,14 @@ import RegisterForm from "../../components/auth/RegisterForm";
 import { registerUser } from "../../services/authService";
 import { useNavigate } from "react-router";
 
-export default function SignupPage({ onNavigate }) {
+export default function SignupPage() {
     const navigate = useNavigate()
     const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
     const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [alert, setAlert] = useState(null);
-    const [done, setDone] = useState(false);
+    const done = false;
 
     const set = (k) => (e) => {
         setForm(f => ({ ...f, [k]: e.target.value }));

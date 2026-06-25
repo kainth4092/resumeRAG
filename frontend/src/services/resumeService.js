@@ -7,3 +7,7 @@ export const uploadResume = (formData) => {
         }
     })
 }
+
+export const setActiveResume = (resumeId) => {
+    return api.post(`/resume/${resumeId}/active`).then((res) => res.data);
+}

@@ -2,12 +2,7 @@ import { FileText, Edit2, Trash2, X } from "lucide-react";
 import DownloadBtn from "./DownloadButton";
 import ResumeTemplate from "../ResumeTemplate";
 import { downloadPDF, downloadDOCX } from "../../../utils/exporter";
-
-export const STATUS_STYLES = {
-  Active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-  Draft: "bg-muted text-muted-foreground border-border",
-  Submitted: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-};
+import { STATUS_STYLES } from "./constants";
 
 function PreviewModal({ resume, onClose, onEdit, onDelete }) {
   return (
@@ -17,7 +12,6 @@ function PreviewModal({ resume, onClose, onEdit, onDelete }) {
         onClick={onClose}
       />
       <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-[var(--shadow-lg)] overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-200 max-h-[92vh]">
-
         <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -45,7 +39,6 @@ function PreviewModal({ resume, onClose, onEdit, onDelete }) {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-
             <button
               onClick={onEdit}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted hover:border-primary/30 active:scale-[0.97] transition-all cursor-pointer"
@@ -56,7 +49,6 @@ function PreviewModal({ resume, onClose, onEdit, onDelete }) {
               format="PDF"
               size="sm"
               onDownload={() => {
-                const el = document.querySelector(".printable-resume");
                 downloadPDF(resume, `${resume.name}.pdf`);
               }}
             />
@@ -82,34 +74,6 @@ function PreviewModal({ resume, onClose, onEdit, onDelete }) {
           </div>
         </div>
 
-        <div className="flex-shrink-0 px-5 py-3 bg-muted/20 border-b border-border flex items-center gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-xs text-muted-foreground">ATS Score</span>
-            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-32">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${resume.score || 0}%`,
-                  backgroundColor:
-                    (resume.score || 0) >= 85
-                      ? "#10b981"
-                      : (resume.score || 0) >= 70
-                        ? "#f59e0b"
-                        : "#ef4444",
-                }}
-              />
-            </div>
-            <span
-              className={`text-xs font-bold ${(resume.score || 0) >= 85 ? "text-emerald-600 dark:text-emerald-400" : (resume.score || 0) >= 70 ? "text-amber-600" : "text-red-500"}`}
-            >
-              {resume.score || 0}/100
-            </span>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Last updated: {resume.updated}
-          </span>
-        </div>
-
         <div className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900 px-6 py-6 font-sans">
           <div className="max-w-[640px] mx-auto shadow-[var(--shadow-lg)] rounded-xl overflow-hidden border border-black/10">
             <ResumeTemplate resume={resume} />
@@ -120,7 +84,12 @@ function PreviewModal({ resume, onClose, onEdit, onDelete }) {
   );
 }
 
-export default function ResumePreviewModal({ previewResume, setPreviewResume, handleEdit, setDeleteTarget }) {
+export default function ResumePreviewModal({
+  previewResume,
+  setPreviewResume,
+  handleEdit,
+  setDeleteTarget,
+}) {
   return (
     <>
       {previewResume && (

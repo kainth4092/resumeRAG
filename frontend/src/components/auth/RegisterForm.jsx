@@ -1,4 +1,4 @@
-import { AuthButton, AuthCheckbox, AuthInput, PasswordInput, PasswordStrengthMeter } from "../../pages/auth/AuthComponents";
+import { AuthButton, AuthInput, PasswordInput, PasswordStrengthMeter } from "../../pages/auth/AuthComponents";
 import { Mail, User } from "lucide-react";
 
 export default function RegisterForm({ form, set, errors, loading, done, handleSubmit }) {

@@ -1,30 +1,48 @@
-import { ArrowUpRight, Clock, Edit2, Eye, FileText, MoreHorizontal, Star, Trash2, Zap, X } from "lucide-react";
+import {
+  Clock,
+  Edit2,
+  Eye,
+  FileText,
+  MoreHorizontal,
+  Star,
+  Trash2,
+  Zap,
+  X,
+  CheckCircle2,
+} from "lucide-react";
 import DownloadBtn from "./DownloadButton";
-import { STATUS_STYLES } from "./ResumePreviewModal";
+import { STATUS_STYLES } from "./constants";
 import { downloadPDF } from "../../../utils/exporter";
 
-export default function ResumeTable({ filtered, removingId, toggleStar, setPreviewResume, handleEdit, menuOpen, setMenuOpen, menuRef, setDeleteTarget, navigate }) {
+export default function ResumeTable({
+  filtered,
+  removingId,
+  toggleStar,
+  setPreviewResume,
+  handleEdit,
+  menuOpen,
+  setMenuOpen,
+  menuRef,
+  setDeleteTarget,
+  navigate,
+  handleSetActive,
+}) {
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {[
-                "Resume",
-                "ATS Score",
-                "Status",
-                "Updated",
-                "Template",
-                "Actions",
-              ].map((h, i) => (
-                <th
-                  key={h}
-                  className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 5 ? "text-right pr-5 pl-4" : i === 0 ? "text-left px-5" : "text-left px-4"}`}
-                >
-                  {h}
-                </th>
-              ))}
+              {["Resume", "Status", "Updated", "Template", "Actions"].map(
+                (h, i) => (
+                  <th
+                    key={h}
+                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 5 ? "text-right pr-5 pl-4" : i === 0 ? "text-left px-5" : "text-left px-4"}`}
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -90,33 +108,6 @@ export default function ResumeTable({ filtered, removingId, toggleStar, setPrevi
                   </td>
 
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${r.score}%`,
-                            backgroundColor:
-                              r.score >= 85
-                                ? "#10b981"
-                                : r.score >= 70
-                                  ? "#f59e0b"
-                                  : "#ef4444",
-                          }}
-                        />
-                      </div>
-                      <span
-                        className={`text-xs font-bold ${r.score >= 85 ? "text-emerald-600 dark:text-emerald-400" : r.score >= 70 ? "text-amber-600" : "text-red-500"}`}
-                      >
-                        {r.score}
-                      </span>
-                      {r.score >= 85 && (
-                        <ArrowUpRight size={11} className="text-emerald-500" />
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-4">
                     <span
                       className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${STATUS_STYLES[r.status]}`}
                     >
@@ -161,7 +152,8 @@ export default function ResumeTable({ filtered, removingId, toggleStar, setPrevi
                         onDownload={() => {
                           setPreviewResume(r);
                           setTimeout(() => {
-                            const el = document.querySelector(".printable-resume");
+                            const el =
+                              document.querySelector(".printable-resume");
                             downloadPDF(el, `${r.name || "Resume"}.pdf`);
                           }, 150);
                         }}
@@ -194,7 +186,8 @@ export default function ResumeTable({ filtered, removingId, toggleStar, setPrevi
           >
             <div className="px-6 py-5 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-foreground text-sm truncate pr-4">
-                {filtered.find((r) => r.id === menuOpen)?.name || "Resume Actions"}
+                {filtered.find((r) => r.id === menuOpen)?.name ||
+                  "Resume Actions"}
               </h3>
               <button
                 onClick={() => setMenuOpen(null)}
@@ -204,6 +197,20 @@ export default function ResumeTable({ filtered, removingId, toggleStar, setPrevi
               </button>
             </div>
             <div className="p-3 space-y-1.5">
+              <button
+                onClick={() => {
+                  const target = filtered.find((r) => r.id === menuOpen);
+                  if (target) {
+                    handleSetActive(target.id);
+                  }
+                  setMenuOpen(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
+              >
+                <CheckCircle2 size={15} className="text-emerald-500" />
+                Set as Active
+              </button>
+
               <button
                 onClick={() => {
                   navigate("generator");

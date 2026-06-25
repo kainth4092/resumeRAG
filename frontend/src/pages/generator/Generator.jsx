@@ -4,6 +4,7 @@ import { uploadResume } from "../../services/resumeService";
 import { analyzeResume, generateResume } from "../../services/generatorService";
 import { interviewService } from "../../services/interviewService";
 import Header from "../../components/generator/Header";
+import { useAuth } from "../../context/AuthContext";
 import ResumeUpload from "../../components/generator/ResumeUpload";
 import JobDescription from "../../components/generator/JobDescription";
 import KeywordAnalysis from "../../components/generator/KeywordAnalysis";
@@ -14,6 +15,10 @@ import GenerateResume from "../../components/generator/GenerateResume";
 
 export function ResumeGenerator() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
+  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
+
   const [resume, setResume] = useState(null);
   const [uploaded, setUploaded] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -40,9 +45,9 @@ export function ResumeGenerator() {
       formData.append("file", file);
       const response = await uploadResume(formData);
 
-      setResume(response.data);
+       setResume(response.data);
       if (response.data?.resume_id) {
-        localStorage.setItem("last_resume_id", response.data.resume_id);
+        localStorage.setItem(lastResumeIdKey, response.data.resume_id);
       }
       setUploaded(true);
       setAnalysis(null);
@@ -71,9 +76,9 @@ export function ResumeGenerator() {
     try {
       setAnalyzing(true);
       setGeneratorError(null);
-      localStorage.setItem("last_job_description", jd);
+      localStorage.setItem(lastJobDescKey, jd);
       if (resume?.resume_id) {
-        localStorage.setItem("last_resume_id", resume.resume_id);
+        localStorage.setItem(lastResumeIdKey, resume.resume_id);
       }
       const response = await analyzeResume({
         resume_id: resume.resume_id,
@@ -92,9 +97,9 @@ export function ResumeGenerator() {
     try {
       setGenerating(true);
       setGeneratorError(null);
-      localStorage.setItem("last_job_description", jd);
+      localStorage.setItem(lastJobDescKey, jd);
       if (resume?.resume_id) {
-        localStorage.setItem("last_resume_id", resume.resume_id);
+        localStorage.setItem(lastResumeIdKey, resume.resume_id);
       }
       const response = await generateResume({
         resume_id: resume.resume_id,
@@ -136,6 +141,8 @@ export function ResumeGenerator() {
           setShowHistory={setShowHistory}
           generated={generated}
           generatedResume={generatedResume}
+          analysis={analysis}
+          resumeId={resume?.resume_id}
         />
 
         {generatorError && (

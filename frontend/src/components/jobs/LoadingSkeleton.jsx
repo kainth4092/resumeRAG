@@ -1,5 +1,3 @@
-import React from "react";
-
 export function SkeletonRow() {
   return (
     <tr className="border-b border-border">

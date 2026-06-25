@@ -1,7 +1,7 @@
 import { Download, Eye, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function Header({ showHistory, setShowHistory, generated, generatedResume }) {
+export default function Header({ showHistory, setShowHistory, generated, generatedResume, analysis, resumeId }) {
     const navigate = useNavigate();
 
     return (
@@ -19,7 +19,7 @@ export default function Header({ showHistory, setShowHistory, generated, generat
                         <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted transition-all">
                             <Download size={14} /> PDF
                         </button>
-                        <button onClick={() => navigate("/resume/editor", { state: { resume: generatedResume } })} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all">
+                        <button onClick={() => navigate("/resume/editor", { state: { resume: { ...generatedResume, id: resumeId, score: analysis?.ats_score } } })} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all">
                             <Eye size={14} /> Preview
                         </button>
                     </>

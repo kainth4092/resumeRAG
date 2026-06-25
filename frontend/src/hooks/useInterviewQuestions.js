@@ -8,6 +8,7 @@ import {
 } from "../services/interviewBankApi";
 import { getInterviewSession } from "../services/interviewService";
 import { asText, estimateMinutes } from "../utils/interviewUtils";
+import { useAuth } from "../context/AuthContext";
 
 const mapExperienceToDifficulty = (exp) => {
   if (!exp) return "Medium";
@@ -22,6 +23,12 @@ const mapExperienceToDifficulty = (exp) => {
 };
 
 export function useInterviewQuestions(locationState) {
+  const { user } = useAuth();
+  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
+  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
+  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
+  const bookmarkedQuestionsKey = user?.email ? `bookmarked_questions_${user.email}` : "bookmarked_questions";
+
   const [viewState, setViewState] = useState("loading");
   const [questions, setQuestions] = useState([]);
   const [session, setSession] = useState(null);
@@ -31,6 +38,7 @@ export function useInterviewQuestions(locationState) {
   const [fetching, setFetching] = useState(false);
 
   const loadSession = useCallback(async () => {
+    if (!user) return;
     try {
       setError("");
       setViewState("loading");
@@ -67,9 +75,11 @@ export function useInterviewQuestions(locationState) {
         return;
       }
 
-      const resumeId = locationState?.resumeId || localStorage.getItem("last_resume_id");
-      const jd = locationState?.jobDescription || localStorage.getItem("last_job_description");
-      const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+      const savedResumes = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+      const activeResume = savedResumes.find((r) => r.status === "Active");
+      const resumeId = locationState?.resumeId || activeResume?.id || localStorage.getItem(lastResumeIdKey);
+      const jd = locationState?.jobDescription || localStorage.getItem(lastJobDescKey);
+      const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
 
       if (!resumeId || !jd) {
         const res = await getAllInterviewQuestions();
@@ -125,7 +135,7 @@ export function useInterviewQuestions(locationState) {
       setQuestions(transformed);
 
       if (transformed.length > 0) {
-        const savedResumes = JSON.parse(localStorage.getItem("saved_resumes") || "[]");
+        const savedResumes = JSON.parse(localStorage.getItem(resumesKey) || "[]");
         const matchingResume = savedResumes.find(r => r.id === parseInt(resumeId, 10));
         const resumeName = matchingResume ? matchingResume.title : "Selected Resume";
 
@@ -184,11 +194,11 @@ export function useInterviewQuestions(locationState) {
       const detail = err.response?.data?.detail || err.message || "An unexpected error occurred.";
       
       if (err.response?.status === 404 && (String(detail).includes("Resume") || String(detail).includes("resume"))) {
-        localStorage.removeItem("last_resume_id");
+        localStorage.removeItem(lastResumeIdKey);
         try {
           const allRes = await getAllInterviewQuestions();
           const allData = allRes.data || [];
-          const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+          const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
           const allTransformed = allData.map((q) => ({
             ...q,
             difficulty: mapExperienceToDifficulty(q.experience_level),
@@ -226,9 +236,10 @@ export function useInterviewQuestions(locationState) {
       setSession(null);
       setQuestions([]);
     }
-  }, [locationState]);
+  }, [locationState, user, resumesKey, lastResumeIdKey, lastJobDescKey, bookmarkedQuestionsKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSession();
   }, [loadSession]);
 
@@ -237,7 +248,7 @@ export function useInterviewQuestions(locationState) {
       prev.map((q) => {
         if (q.id === questionId) {
           const nextBookmarked = !q.bookmarked;
-          const saved = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+          const saved = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
 
           if (nextBookmarked) {
             if (!saved.includes(questionId)) {
@@ -250,13 +261,13 @@ export function useInterviewQuestions(locationState) {
             }
           }
 
-          localStorage.setItem("bookmarked_questions", JSON.stringify(saved));
+          localStorage.setItem(bookmarkedQuestionsKey, JSON.stringify(saved));
           return { ...q, bookmarked: nextBookmarked };
         }
         return q;
       })
     );
-  }, []);
+  }, [bookmarkedQuestionsKey]);
 
   const handleQuestionExpand = useCallback((questionId) => {
     setQuestions((prev) =>
@@ -302,7 +313,7 @@ export function useInterviewQuestions(locationState) {
         setSuccess("Question updated successfully.");
       } else {
         const res = await createInterviewQuestion(payload);
-        const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+        const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
         const newQ = {
           ...res.data,
           difficulty: mapExperienceToDifficulty(res.data.experience_level),
@@ -321,7 +332,7 @@ export function useInterviewQuestions(locationState) {
     } finally {
       setLoadingQuestionId(null);
     }
-  }, []);
+  }, [bookmarkedQuestionsKey]);
 
   return {
     questions,
