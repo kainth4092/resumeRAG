@@ -12,6 +12,8 @@ from app.api.experience.routes import router as experience_router
 from app.api.interview.routes import router as interview_router
 from app.api.interview_bank.routes import router as interview_bank_router
 from app.api.bookmark.routes import router as bookmark_router
+from app.api.jobs.routes import router as jobs_router
+from app.api.tracker.routes import router as tracker_router
 
 app = FastAPI(title="ResumeRAG API")
 
@@ -35,6 +37,8 @@ app.include_router(experience_router)
 app.include_router(interview_router)
 app.include_router(interview_bank_router)
 app.include_router(bookmark_router)
+app.include_router(jobs_router)
+app.include_router(tracker_router)
 
 
 @app.get("/")

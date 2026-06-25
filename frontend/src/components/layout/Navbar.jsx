@@ -13,13 +13,6 @@ export default function Navbar({ notifRef, unreadCount, notifOpen, profileRef, s
                 <Menu size={18} />
             </button>
 
-            <button
-                className="flex items-center gap-2.5 flex-1 max-w-xs h-9 px-3.5 bg-input-background border border-border rounded-xl text-sm text-muted-foreground hover:border-primary/40 hover:bg-accent/50 transition-all group"
-            >
-                <Search size={14} className="flex-shrink-0" />
-                <span className="flex-1 text-left text-muted-foreground/70 hidden sm:block">Search anything...</span>
-            </button>
-
             <div className="flex items-center gap-1.5 ml-auto">
 
                 <button

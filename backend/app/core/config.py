@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     OPENROUTER_API_KEY: str
+    RAPIDAPI_KEY: str
+    RAPIDAPI_HOST: str
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

@@ -182,6 +182,45 @@ export function useInterviewQuestions(locationState) {
     } catch (err) {
       console.error("Failed to load session:", err);
       const detail = err.response?.data?.detail || err.message || "An unexpected error occurred.";
+      
+      if (err.response?.status === 404 && (String(detail).includes("Resume") || String(detail).includes("resume"))) {
+        localStorage.removeItem("last_resume_id");
+        try {
+          const allRes = await getAllInterviewQuestions();
+          const allData = allRes.data || [];
+          const savedBookmarks = JSON.parse(localStorage.getItem("bookmarked_questions") || "[]");
+          const allTransformed = allData.map((q) => ({
+            ...q,
+            difficulty: mapExperienceToDifficulty(q.experience_level),
+            bookmarked: savedBookmarks.includes(q.id),
+            sampleAnswer: asText(q.answer),
+            estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
+          }));
+          setQuestions(allTransformed);
+          if (allTransformed.length > 0) {
+            setSession({
+              company: "Interview Bank",
+              role: "Software Engineer",
+              companyLogo: "B",
+              logoColor: "#7C3AED",
+              resumeUsed: "None",
+              generatedAt: new Date().toLocaleDateString(),
+              questionCount: allTransformed.length,
+              difficulty: {
+                easy: allTransformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Easy").length,
+                medium: allTransformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Medium").length,
+                hard: allTransformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Hard").length,
+              },
+              status: "Ready",
+            });
+            setViewState("active");
+            return;
+          }
+        } catch (fallbackErr) {
+          console.error("Failed to load fallback session:", fallbackErr);
+        }
+      }
+
       setError(detail);
       setViewState("empty");
       setSession(null);
