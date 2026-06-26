@@ -3,7 +3,7 @@ import { PanelLeftClose, PanelLeftOpen, LogOut, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { NAV_SECTIONS } from "../../data/navigation";
-import { getTrackedJobs } from "../../services/jobs.service";
+import { getTrackedJobs } from "../../features/jobs/services/jobs.service";
 
 export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
   const navigate = useNavigate();
@@ -12,17 +12,25 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
   const [jobCount, setJobCount] = useState(null);
 
   useEffect(() => {
-    getTrackedJobs()
-      .then((data) => {
-        if (data) setJobCount(data.length);
-      })
-      .catch(() => {});
+    const fetchCount = () => {
+      getTrackedJobs()
+        .then((data) => {
+          if (data) setJobCount(data.length);
+        })
+        .catch(() => { });
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 10000);
 
     const handleUpdate = (e) => {
       setJobCount(e.detail);
     };
     window.addEventListener("tracker-updated", handleUpdate);
-    return () => window.removeEventListener("tracker-updated", handleUpdate);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("tracker-updated", handleUpdate);
+    };
   }, []);
 
 
@@ -45,11 +53,11 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
   return (
     <div className="flex flex-col h-full">
       <div
-        className={`flex items-center h-16 px-4 border-b border-sidebar-border flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}
+        className={`flex items-center h-16 px-4 border-b border-sidebar-border shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}
       >
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/30">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
               <Zap size={15} className="text-white" />
             </div>
             <div className="min-w-0">
@@ -95,11 +103,10 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                     className={`
                                             w-full flex items-center gap-3 rounded-xl text-md transition-all duration-150 group relative
                                             ${collapsed ? "justify-center p-2.5" : "px-3 py-2.5"}
-                                            ${
-                                              active
-                                                ? "bg-primary/10 text-primary font-medium"
-                                                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                                            }
+                                            ${active
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      }
                                         `}
                   >
                     {active && !collapsed && (
@@ -107,7 +114,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                     )}
                     <Icon
                       size={16}
-                      className={`flex-shrink-0 transition-colors ${active ? "text-primary" : ""}`}
+                      className={`shrink-0 transition-colors ${active ? "text-primary" : ""}`}
                     />
                     {!collapsed && (
                       <>
@@ -116,11 +123,10 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                         </span>
                         {((item.id === "tracker" && jobCount !== null) ? String(jobCount) : item.badge) && (
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                              item.badge === "New"
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${item.badge === "New"
                                 ? "bg-primary/15 text-primary"
                                 : "bg-muted text-muted-foreground"
-                            }`}
+                              }`}
                           >
                             {item.id === "tracker" && jobCount !== null ? jobCount : item.badge}
                           </span>
@@ -134,7 +140,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                     {collapsed && (
                       <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-popover text-popover-foreground text-xs rounded-xl shadow-lg border border-border whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity duration-150">
                         {item.label}
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover border-l border-t border-border rotate-[-45deg]" />
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover border-l border-t border-border -rotate-45deg" />
                       </div>
                     )}
                   </button>
@@ -145,7 +151,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
         ))}
       </nav>
 
-      <div className="flex-shrink-0 p-3 border-t border-sidebar-border">
+      <div className="shrink-0 p-3 border-t border-sidebar-border">
         {collapsed ? (
           <button className="w-full flex justify-center p-1" onClick={logout}>
             <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold">
@@ -154,7 +160,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
           </button>
         ) : (
           <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-sidebar-accent transition-all cursor-pointer group">
-            <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-sm font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-sm font-bold shrink-0">
               {user?.avatar}
             </div>
             <div className="flex-1 min-w-0">

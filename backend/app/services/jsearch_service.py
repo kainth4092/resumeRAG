@@ -27,8 +27,10 @@ class JSearchService:
         page: int = 1,
         num_pages: int = 1,
         location: str | None = None,
+        employment_type: str | None = None,
+        remote: str | None = None,
     ):
-        query_key = f"{query}||page:{page}||loc:{location or ''}"
+        query_key = f"{query}||page:{page}||loc:{location or ''}||type:{employment_type or ''}||remote:{remote or ''}"
 
         try:
             cached_search = db.query(SearchCache).filter(SearchCache.query == query_key).first()
@@ -43,9 +45,18 @@ class JSearchService:
             "query": query,
             "page": page,
             "num_pages": num_pages,
+            "country": "in",
         }
         if location:
             params["location"] = location
+            
+        if employment_type:
+            val = employment_type.upper().replace("-", "")
+            if val in ["FULLTIME", "CONTRACT", "PARTTIME", "INTERN"]:
+                params["employment_types"] = val
+                
+        if remote == "yes":
+            params["remote_jobs_only"] = "true"
 
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.get(

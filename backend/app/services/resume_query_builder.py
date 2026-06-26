@@ -5,7 +5,16 @@ class ResumeQueryBuilder:
     @staticmethod
     def build_query(headline: str, skills: List[str]) -> str:
         clean_headline = (headline or "").strip()
-        clean_skills = [skill.strip() for skill in skills if skill][:3]
+        
+        headline_words = set(clean_headline.lower().split())
+        
+        unique_skills = []
+        for skill in skills:
+            skill_clean = (skill or "").strip()
+            if skill_clean and skill_clean.lower() not in headline_words:
+                unique_skills.append(skill_clean)
+                
+        clean_skills = unique_skills[:2]
         
         parts = []
         if clean_headline:

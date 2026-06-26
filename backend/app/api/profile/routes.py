@@ -15,7 +15,7 @@ from app.models.user_experience import UserExperience
 router = APIRouter(prefix="/api/profile", tags=["Profile"])
 
 
-@router.post("/", response_model=ProfileResponse)
+@router.post("", response_model=ProfileResponse)
 def create_profile(
     payload: ProfileCreate,
     db: Session = Depends(get_db),
@@ -38,7 +38,7 @@ def create_profile(
     return profile
 
 
-@router.get("/", response_model=ProfileResponse)
+@router.get("", response_model=ProfileResponse)
 def get_profile(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
@@ -48,7 +48,7 @@ def get_profile(
     return profile
 
 
-@router.put("/", response_model=ProfileResponse)
+@router.put("", response_model=ProfileResponse)
 def update_profile(
     payload: ProfileCreate,
     db: Session = Depends(get_db),

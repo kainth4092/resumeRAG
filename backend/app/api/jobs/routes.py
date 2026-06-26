@@ -1,4 +1,6 @@
 import logging
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -21,12 +23,22 @@ router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 @router.get("/search")
 async def search_jobs(
     query: str,
+    location: str | None = None,
+    employment_type: str | None = None,
+    remote: str | None = None,
     page: int = 1,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     try:
-        return await JSearchService.search_jobs(db, query=query, page=page)
+        return await JSearchService.search_jobs(
+            db, 
+            query=query, 
+            page=page, 
+            location=location,
+            employment_type=employment_type,
+            remote=remote
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -36,6 +48,9 @@ async def search_jobs(
 
 @router.get("/recommended")
 async def recommended_jobs(
+    location: str | None = None,
+    employment_type: str | None = None,
+    remote: str | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -53,8 +68,6 @@ async def recommended_jobs(
         if user_skills:
             skills = [s.skill_name for s in user_skills]
 
-       
-        # Get active resume or fallback to latest resume
         latest_resume = db.query(Resume).filter(Resume.user_id == current_user.id, Resume.is_active == True).first()
         if not latest_resume:
             latest_resume = db.query(Resume).filter(Resume.user_id == current_user.id).order_by(Resume.created_at.desc()).first()
@@ -64,8 +77,45 @@ async def recommended_jobs(
                 filename = latest_resume.title
                 if "." in filename:
                     filename = filename.rsplit(".", 1)[0]
-                headline = filename.replace("_", " ").replace("-", " ").strip()
-            
+                filename_clean = filename.replace("_", " ").replace("-", " ").strip()
+
+                job_keywords = [
+                    "developer", "engineer", "designer", "manager", "analyst", "architect", 
+                    "specialist", "administrator", "consultant", "scientist", "lead", 
+                    "programmer", "strategist", "tester", "expert", "intern"
+                ]
+                
+                filename_lower = filename_clean.lower()
+                has_job_keyword = any(kw in filename_lower for kw in job_keywords)
+                filler_words = ["resume", "cv", "portfolio", "profile", "bio", "job", "apply", "latest", "updated", "final"]
+                has_filler = any(fw in filename_lower for fw in filler_words)
+
+                extracted_headline = None
+                if has_job_keyword and not has_filler:
+                    extracted_headline = filename_clean
+                elif latest_resume.parsed_text:
+                    text_lines = [line.strip() for line in latest_resume.parsed_text.split("\n") if line.strip()][:30]
+                    for line in text_lines:
+                        line_lower = line.lower()
+                        if len(line) < 80:
+                            parts = [p.strip() for p in re.split(r'[|,\-/•]', line) if p.strip()]
+                            for part in parts:
+                                part_lower = part.lower()
+                                if any(kw in part_lower for kw in job_keywords):
+                                    if not any(w in part_lower for w in ["education", "experience", "skills", "projects", "summary", "@", "phone", "email"]):
+                                        if current_user.name and current_user.name.lower() in part_lower:
+                                            continue
+                                        extracted_headline = part
+                                        break
+                            if extracted_headline:
+                                break
+                
+                if not extracted_headline and has_job_keyword:
+                    extracted_headline = filename_clean
+
+                if extracted_headline:
+                    headline = extracted_headline
+
             if not skills and latest_resume.parsed_text:
                 common_tech_skills = [
                     "Python", "JavaScript", "TypeScript", "React", "Node.js", "Java", "C++", 
@@ -89,7 +139,13 @@ async def recommended_jobs(
             skills = ["React", "Node.js", "Python", "SQL"]
 
         query = ResumeQueryBuilder.build_query(headline=headline, skills=skills)
-        jobs = await JSearchService.search_jobs(db, query=query)
+        jobs = await JSearchService.search_jobs(
+            db, 
+            query=query, 
+            location=location,
+            employment_type=employment_type,
+            remote=remote
+        )
         return jobs
     except HTTPException:
         raise

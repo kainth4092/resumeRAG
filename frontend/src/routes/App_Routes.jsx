@@ -1,24 +1,37 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
-import Dashboard from "../pages/dashboard/Dashboard";
-import { Profile } from "../pages/profile/Profile";
+
+// Layout components (shared infrastructure)
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import Layout from "../components/layout/Layout";
-import { ResumeGenerator } from "../pages/generator/Generator";
-import ResumeEditor from "../pages/resume/ResumeEditor";
 
-import MyResumes from "../pages/resume/MyResumes";
-import Templates from "../pages/resume/Templates";
-import InterviewPrep from "../pages/interview/InterviewPrep";
-import JobsPage from "../pages/jobs/JobsPage";
+// Auth feature
+import Login from "../features/auth/pages/Login";
+import Register from "../features/auth/pages/Register";
+
+// Dashboard feature
+import Dashboard from "../features/dashboard/pages/Dashboard";
+
+// Profile feature
+import { Profile } from "../features/profile/pages/Profile";
+
+// Resume feature
+import { ResumeGenerator } from "../features/resume/pages/Generator";
+import ResumeEditor from "../features/resume/pages/ResumeEditor";
+import MyResumes from "../features/resume/pages/MyResumes";
+import Templates from "../features/resume/pages/Templates";
+
+// Interview feature
+import InterviewPrep from "../features/interview/pages/InterviewPrep";
+
+// Jobs feature
+import JobsPage from "../features/jobs/pages/JobsPage";
 
 export default function AppRoutes() {
     return (
         <>
             <Toaster richColors position="top-right" />
-            <BrowserRouter >
+            <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Login />} />
                     <Route path="/register" element={<Register />} />
@@ -33,10 +46,9 @@ export default function AppRoutes() {
                             <Route path="/interview" element={<InterviewPrep />} />
                             <Route path="/tracker" element={<JobsPage />} />
                         </Route>
-
                     </Route>
                 </Routes>
             </BrowserRouter>
         </>
-    )
+    );
 }

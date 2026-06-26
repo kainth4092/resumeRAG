@@ -56,7 +56,7 @@ export default function Layout() {
         className={`
         fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
         flex flex-col h-full bg-sidebar border-r border-sidebar-border
-        transition-all duration-300 ease-in-out flex-shrink-0 overflow-hidden
+        transition-all duration-300 ease-in-out shrink-0 overflow-hidden
         ${collapsed ? "lg:w-[68px]" : "lg:w-[240px]"}
         ${mobileOpen ? "translate-x-0 w-[240px]" : "-translate-x-full lg:translate-x-0"}
         shadow-lg lg:shadow-none

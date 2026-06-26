@@ -55,43 +55,38 @@ def generate_interview(
                 status_code=404,
                 detail="Resume not found",
             )
-        ai = generate_interview_questions(
-            resume.parsed_text,
-            payload.job_description,
+
+        from app.interview.services.generator_service import InterviewGeneratorService
+        from app.interview.services.session_service import InterviewSessionService
+
+        # Run questions generation pipeline
+        generator_service = InterviewGeneratorService()
+        questions_to_add = generator_service.generate_session_questions(
+            resume_text=resume.parsed_text,
+            job_description=payload.job_description
         )
-        session = InterviewSession(
+
+        candidate_type = "FRESHER"
+        if "experienced" in resume.parsed_text.lower() or "experience" in resume.parsed_text.lower():
+            candidate_type = "EXPERIENCED"
+
+        session = InterviewSessionService.create_session(
+            db=db,
             user_id=current_user.id,
             resume_id=resume.id,
             company=payload.company,
             role=payload.role,
-            candidate_type=ai.get("candidate_type", "FRESHER"),
-            job_description=payload.job_description,
+            candidate_type=candidate_type,
+            job_description=payload.job_description
         )
 
-        db.add(session)
-        db.flush()
+        for q_data in questions_to_add:
+            InterviewSessionService.add_question_to_session(
+                db=db,
+                session_id=session.id,
+                question_data=q_data
+            )
 
-        for category, questions in ai.items():
-            if not isinstance(questions, list):
-                continue
-            for item in questions:
-
-                db.add(
-                    InterviewQuestion(
-                        session_id=session.id,
-                        category=CATEGORY_NAMES.get(
-                            str(category).lower(),
-                            str(category).title(),
-                        ),
-                        question=item.get("question", ""),
-                        difficulty=item.get("difficulty", "Medium"),
-                        answer=None,
-                        details_generated=False,
-                        estimated_duration=item.get("estimated_duration"),
-                        tech_skill=item.get("tech_skill"),
-                        bookmarked=False,
-                    )
-                )
         db.commit()
         db.refresh(session)
         return {"session": session}
