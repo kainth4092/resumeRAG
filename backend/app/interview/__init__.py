@@ -1,1 +1,0 @@
-# app/interview module init
