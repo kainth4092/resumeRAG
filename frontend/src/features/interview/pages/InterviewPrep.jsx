@@ -237,7 +237,7 @@ export default function InterviewPrep() {
               <History size={13} /> History
             </button>
             <button
-              onClick={() => navigate("/generator")}
+              onClick={() => navigate("/resumes?view=new")}
               className="flex items-center gap-1.5 h-9 px-3.5 border border-border rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
             >
               <Sparkles size={13} /> Regenerate
@@ -271,7 +271,7 @@ export default function InterviewPrep() {
 
         {viewState === "loading" && <LoadingState />}
 
-        {viewState === "empty" && <EmptyState onGoGenerate={() => navigate("/generator")} />}
+        {viewState === "empty" && <EmptyState onGoGenerate={() => navigate("/resumes?view=new")} />}
 
         {viewState === "active" && session && (
           <div className="space-y-5">

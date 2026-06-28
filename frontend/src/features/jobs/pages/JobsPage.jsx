@@ -374,7 +374,7 @@ export default function JobsPage() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate("/generator");
+                                        navigate("/resumes?view=new");
                                       }}
                                       className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all cursor-pointer"
                                       title="Generate Resume"

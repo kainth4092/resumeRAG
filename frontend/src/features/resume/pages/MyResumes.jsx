@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import Header from "../components/resume/dashboard/Header";
 import StatsCards from "../components/resume/dashboard/StatsCards";
 import SearchFilter from "../components/resume/dashboard/SearchFilter";
@@ -9,12 +10,18 @@ import ResumePreviewModal from "../components/resume/dashboard/ResumePreviewModa
 import DeleteDialog from "../components/resume/dashboard/DeleteDialog";
 import { setActiveResume } from "../services/resumeService";
 import { useAuth } from "../../../context/AuthContext";
+import { ResumeGenerator } from "./Generator";
+import { interviewService } from "../../interview/services/interviewService";
 
 export default function MyResumes() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get("view") || "list";
+
   const { user } = useAuth();
   const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
   const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
+  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
 
   const [resumes, setResumes] = useState([]);
   const [search, setSearch] = useState("");
@@ -71,6 +78,7 @@ export default function MyResumes() {
         template: item.template || "Professional",
         color: item.color || "#7C3AED",
         resume: item.resume,
+        jobDescription: item.jobDescription,
       };
     });
     setResumes(mapped);
@@ -154,6 +162,57 @@ export default function MyResumes() {
     navigate("/resume/editor", { state: { resume: r } });
   };
 
+  const handleDuplicate = (resumeToDup) => {
+    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+    const dupEntry = {
+      id: Date.now(),
+      title: `${resumeToDup.name || "Untitled Resume"} (Copy)`,
+      score: resumeToDup.score || 80,
+      status: "Draft",
+      updatedAt: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      template: resumeToDup.template || "Professional",
+      color: resumeToDup.color || "#7C3AED",
+      starred: false,
+      version: resumeToDup.version || "v1",
+      pages: resumeToDup.pages || 1,
+      resume: resumeToDup.resume,
+      jobDescription: resumeToDup.jobDescription,
+    };
+    saved.push(dupEntry);
+    localStorage.setItem(resumesKey, JSON.stringify(saved));
+    setReloadTrigger(p => p + 1);
+    toast.success(`Duplicated "${resumeToDup.name}" successfully!`);
+  };
+
+  const handleGenerateInterview = (resumeObj) => {
+    const jd = resumeObj.jobDescription || localStorage.getItem(lastJobDescKey) || "Software Engineer role";
+    const resumeId = resumeObj.id;
+
+    toast.promise(
+      interviewService.generateInterview({
+        resume_id: parseInt(resumeId, 10) || resumeId,
+        job_description: jd,
+      }),
+      {
+        loading: "Preparing interview questions...",
+        success: (response) => {
+          const sessId = response.data?.session?.id;
+          if (sessId) {
+            navigate("/interview", { state: { sessionId: sessId } });
+            return "Interview prep is ready!";
+          } else {
+            throw new Error("Invalid session ID");
+          }
+        },
+        error: "Failed to generate interview prep. Make sure the resume has correct skills and experience."
+      }
+    );
+  };
+
   const statusOpts = [
     { value: "All", label: "All Status" },
     { value: "Active", label: "Active" },
@@ -166,10 +225,16 @@ export default function MyResumes() {
     { value: "name", label: "Name (A–Z)" },
   ];
 
+  if (view === "new") {
+    return (
+      <ResumeGenerator onBack={() => setSearchParams({})} />
+    );
+  }
+
   return (
-    <div className="h-full overflow-y-auto font-sans bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <Header resumes={resumes} onNewResume={() => navigate("/generator")} />
+    <div className="h-full overflow-y-auto font-sans bg-background text-left">
+      <div className="max-w-7xl mx-auto p-6 space-y-6 animate-in fade-in-0 duration-200">
+        <Header resumes={resumes} onNewResume={() => setSearchParams({ view: "new" })} />
 
         {resumes.length === 0 ? (
           <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-2xl p-12 text-center bg-card">
@@ -184,8 +249,8 @@ export default function MyResumes() {
               resume, then save it here.
             </p>
             <button
-              onClick={() => navigate("/generator")}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
+              onClick={() => setSearchParams({ view: "new" })}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
             >
               <Sparkles size={16} /> Go to Generator
             </button>
@@ -219,6 +284,8 @@ export default function MyResumes() {
               setDeleteTarget={setDeleteTarget}
               navigate={navigate}
               handleSetActive={handleSetActive}
+              handleDuplicate={handleDuplicate}
+              handleGenerateInterview={handleGenerateInterview}
             />
           </>
         )}

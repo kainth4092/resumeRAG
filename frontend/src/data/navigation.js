@@ -5,10 +5,8 @@ export const NAV_SECTIONS = [
         title: "Workspace",
         items: [
             { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", badge: null },
-            { id: "generator", icon: Zap, label: "Generator", badge: "New" },
-            { id: "resumes", icon: FileText, label: "My Resumes", badge: null },
+            { id: "resumes", icon: FileText, label: "Resume", badge: null },
             { id: "profile", icon: User, label: "Profile Data", badge: null },
-            { id: "templates", icon: LayoutTemplate, label: "Templates", badge: null },
         ],
     },
     {

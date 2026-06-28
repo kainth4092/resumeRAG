@@ -158,7 +158,7 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => {
-                navigate("/generator");
+                navigate("/resumes?view=new");
                 onClose();
               }}
               className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/15 cursor-pointer"

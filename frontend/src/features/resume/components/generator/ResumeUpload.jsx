@@ -20,26 +20,31 @@ export default function ResumeUpload({
     const fileRef = useRef(null);
 
     return (
-        <div className="bg-card border border-border rounded-2xl p-5">
-            <h3 className="text-foreground mb-4">Upload Resume</h3>
+        <div className="bg-card border border-border rounded-2xl p-4 font-sans">
+            <h3 className="text-sm font-bold text-foreground mb-3">Upload Resume</h3>
             {!uploaded && !uploading ? (
                 <div
                     onDragOver={e => { e.preventDefault(); setDragging(true); }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDrop}
                     onClick={() => fileRef.current?.click()}
-                    className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer transition-all ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/30"}`}
+                    className={`border border-dashed rounded-xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/20"}`}
                 >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${dragging ? "bg-primary/15" : "bg-muted"}`}>
-                        <Upload size={22} className={dragging ? "text-primary" : "text-muted-foreground"} />
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${dragging ? "bg-primary/15" : "bg-muted"}`}>
+                            <Upload size={16} className={dragging ? "text-primary" : "text-muted-foreground"} />
+                        </div>
+                        <div className="min-w-0 text-left">
+                            <p className="text-xs font-semibold text-foreground truncate">Drop or select your resume</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">PDF format · Max 10MB</p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm font-semibold text-foreground">Drop your resume here</p>
-                        <p className="text-xs text-muted-foreground mt-1">or click to browse files</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {["PDF"].map(f => <span key={f} className="text-[11px] px-2.5 py-1 bg-muted rounded-lg text-muted-foreground border border-border font-mono">{f}</span>)}
-                    </div>
+                    <button
+                        type="button"
+                        className="px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-foreground bg-card hover:bg-muted hover:border-primary/30 transition-all shrink-0 cursor-pointer"
+                    >
+                        Choose File
+                    </button>
                     <input ref={fileRef} type="file" className="hidden" accept=".pdf" onChange={(e) => {
                         const file = e.target.files[0]
                         if (file) {
@@ -48,38 +53,40 @@ export default function ResumeUpload({
                     }} />
                 </div>
             ) : uploading ? (
-                <div className="p-5 border border-border rounded-2xl bg-muted/20">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Loader2 size={16} className="text-primary animate-spin" />
+                <div className="p-4 border border-border rounded-xl bg-muted/10 font-sans">
+                    <div className="flex items-center gap-3 mb-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Loader2 size={15} className="text-primary animate-spin" />
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">Uploading resume...</p>
-                            <p className="text-xs text-muted-foreground">{fileName}</p>
+                        <div className="flex-1 min-w-0 text-left">
+                            <p className="text-xs font-semibold text-foreground">Uploading resume...</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{fileName}</p>
                         </div>
-                        <span className="text-sm font-semibold text-primary">{uploadProgress}%</span>
+                        <span className="text-xs font-bold text-primary shrink-0">{uploadProgress}%</span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full transition-all duration-200" style={{ width: `${uploadProgress}%` }} />
                     </div>
                 </div>
             ) : (
-                <div className="flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                        <FileText size={17} className="text-emerald-500" />
+                <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl font-sans">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <FileText size={15} className="text-emerald-500" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{fileName}</p>
-                        <p className="text-xs text-muted-foreground">{fileSize} MB · Uploaded successfully</p>
+                    <div className="flex-1 min-w-0 text-left">
+                        <p className="text-xs font-semibold text-foreground truncate">{fileName}</p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                            {fileSize} MB · Resume uploaded successfully
+                        </p>
                     </div>
-                    <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0" />
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                     <button
                         onClick={() => { setUploaded(false); setAnalysis(false); setGenerated(false); }}
                         disabled={generating || generated}
-                        className={`transition-colors ${generating || generated ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
+                        className={`transition-colors shrink-0 ${generating || generated ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
                         title={generating || generated ? "Cannot reset file after generating" : "Reset upload"}
                     >
-                        <X size={16} />
+                        <X size={15} />
                     </button>
                 </div>
             )}

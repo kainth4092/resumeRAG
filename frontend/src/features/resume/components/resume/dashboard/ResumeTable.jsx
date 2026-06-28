@@ -9,6 +9,7 @@ import {
   Zap,
   X,
   CheckCircle2,
+  Copy,
 } from "lucide-react";
 import DownloadBtn from "./DownloadButton";
 import { STATUS_STYLES } from "./constants";
@@ -26,6 +27,8 @@ export default function ResumeTable({
   setDeleteTarget,
   navigate,
   handleSetActive,
+  handleDuplicate,
+  handleGenerateInterview,
 }) {
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -33,12 +36,11 @@ export default function ResumeTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {["Resume", "Status", "Updated", "Template", "Actions"].map(
+              {["Resume", "ATS Score", "Status", "Updated", "Template", "Actions"].map(
                 (h, i) => (
                   <th
                     key={h}
-                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 4 ? "text-right pr-10 pl-4" : i === 0 ? "text-left px-5" : "text-left px-4"}`}
-
+                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 5 ? "text-right pr-10 pl-4" : i === 0 ? "text-left px-5" : "text-left px-4"}`}
                   >
                     {h}
                   </th>
@@ -109,6 +111,18 @@ export default function ResumeTable({
                   </td>
 
                   <td className="px-4 py-4">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                      r.score >= 80 
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                        : r.score >= 60 
+                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20" 
+                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                    }`}>
+                      {r.score || 0}%
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-4">
                     <span
                       className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${STATUS_STYLES[r.status]}`}
                     >
@@ -172,10 +186,11 @@ export default function ResumeTable({
       </div>
 
       {menuOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-end p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-end p-4" onClick={() => setMenuOpen(null)}>
           <div
             className="bg-card border border-border rounded-3xl w-full max-w-sm overflow-hidden shadow-(--shadow-xl) animate-in fade-in zoom-in-95 duration-200 text-left"
             ref={menuRef}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 py-5 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-foreground text-sm truncate pr-4">
@@ -206,13 +221,62 @@ export default function ResumeTable({
 
               <button
                 onClick={() => {
-                  navigate("generator");
+                  const target = filtered.find((r) => r.id === menuOpen);
+                  if (target) {
+                    setPreviewResume(target);
+                  }
+                  setMenuOpen(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
+              >
+                <Eye size={15} className="text-muted-foreground" />
+                Preview Resume
+              </button>
+
+              <button
+                onClick={() => {
+                  const target = filtered.find((r) => r.id === menuOpen);
+                  if (target) {
+                    setPreviewResume(target);
+                    setTimeout(() => {
+                      const el = document.querySelector(".printable-resume");
+                      downloadPDF(el, `${target.name || "Resume"}.pdf`);
+                    }, 150);
+                  }
+                  setMenuOpen(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
+              >
+                <FileText size={15} className="text-muted-foreground" />
+                Download PDF
+              </button>
+
+              <button
+                onClick={() => {
+                  const target = filtered.find((r) => r.id === menuOpen);
+                  if (target && handleDuplicate) {
+                    handleDuplicate(target);
+                  }
+                  setMenuOpen(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
+              >
+                <Copy size={15} className="text-muted-foreground" />
+                Duplicate Resume
+              </button>
+
+              <button
+                onClick={() => {
+                  const target = filtered.find((r) => r.id === menuOpen);
+                  if (target && handleGenerateInterview) {
+                    handleGenerateInterview(target);
+                  }
                   setMenuOpen(null);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
               >
                 <Zap size={15} className="text-primary" />
-                Regenerate Resume
+                Generate Interview Prep
               </button>
 
               <button

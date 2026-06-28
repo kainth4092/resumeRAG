@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import Layout from "../components/layout/Layout";
@@ -25,10 +25,10 @@ export default function AppRoutes() {
                         <Route element={<Layout />}>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/profile" element={<Profile />} />
-                            <Route path="/generator" element={<ResumeGenerator />} />
+                            <Route path="/generator" element={<Navigate to="/resumes?view=new" replace />} />
                             <Route path="/resume/editor" element={<ResumeEditor />} />
                             <Route path="/resumes" element={<MyResumes />} />
-                            <Route path="/templates" element={<Templates />} />
+                            <Route path="/templates" element={<Navigate to="/resumes" replace />} />
                             <Route path="/interview" element={<InterviewPrep />} />
                             <Route path="/tracker" element={<JobsPage />} />
                         </Route>

@@ -34,7 +34,7 @@ export default function DashboardHeader({ onRefresh, refreshing }) {
           <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
         </button>
         <button
-          onClick={() => navigate("/generator")}
+          onClick={() => navigate("/resumes?view=new")}
           className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/25 text-sm font-semibold"
         >
           <Zap size={15} /> Generate Resume
