@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { BookmarkCheck, SearchIcon } from "lucide-react";
+import { BookmarkCheck, SearchIcon, Star } from "lucide-react";
 import { DIFF_OPTS } from "../../../data/interviewConstants";
 import Select from "../../resume/components/resume/dashboard/Select";
 

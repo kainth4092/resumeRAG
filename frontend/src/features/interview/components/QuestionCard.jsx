@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from "react";
 import {
-  Bookmark, BookmarkCheck, ChevronDown, Sparkles, Edit2, Trash2, Clock, CheckCircle2, AlertCircle, ChevronRight
+  Bookmark, BookmarkCheck, ChevronDown, Sparkles, Edit2, Trash2, Clock, CheckCircle2, AlertCircle, ChevronRight, Star
 } from "lucide-react";
 import { CAT_CFG, DIFF_CFG } from "../../../data/interviewConstants";
 import { useAuth } from "../../auth/context/AuthContext";
@@ -182,7 +182,13 @@ export const QuestionCard = memo(function QuestionCard({
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground leading-relaxed">
-            {question.question}
+            {(question.is_personalized || question.source === "resume_generated") && (
+              <>
+                <span className="text-yellow-500 mr-1 select-none">✨</span>
+
+              </>
+            )}
+            <span className="align-middle">{question.question}</span>
           </p>
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
 

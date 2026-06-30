@@ -55,6 +55,8 @@ export function useQuestionFilters({
           ...q,
           difficulty: mapExperienceToDifficulty(q.experience_level),
           bookmarked: savedBookmarks.includes(q.id),
+          is_personalized: q.is_personalized !== undefined ? q.is_personalized : false,
+          source: q.source || "question_bank",
           sampleAnswer: asText(q.answer),
           estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
         }));

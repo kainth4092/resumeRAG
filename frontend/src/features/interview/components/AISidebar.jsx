@@ -38,6 +38,7 @@ export default function AISidebar({
               {bookmarked}
             </span>
           </div>
+
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground font-medium">Est. Reading Time</span>
             <span className="text-sm font-bold text-foreground">{totalMins} mins</span>

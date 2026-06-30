@@ -5,7 +5,7 @@ import {
   updateInterviewQuestion,
   deleteInterviewQuestion,
 } from "../services/interviewBankService";
-import { getInterviewSession, getInterviewHistory, getQuestionDetails } from "../services/interviewService";
+import { getInterviewSession, getInterviewHistory, getQuestionDetails, bookmarkQuestion } from "../services/interviewService";
 import { asText, estimateMinutes } from "../../../utils/interviewUtils";
 import { useAuth } from "../../auth/context/AuthContext";
 
@@ -61,6 +61,8 @@ export function useInterviewQuestions(locationState) {
           skill: q.tech_skill || q.skill,
           difficulty: q.difficulty || mapExperienceToDifficulty(q.experience_level),
           bookmarked: q.bookmarked,
+          is_personalized: q.is_personalized !== undefined ? q.is_personalized : true,
+          source: q.source || "resume_generated",
           sampleAnswer: asText(q.answer),
           estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
         }));
@@ -94,6 +96,8 @@ export function useInterviewQuestions(locationState) {
         ...q,
         difficulty: mapExperienceToDifficulty(q.experience_level),
         bookmarked: savedBookmarks.includes(q.id),
+        is_personalized: q.is_personalized !== undefined ? q.is_personalized : false,
+        source: q.source || "question_bank",
         sampleAnswer: asText(q.answer),
         estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
       }));
@@ -134,7 +138,7 @@ export function useInterviewQuestions(locationState) {
     loadSession();
   }, [loadSession]);
 
-  const handleToggleBookmark = useCallback((questionId) => {
+  const handleToggleBookmark = useCallback(async (questionId) => {
     setQuestions((prev) =>
       prev.map((q) => {
         if (q.id === questionId) {
@@ -158,7 +162,14 @@ export function useInterviewQuestions(locationState) {
         return q;
       })
     );
+
+    try {
+      await bookmarkQuestion(questionId);
+    } catch (err) {
+      console.error("Failed to persist bookmark to backend:", err);
+    }
   }, [bookmarkedQuestionsKey]);
+
 
   const handleQuestionExpand = useCallback(async (questionId) => {
     const q = questions.find((item) => item.id === questionId);
@@ -238,6 +249,8 @@ export function useInterviewQuestions(locationState) {
           skill: res.data.tech_skill || res.data.skill,
           difficulty: mapExperienceToDifficulty(res.data.experience_level),
           bookmarked: savedBookmarks.includes(res.data.id),
+          is_personalized: res.data.is_personalized !== undefined ? res.data.is_personalized : false,
+          source: res.data.source || "question_bank",
           sampleAnswer: asText(res.data.answer),
           estimatedMins: res.data.estimated_duration || estimateMinutes(res.data.answer),
         };

@@ -67,6 +67,7 @@ class InterviewQuestionResponse(BaseModel):
     tags: list[str]
 
     source: str
+    is_personalized: bool = False
 
     created_by: Optional[int]
 

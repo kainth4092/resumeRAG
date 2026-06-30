@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PanelLeftClose, PanelLeftOpen, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { NAV_SECTIONS } from "../../data/navigation";
 import { getTrackedJobs } from "../../features/jobs/services/jobs.service";
@@ -58,7 +58,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
             </div>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/30">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
             <Zap size={15} className="text-white" />
           </div>
         )}
@@ -67,9 +67,9 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
           className="hidden lg:flex w-6 h-6 items-center justify-center rounded-lg hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-foreground transition-all"
         >
           {collapsed ? (
-            <PanelLeftOpen size={14} />
+            <ChevronRight size={14} />
           ) : (
-            <PanelLeftClose size={14} />
+            <ChevronLeft size={14} />
           )}
         </button>
       </div>
@@ -92,9 +92,9 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                     onClick={() => handleNav(item.id)}
                     title={collapsed ? item.label : undefined}
                     className={`
-                                            w-full flex items-center gap-3 rounded-xl text-md transition-all duration-150 group relative
-                                            ${collapsed ? "justify-center p-2.5" : "px-3 py-2.5"}
-                                            ${active
+                        w-full flex items-center gap-3 rounded-xl text-md transition-all duration-150 group relative
+                        ${collapsed ? "justify-center p-2.5" : "px-3 py-2.5"}
+                        ${active
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       }

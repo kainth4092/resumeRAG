@@ -30,6 +30,15 @@ class InterviewQuestionBank(Base):
 
     tags = Column(JSONB, nullable=False, default=list)
 
+    # MCQ columns
+    option_a = Column(Text, nullable=True)
+    option_b = Column(Text, nullable=True)
+    option_c = Column(Text, nullable=True)
+    option_d = Column(Text, nullable=True)
+    correct_option = Column(String(10), nullable=True)
+    short_explanation = Column(Text, nullable=True)
+    distractor_explanations = Column(JSONB, nullable=True)
+
     source = Column(
         String(20),
         nullable=False,

@@ -35,6 +35,8 @@ class InterviewQuestionResponse(BaseModel):
     answer: Optional[Any] = None
     details_generated: bool
     bookmarked: bool
+    is_personalized: bool = True
+    source: str = "resume_generated"
 
     @field_validator("difficulty")
     @classmethod

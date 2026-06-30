@@ -87,3 +87,24 @@ def get_question_details(
     current_user: User = Depends(get_current_user),
 ):
     return InterviewWorkflowService.get_question_details(db, question_id, current_user)
+
+
+@router.get("/challenge/questions")
+def get_challenge_questions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.interview.services.challenge_service import ChallengeService
+
+    return ChallengeService.get_challenge_questions(db)
+
+
+@router.post("/challenge/submit")
+def submit_challenge(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.interview.services.challenge_service import ChallengeService
+
+    return ChallengeService.submit_challenge(payload)

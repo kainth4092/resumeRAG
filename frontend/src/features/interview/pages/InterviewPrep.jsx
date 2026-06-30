@@ -1,221 +1,67 @@
-import { useState, useCallback, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { SearchIcon, BrainCircuit, X, Plus, History, Sparkles } from "lucide-react";
-
-import { useInterviewQuestions } from "../hooks/useInterviewQuestions";
-import { useQuestionFilters } from "../hooks/useQuestionFilters";
+import { useInterviewPrep } from "../hooks/useInterviewPrep";
 import { QuestionGroup } from "../components/QuestionGroup";
 import QuestionForm from "../components/QuestionForm";
 import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
-
 import AISidebar from "../components/AISidebar";
 import HeroCard from "../components/HeroCard";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import HistoryDrawer from "../components/HistoryDrawer";
 import { SearchBar } from "../components/SearchBar";
+import ChallengeContainer from "../Challenge/ChallengeContainer";
 
 export default function InterviewPrep() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const {
+    navigate,
+    location,
+    activeTab,
+    setActiveTab,
     questions,
-    setQuestions,
     session,
     viewState,
     error,
     setError,
     success,
     setSuccess,
-    setFetching,
     handleToggleBookmark,
-    handleDeleteQuestion,
-    handleSaveQuestion,
-    mapExperienceToDifficulty,
+    handleToggleImportant,
     loadingQuestionId,
     handleQuestionExpand,
-  } = useInterviewQuestions(location.state);
-
-  const {
     search,
     setSearch,
     diffFilter,
     setDiffFilter,
     bookmarkOnly,
     setBookmarkOnly,
+    importantOnly,
+    setImportantOnly,
     setActiveFilter,
-    filteredQuestions,
-  } = useQuestionFilters({
-    questions,
-    setQuestions,
-    viewState,
-    setFetching,
-    setError,
-    locationState: location.state,
-    mapExperienceToDifficulty,
-  });
-
-  const [showModal, setShowModal] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    question: "",
-    answer: "",
-    skill: "",
-    category: "Technical",
-    experience_level: "Fresher",
-    tags: "",
-  });
-  const [formError, setFormError] = useState("");
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [questionToDelete, setQuestionToDelete] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [expandedQuestionId, setExpandedQuestionId] = useState(null);
-
-  const getQuestionTabCategory = useCallback((q) => {
-    let cat = q.skill || q.category || "General";
-    const lower = cat.toLowerCase();
-
-    if (lower === "hr") {
-      cat = "Behavioral";
-    } else if (lower === "react") {
-      cat = "React";
-    } else if (lower === "python") {
-      cat = "Python";
-    } else if (lower === "fastapi") {
-      cat = "FastAPI";
-    } else if (lower === "postgresql") {
-      cat = "PostgreSQL";
-    } else if (lower === "javascript") {
-      cat = "JavaScript";
-    } else if (lower === "project" || lower === "projects") {
-      cat = "Project";
-    } else if (lower === "behavioral") {
-      cat = "Behavioral";
-    } else if (lower === "technical") {
-      cat = "Technical";
-    } else if (lower === "coding") {
-      cat = "Coding";
-    } else {
-      cat = cat.charAt(0).toUpperCase() + cat.slice(1);
-    }
-    return cat;
-  }, []);
-
-  const finalFilteredQuestions = filteredQuestions;
-
-  const groupedQuestions = useMemo(() => {
-    const groups = {};
-    finalFilteredQuestions.forEach((q) => {
-      const cat = getQuestionTabCategory(q);
-      if (!groups[cat]) {
-        groups[cat] = [];
-      }
-      groups[cat].push(q);
-    });
-    return groups;
-  }, [finalFilteredQuestions, getQuestionTabCategory]);
-
-  const sortedGroupedCategories = useMemo(() => {
-    return Object.entries(groupedQuestions).sort(([a], [b]) => a.localeCompare(b));
-  }, [groupedQuestions]);
-
-  const handleEditClick = useCallback((q) => {
-    setEditingQuestion(q);
-    setFormData({
-      question: q.question,
-      answer: q.sampleAnswer || q.answer || "",
-      skill: q.skill || "",
-      category: q.category || "Technical",
-      experience_level: q.experience_level || "Fresher",
-      tags: Array.isArray(q.tags) ? q.tags.join(", ") : typeof q.tags === "string" ? q.tags : "",
-    });
-    setFormError("");
-    setShowModal(true);
-  }, []);
-
-  const handleDeleteClick = useCallback((q) => {
-    setQuestionToDelete(q);
-    setShowDeleteConfirm(true);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    if (!questionToDelete) return;
-    setDeleting(true);
-    const ok = await handleDeleteQuestion(questionToDelete.id);
-    setDeleting(false);
-    if (ok) {
-      setShowDeleteConfirm(false);
-      setQuestionToDelete(null);
-    }
-  }, [questionToDelete, handleDeleteQuestion]);
-
-  const handleFormSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setFormError("");
-
-    try {
-      const tagsArray = formData.tags
-        ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [];
-
-      const payload = {
-        question: formData.question,
-        answer: formData.answer,
-        skill: formData.skill,
-        category: formData.category,
-        experience_level: formData.experience_level,
-        tags: tagsArray,
-      };
-
-      const ok = await handleSaveQuestion(payload, editingQuestion?.id);
-      if (ok) {
-        setShowModal(false);
-      }
-    } catch (err) {
-      setFormError(err.response?.data?.detail || err.message || "Failed to save question.");
-    } finally {
-      setSubmitting(false);
-    }
-  }, [formData, editingQuestion, handleSaveQuestion]);
-
-  const handleShareClick = useCallback(() => {
-    setEditingQuestion(null);
-    setFormData({
-      question: "",
-      answer: "",
-      skill: "",
-      category: "Technical",
-      experience_level: "Fresher",
-      tags: "",
-    });
-    setFormError("");
-    setShowModal(true);
-  }, []);
-
-  const jumpToNext = useCallback(() => {
-    const next = finalFilteredQuestions[0];
-    if (next) {
-      setTimeout(
-        () => document.getElementById(`q-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
-        100
-      );
-    }
-  }, [finalFilteredQuestions]);
-
-  const jumpToRandom = useCallback(() => {
-    if (!finalFilteredQuestions.length) return;
-    const q = finalFilteredQuestions[Math.floor(Math.random() * finalFilteredQuestions.length)];
-    setExpandedQuestionId(q.id);
-    setTimeout(() => {
-      document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 150);
-  }, [finalFilteredQuestions]);
+    finalFilteredQuestions,
+    sortedGroupedCategories,
+    showModal,
+    setShowModal,
+    editingQuestion,
+    submitting,
+    formData,
+    setFormData,
+    formError,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    deleting,
+    showSidebar,
+    setShowSidebar,
+    historyOpen,
+    setHistoryOpen,
+    expandedQuestionId,
+    handleEditClick,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    handleFormSubmit,
+    handleShareClick,
+    jumpToNext,
+    jumpToRandom,
+  } = useInterviewPrep();
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -253,6 +99,24 @@ export default function InterviewPrep() {
           </div>
         </div>
 
+        <div className="border-b border-border flex gap-6 text-sm font-medium">
+          {[
+            { id: "questions", label: "Questions" },
+            { id: "challenge", label: "Interview Challenge" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 border-b-2 transition-all cursor-pointer font-semibold ${activeTab === tab.id
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {error && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
             <span>{error}</span>
@@ -271,76 +135,87 @@ export default function InterviewPrep() {
           </div>
         )}
 
-        {viewState === "loading" && <LoadingState />}
+        {activeTab === "questions" && (
+          <>
+            {viewState === "loading" && <LoadingState />}
 
-        {viewState === "empty" && <EmptyState onGoGenerate={() => navigate("/resumes?view=new")} />}
+            {viewState === "empty" && <EmptyState onGoGenerate={() => navigate("/resumes?view=new")} />}
 
-        {viewState === "active" && session && (
-          <div className="space-y-5">
-            <HeroCard
-              session={session}
-              setShowSidebar={setShowSidebar}
-              questions={questions}
-              jumpToNext={jumpToNext}
-            />
-
-
-            <div className="flex gap-5 items-start">
-              <div className="flex-1 min-w-0 space-y-4">
-                <SearchBar
-                  search={search}
-                  setSearch={setSearch}
-                  bookmarkOnly={bookmarkOnly}
-                  setBookmarkOnly={setBookmarkOnly}
-                  diffFilter={diffFilter}
-                  setDiffFilter={setDiffFilter}
-                  filteredCount={finalFilteredQuestions.length}
-                />
-
-                {finalFilteredQuestions.length === 0 ? (
-                  <div className="flex flex-col items-center py-16 text-center bg-card border border-border rounded-2xl">
-                    <SearchIcon size={22} className="text-muted-foreground/30 mb-2" />
-                    <p className="text-sm font-semibold text-foreground mb-1">No questions match</p>
-                    <button
-                      onClick={() => {
-                        setSearch("");
-                        setDiffFilter("");
-                        setBookmarkOnly(false);
-                        setActiveFilter("All");
-                      }}
-                      className="text-xs text-primary hover:text-primary/80 font-semibold mt-2 cursor-pointer"
-                    >
-                      Clear filters →
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-6 animate-in fade-in-50 duration-200">
-                    {sortedGroupedCategories.map(([catName, catQuestions]) => (
-                      <QuestionGroup
-                        key={catName}
-                        categoryName={catName}
-                        questions={catQuestions}
-                        onToggleBookmark={handleToggleBookmark}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
-                        expandedQuestionId={expandedQuestionId}
-                        onExpandQuestion={handleQuestionExpand}
-                        loadingQuestionId={loadingQuestionId}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-6 h-fit">
-                <AISidebar
-                  questions={questions}
+            {viewState === "active" && session && (
+              <div className="space-y-5">
+                <HeroCard
                   session={session}
-                  onJumpRandom={jumpToRandom}
+                  setShowSidebar={setShowSidebar}
+                  questions={questions}
+                  jumpToNext={jumpToNext}
                 />
+
+                <div className="flex gap-5 items-start">
+                  <div className="flex-1 min-w-0 space-y-4">
+                    <SearchBar
+                      search={search}
+                      setSearch={setSearch}
+                      bookmarkOnly={bookmarkOnly}
+                      setBookmarkOnly={setBookmarkOnly}
+                      importantOnly={importantOnly}
+                      setImportantOnly={setImportantOnly}
+                      diffFilter={diffFilter}
+                      setDiffFilter={setDiffFilter}
+                      filteredCount={finalFilteredQuestions.length}
+                    />
+
+                    {finalFilteredQuestions.length === 0 ? (
+                      <div className="flex flex-col items-center py-16 text-center bg-card border border-border rounded-2xl">
+                        <SearchIcon size={22} className="text-muted-foreground/30 mb-2" />
+                        <p className="text-sm font-semibold text-foreground mb-1">No questions match</p>
+                        <button
+                          onClick={() => {
+                            setSearch("");
+                            setDiffFilter("");
+                            setBookmarkOnly(false);
+                            setImportantOnly(false);
+                            setActiveFilter("All");
+                          }}
+                          className="text-xs text-primary hover:text-primary/80 font-semibold mt-2 cursor-pointer"
+                        >
+                          Clear filters →
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6 animate-in fade-in-50 duration-200">
+                        {sortedGroupedCategories.map(([catName, catQuestions]) => (
+                          <QuestionGroup
+                            key={catName}
+                            categoryName={catName}
+                            questions={catQuestions}
+                            onToggleBookmark={handleToggleBookmark}
+                            onToggleImportant={handleToggleImportant}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteClick}
+                            expandedQuestionId={expandedQuestionId}
+                            onExpandQuestion={handleQuestionExpand}
+                            loadingQuestionId={loadingQuestionId}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-6 h-fit">
+                    <AISidebar
+                      questions={questions}
+                      session={session}
+                      onJumpRandom={jumpToRandom}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "challenge" && (
+          <ChallengeContainer onBackToPrep={() => setActiveTab("questions")} />
         )}
       </div>
 
