@@ -11,7 +11,6 @@ export default function SearchFilter({
   sortBy,
   setSortBy,
   statusOpts,
-  sortOpts,
 }) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -32,8 +31,8 @@ export default function SearchFilter({
       <button
         onClick={() => setStarredFilter((f) => !f)}
         className={`flex items-center gap-2 h-10 px-3.5 rounded-xl text-sm border transition-all cursor-pointer ${starredFilter
-            ? "bg-amber-500/10 border-amber-500/30 text-amber-600 font-semibold"
-            : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+          ? "bg-amber-500/10 border-amber-500/30 text-amber-600 font-semibold"
+          : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
           }`}
       >
         <Star
@@ -49,15 +48,6 @@ export default function SearchFilter({
           value={statusFilter}
           onChange={setStatusFilter}
           size="md"
-        />
-      </div>
-      <div className="w-44">
-        <Select
-          options={sortOpts}
-          value={sortBy}
-          onChange={setSortBy}
-          size="md"
-          placeholder="Sort by…"
         />
       </div>
     </div>

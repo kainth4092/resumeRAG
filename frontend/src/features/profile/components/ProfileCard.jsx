@@ -40,7 +40,7 @@ export default function ProfileCard({ setProfileSaved }) {
 
         setProfile(emptyProfile);
         setProfileDraft(emptyProfile);
-        setEditingProfile(true);
+        setEditingProfile(false);
 
         return;
       }

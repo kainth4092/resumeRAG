@@ -1,4 +1,5 @@
 import React from "react";
+import ResumeSkillRenderer from "./ResumeSkillRenderer";
 
 export default function Professional({ resume }) {
     if (!resume) return null;
@@ -50,69 +51,6 @@ export default function Professional({ resume }) {
         url: p.url || p.github || p.live || p.link || "",
         desc: p.desc || (Array.isArray(p.description) ? p.description.join("\n") : p.description || ""),
     }));
-
-    // Classify skills into 4 columns matching the reference layout
-    const col1 = [];
-    const col2 = [];
-    const col3 = [];
-    const col4 = [];
-
-    skillsList.forEach((s) => {
-        const name = s.name.toLowerCase();
-        if (
-            name.includes("aws") || name.includes("gcp") || name.includes("azure") ||
-            name.includes("cloud") || name.includes("pipeline") || name.includes("spark") ||
-            name.includes("glue") || name.includes("etl") || name.includes("elt") ||
-            name.includes("stream") || name.includes("lake") || name.includes("warehouse")
-        ) {
-            col1.push(s.name);
-        } else if (
-            name.includes("python") || name.includes("sql") || name.includes("db") ||
-            name.includes("postgres") || name.includes("mongo") || name.includes("redis") ||
-            name.includes("java") || name.includes("c#") || name.includes("c++") ||
-            name.includes("programming") || name.includes("query") || name.includes("dbt")
-        ) {
-            col2.push(s.name);
-        } else if (
-            name.includes("architecture") || name.includes("devops") || name.includes("docker") ||
-            name.includes("kubernetes") || name.includes("git") || name.includes("ci/cd") ||
-            name.includes("deploy") || name.includes("rest") || name.includes("api") ||
-            name.includes("agile") || name.includes("scrum")
-        ) {
-            col3.push(s.name);
-        } else {
-            col4.push(s.name);
-        }
-    });
-
-    const cols = [col1, col2, col3, col4];
-    const allAssigned = [...col1, ...col2, ...col3, ...col4];
-
-    // Distribute remaining skills round-robin to keep the table columns balanced
-    skillsList.forEach((s) => {
-        if (!allAssigned.includes(s.name)) {
-            let minIdx = 0;
-            let minLen = cols[0].length;
-            for (let i = 1; i < 4; i++) {
-                if (cols[i].length < minLen) {
-                    minLen = cols[i].length;
-                    minIdx = i;
-                }
-            }
-            cols[minIdx].push(s.name);
-        }
-    });
-
-    // Fallbacks if no skills exist
-    if (skillsList.length === 0) {
-        col1.push("AWS Glue / Glue Studio", "Amazon S3 / Redshift", "Apache Spark / PySpark");
-        col2.push("Python Engineering", "Advanced SQL", "PostgreSQL / SQL Server");
-        col3.push("Solution Architecture", "Docker / Kubernetes", "CI/CD & GIT");
-        col4.push("Data Quality Frameworks", "Data Governance", "Schema Validation");
-    }
-
-    const maxRows = Math.max(col1.length, col2.length, col3.length, col4.length);
-    const tableRows = Array.from({ length: maxRows });
 
     const primaryColor = "#224b7a"; // Professional Image Blue
 
@@ -168,45 +106,9 @@ export default function Professional({ resume }) {
                 )}
 
                 {/* CORE TECHNICAL SKILLS Section */}
-                <div className="space-y-1.5">
-                    <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: primaryColor }}>
-                        CORE TECHNICAL SKILLS
-                    </h2>
-                    <hr className="border-t border-gray-300" />
-                    
-                    <div className="border border-gray-300 overflow-hidden rounded-sm mt-1">
-                        <table className="w-full border-collapse text-[9px] leading-normal">
-                            <thead>
-                                <tr className="text-white font-bold" style={{ backgroundColor: primaryColor }}>
-                                    <th className="border-r border-gray-300 px-2 py-1.5 text-left w-1/4">AWS Cloud & Data Pipelines</th>
-                                    <th className="border-r border-gray-300 px-2 py-1.5 text-left w-1/4">Programming, SQL & Databases</th>
-                                    <th className="border-r border-gray-300 px-2 py-1.5 text-left w-1/4">Architecture, DevOps & Delivery</th>
-                                    <th className="px-2 py-1.5 text-left w-1/4">Governance, Quality & Domain Exposure</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tableRows.map((_, rIdx) => (
-                                    <tr key={rIdx} className="border-t border-gray-300">
-                                        <td className="border-r border-gray-300 px-2 py-1 text-gray-800 valign-top align-top whitespace-pre-wrap">
-                                            {col1[rIdx] ? `• ${col1[rIdx]}` : ""}
-                                        </td>
-                                        <td className="border-r border-gray-300 px-2 py-1 text-gray-800 valign-top align-top whitespace-pre-wrap">
-                                            {col2[rIdx] ? `• ${col2[rIdx]}` : ""}
-                                        </td>
-                                        <td className="border-r border-gray-300 px-2 py-1 text-gray-800 valign-top align-top whitespace-pre-wrap">
-                                            {col3[rIdx] ? `• ${col3[rIdx]}` : ""}
-                                        </td>
-                                        <td className="px-2 py-1 text-gray-800 valign-top align-top whitespace-pre-wrap">
-                                            {col4[rIdx] ? `• ${col4[rIdx]}` : ""}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <ResumeSkillRenderer resume={r} variant="professional" primaryColor={primaryColor} />
 
-                {/* PROFESSIONAL EXPERIENCE Section */}
+
                 {experienceList.length > 0 && (
                     <div className="space-y-2">
                         <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: primaryColor }}>
@@ -240,7 +142,6 @@ export default function Professional({ resume }) {
                     </div>
                 )}
 
-                {/* PROJECT EXPERIENCE Section */}
                 {projectsList.length > 0 && (
                     <div className="space-y-2">
                         <h2 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: primaryColor }}>

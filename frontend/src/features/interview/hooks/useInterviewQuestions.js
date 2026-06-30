@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  retrieveInterviewQuestions,
   getAllInterviewQuestions,
   createInterviewQuestion,
   updateInterviewQuestion,
   deleteInterviewQuestion,
 } from "../../../services/interviewBankApi";
-import { getInterviewSession, getInterviewHistory } from "../services/interviewService";
+import { getInterviewSession, getInterviewHistory, getQuestionDetails } from "../../../services/interviewService";
 import { asText, estimateMinutes } from "../../../utils/interviewUtils";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -44,8 +43,6 @@ export function useInterviewQuestions(locationState) {
       setViewState("loading");
 
       let sessionId = locationState?.sessionId;
-
-      // Auto-load latest session from history if no sessionId is provided
       if (!sessionId) {
         try {
           const history = await getInterviewHistory();
@@ -89,7 +86,6 @@ export function useInterviewQuestions(locationState) {
         return;
       }
 
-      // If no session exists, fallback to default Question Bank
       const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
       const res = await getAllInterviewQuestions();
       const data = res.data || [];
@@ -164,11 +160,38 @@ export function useInterviewQuestions(locationState) {
     );
   }, [bookmarkedQuestionsKey]);
 
-  const handleQuestionExpand = useCallback((questionId) => {
+  const handleQuestionExpand = useCallback(async (questionId) => {
+    const q = questions.find((item) => item.id === questionId);
+    if (!q) return;
+
     setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, details_generated: true } : q))
+      prev.map((item) => (item.id === questionId ? { ...item, details_generated: true } : item))
     );
-  }, []);
+
+    if (q.sampleAnswer || q.answer) {
+      return;
+    }
+
+    setLoadingQuestionId(questionId);
+    try {
+      const res = await getQuestionDetails(questionId);
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === questionId
+            ? {
+              ...item,
+              answer: res.answer,
+              sampleAnswer: asText(res.answer),
+            }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("Failed to generate/retrieve sample answer:", err);
+    } finally {
+      setLoadingQuestionId(null);
+    }
+  }, [questions]);
 
   const handleDeleteQuestion = useCallback(async (questionId) => {
     setError("");

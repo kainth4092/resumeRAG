@@ -1,12 +1,41 @@
 from typing import List, Set
 
 COMMON_SKILLS = [
-    "React", "JavaScript", "TypeScript", "HTML", "CSS", "Tailwind CSS",
-    "Python", "FastAPI", "Flask", "Django", "PostgreSQL", "SQL",
-    "Docker", "Git", "GitHub", "JWT", "REST API", "Redis", "Qdrant",
-    "LangChain", "LangGraph", "AI", "Machine Learning", "GenAI", "RAG",
-    "Linux", "Kubernetes", "AWS", "GCP", "Azure", "Java", "C++", "Go"
+    "React",
+    "JavaScript",
+    "TypeScript",
+    "HTML",
+    "CSS",
+    "Tailwind CSS",
+    "Python",
+    "FastAPI",
+    "Flask",
+    "Django",
+    "PostgreSQL",
+    "SQL",
+    "Docker",
+    "Git",
+    "GitHub",
+    "JWT",
+    "REST API",
+    "Redis",
+    "Qdrant",
+    "LangChain",
+    "LangGraph",
+    "AI",
+    "Machine Learning",
+    "GenAI",
+    "RAG",
+    "Linux",
+    "Kubernetes",
+    "AWS",
+    "GCP",
+    "Azure",
+    "Java",
+    "C++",
+    "Go",
 ]
+
 
 class SkillMatchingService:
     @staticmethod

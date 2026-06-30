@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadResume } from "../services/resumeService";
 import { analyzeResume, generateResume } from "../services/generatorService";
-import { interviewService } from "../../interview/services/interviewService";
+import { interviewService } from "../../../services/interviewService";
+import { estimatePageCount } from "../../../utils/resumeUtils";
 import Header from "../components/generator/Header";
 import { useAuth } from "../../../context/AuthContext";
 import ResumeUpload from "../components/generator/ResumeUpload";
@@ -14,7 +15,7 @@ import AISuggestions from "../components/generator/AISuggestions";
 import LivePreview from "../components/resume/editor/LivePreview";
 import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
 import { MOCK_RESUME } from "./templatesData";
-import { downloadPDF } from "../utils/exporter";
+import { downloadPDF, downloadDOCX, printResume } from "../exporters";
 import { CheckCircle2, AlertCircle, Loader2, Download, Edit2, Printer, ArrowLeft, Zap, Info, Eye, X } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "../components/resume/templates";
 
@@ -45,8 +46,8 @@ export function ResumeGenerator({ onBack }) {
   const [hoveredTemplate, setHoveredTemplate] = useState(null);
   const [mobilePreviewTemplate, setMobilePreviewTemplate] = useState(null);
 
-  const [resumeState, setResumeState] = useState("idle"); // idle | generating | completed | failed
-  const [interviewState, setInterviewState] = useState("idle"); // idle | queued | generating | completed | failed
+  const [resumeState, setResumeState] = useState("idle");
+  const [interviewState, setInterviewState] = useState("idle");
   const [interviewSessionId, setInterviewSessionId] = useState(null);
   const [currentInterviewStep, setCurrentInterviewStep] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
@@ -72,7 +73,7 @@ export function ResumeGenerator({ onBack }) {
       setFileSize((file.size / (1024 * 1024)).toFixed(2));
     } catch (err) {
       console.error("Upload failed", err);
-      setGeneratorError(err.response?.data?.detail || "Upload failed. Please ensure the file is a valid PDF.");
+      setGeneratorError(err.response?.data?.detail || "Upload failed. Please ensure the file is a valid PDF or DOCX.");
     } finally {
       setUploading(false);
     }
@@ -249,7 +250,7 @@ export function ResumeGenerator({ onBack }) {
         color: "#7C3AED",
         starred: false,
         version: "v1",
-        pages: 1,
+        pages: estimatePageCount(r),
         resume: r,
         jobDescription: jd,
       };
@@ -266,8 +267,6 @@ export function ResumeGenerator({ onBack }) {
       }
       localStorage.setItem(resumesKey, JSON.stringify(savedList));
       setSaveMessage("Resume saved automatically!");
-
-      // Start non-blocking background interview generation
       runBackgroundInterviewGeneration(resume.resume_id, jd);
 
     } catch (err) {
@@ -319,20 +318,19 @@ export function ResumeGenerator({ onBack }) {
           <div className="flex items-center justify-between w-full max-w-4xl mx-auto">
             {wizardSteps.map((s, idx) => (
               <div key={s.number} className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
-                  s.active || generated
-                    ? "bg-primary text-white"
-                    : idx === 3 && generating
-                      ? "bg-primary/20 text-primary animate-pulse"
-                      : "bg-muted text-muted-foreground border border-border"
-                }`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0 ${s.active || generated
+                  ? "bg-primary text-white"
+                  : idx === 3 && generating
+                    ? "bg-primary/20 text-primary animate-pulse"
+                    : "bg-muted text-muted-foreground border border-border"
+                  }`}>
                   {s.number}
                 </div>
                 <span className={`text-xs font-semibold whitespace-nowrap ${s.active || generated ? "text-foreground" : "text-muted-foreground"}`}>
                   {s.label}
                 </span>
                 {idx < wizardSteps.length - 1 && (
-                  <div className={`w-12 h-0.5 rounded-full hidden md:block shrink-0 ${s.active && wizardSteps[idx+1].active ? "bg-primary" : "bg-border"}`} />
+                  <div className={`w-12 h-0.5 rounded-full hidden md:block shrink-0 ${s.active && wizardSteps[idx + 1].active ? "bg-primary" : "bg-border"}`} />
                 )}
               </div>
             ))}
@@ -418,6 +416,21 @@ export function ResumeGenerator({ onBack }) {
               />
             </div>
 
+            {analysis && (
+              <div className="space-y-6 animate-in fade-in-0 duration-300">
+                <div className="border-b border-border pb-2.5 text-left">
+                  <h3 className="text-sm font-bold text-foreground">Current Resume Analysis</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Below is the ATS score and feedback for your uploaded resume against the target job description.</p>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                  <ATSScore analysis={analysis} />
+                  <AISuggestions analysis={analysis} />
+                  <KeywordAnalysis analysis={analysis} />
+                  <HeatMap analysis={analysis} />
+                </div>
+              </div>
+            )}
+
             {/* Step 3: Choose Resume Template Inline (Split layout with Hover Preview) */}
             <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-(--shadow-xs)">
               <div>
@@ -436,11 +449,10 @@ export function ResumeGenerator({ onBack }) {
                         onClick={() => setSelectedTemplateName(tpl.name)}
                         onMouseEnter={() => setHoveredTemplate(tpl.name)}
                         onMouseLeave={() => setHoveredTemplate(null)}
-                        className={`group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:scale-[1.01] ${
-                          isSelected
-                            ? "border-primary bg-primary/5 ring-1 ring-primary/45 shadow-sm"
-                            : "border-border bg-card hover:border-primary/20 hover:bg-muted/10"
-                        }`}
+                        className={`group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:scale-[1.01] ${isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/45 shadow-sm"
+                          : "border-border bg-card hover:border-primary/20 hover:bg-muted/10"
+                          }`}
                       >
                         {/* Mobile Preview Action Button */}
                         <button
@@ -573,95 +585,93 @@ export function ResumeGenerator({ onBack }) {
             </div>
           </div>
         ) : (
-          /* Steps 5 & 6: Generated Results with Side-by-side Live Preview and Analytics */
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start animate-in fade-in-0 duration-300">
-            <div className="lg:col-span-3 space-y-4">
-              {generatedResume && (
-                <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-(--shadow-sm)">
-                  <div className="flex items-center justify-between border-b border-border pb-3.5 flex-wrap gap-3">
-                    <div className="text-left">
-                      <h3 className="text-md font-bold text-foreground">Optimized Resume Preview</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">Preview and print/download your tailored resume</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {saveMessage && (
-                        <span className="text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-lg font-medium flex items-center gap-1">
-                          <CheckCircle2 size={12} /> {saveMessage}
-                        </span>
-                      )}
-
-                      <select
-                        value={activeTemplate}
-                        onChange={(e) => handleSwitchTemplate(e.target.value)}
-                        className="h-8 px-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-muted transition-all"
-                      >
-                        {Object.keys(TEMPLATE_REGISTRY).map((name) => (
-                          <option key={name} value={name}>
-                            Template: {name}
-                          </option>
-                        ))}
-                      </select>
-
-                      <button
-                        onClick={() => window.print()}
-                        className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all cursor-pointer"
-                        title="Print / Save as PDF from browser"
-                      >
-                        <Printer size={12} /> Print
-                      </button>
-                      <button
-                        onClick={() => downloadPDF(generatedResume, `${generatedResume.personal_info?.name || "Optimized"}_Resume.pdf`)}
-                        className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all cursor-pointer"
-                      >
-                        <Download size={12} /> PDF
-                      </button>
-                      <button
-                        onClick={() => navigate("/resume/editor", { state: { resume: { ...generatedResume, id: resume?.resume_id, score: analysis?.ats_score } } })}
-                        className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/95 active:scale-[0.98] transition-all cursor-pointer"
-                      >
-                        <Edit2 size={12} /> Edit
-                      </button>
-                    </div>
+          /* Steps 5 & 6: Generated Results with centered full-width Live Preview, hiding analysis */
+          <div className="max-w-4xl mx-auto animate-in fade-in-0 duration-300">
+            {generatedResume && (
+              <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-(--shadow-sm)">
+                <div className="flex items-center justify-between border-b border-border pb-3.5 flex-wrap gap-3">
+                  <div className="text-left">
+                    <h3 className="text-md font-bold text-foreground">Optimized Resume Preview</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Preview and print/download your tailored resume</p>
                   </div>
+                  <div className="flex items-center gap-2">
+                    {saveMessage && (
+                      <span className="text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-lg font-medium flex items-center gap-1">
+                        <CheckCircle2 size={12} /> {saveMessage}
+                      </span>
+                    )}
 
-                  <div className="bg-muted/10 border border-border rounded-xl p-4 overflow-y-auto max-h-[600px]">
-                    <div className="max-w-[500px] mx-auto shadow-md rounded-lg overflow-hidden bg-card border border-border">
-                      <LivePreview
-                        personal={normalizeResumeForPreview(generatedResume).personal_info}
-                        summary={normalizeResumeForPreview(generatedResume).summary}
-                        skills={normalizeResumeForPreview(generatedResume).skills}
-                        experience={normalizeResumeForPreview(generatedResume).experience}
-                        education={normalizeResumeForPreview(generatedResume).education}
-                        projects={normalizeResumeForPreview(generatedResume).projects}
-                        color="#7C3AED"
-                        templateName={activeTemplate}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-start">
-                    <button
-                      onClick={() => setGenerated(false)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-2 px-3 border border-border rounded-xl bg-card cursor-pointer"
+                    <select
+                      value={activeTemplate}
+                      onChange={(e) => handleSwitchTemplate(e.target.value)}
+                      className="h-8 px-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-muted transition-all"
                     >
-                      <ArrowLeft size={12} /> Edit Inputs & Re-Generate
+                      {Object.keys(TEMPLATE_REGISTRY).map((name) => (
+                        <option key={name} value={name}>
+                          Template: {name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => printResume()}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all cursor-pointer"
+                      title="Print / Save as PDF from browser"
+                    >
+                      <Printer size={12} /> Print
+                    </button>
+                    <button
+                      onClick={() => downloadPDF(generatedResume, `${generatedResume.personal_info?.name || "Optimized"}_Resume.pdf`)}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all cursor-pointer"
+                      title="Download PDF"
+                    >
+                      <Download size={12} /> PDF
+                    </button>
+                    <button
+                      onClick={() => downloadDOCX(generatedResume, `${generatedResume.personal_info?.name || "Optimized"}_Resume.docx`, activeTemplate)}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted transition-all cursor-pointer"
+                      title="Download DOCX"
+                    >
+                      <Download size={12} /> DOCX
+                    </button>
+                    <button
+                      onClick={() => navigate("/resume/editor", { state: { resume: { ...generatedResume, id: resume?.resume_id, score: analysis?.ats_score } } })}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/95 active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      <Edit2 size={12} /> Edit
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="lg:col-span-2 space-y-4">
-              <ATSScore analysis={analysis} />
-              <AISuggestions analysis={analysis} />
-              <KeywordAnalysis analysis={analysis} />
-              <HeatMap analysis={analysis} />
-            </div>
+                <div className="bg-muted/10 border border-border rounded-xl p-4 overflow-y-auto max-h-[750px]">
+                  <div className="max-w-[650px] mx-auto shadow-md rounded-lg overflow-hidden bg-card border border-border">
+                    <LivePreview
+                      personal={normalizeResumeForPreview(generatedResume).personal_info}
+                      summary={normalizeResumeForPreview(generatedResume).summary}
+                      skills={normalizeResumeForPreview(generatedResume).skills}
+                      experience={normalizeResumeForPreview(generatedResume).experience}
+                      education={normalizeResumeForPreview(generatedResume).education}
+                      projects={normalizeResumeForPreview(generatedResume).projects}
+                      color="#7C3AED"
+                      templateName={activeTemplate}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-start">
+                  <button
+                    onClick={() => setGenerated(false)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors py-2 px-3 border border-border rounded-xl bg-card cursor-pointer"
+                  >
+                    <ArrowLeft size={12} /> Edit Inputs & Re-Generate
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Mobile/Tablet Preview Overlay Modal */}
       {mobilePreviewTemplate && (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0 duration-200">
           <div

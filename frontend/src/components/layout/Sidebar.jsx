@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
-import { PanelLeftClose, PanelLeftOpen, LogOut, Zap } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
-import { useAuth } from "../../context/AuthContext";
 import { NAV_SECTIONS } from "../../data/navigation";
 import { getTrackedJobs } from "../../features/jobs/services/jobs.service";
 
 export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout: authLogout } = useAuth();
   const [jobCount, setJobCount] = useState(null);
 
   useEffect(() => {
@@ -41,14 +39,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
     setMobileOpen(false);
   };
 
-  const logout = () => {
-    if (authLogout) {
-      authLogout();
-    } else {
-      localStorage.removeItem("access_token");
-    }
-    navigate("/");
-  };
+
 
   return (
     <div className="flex flex-col h-full">
@@ -124,8 +115,8 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                         {((item.id === "tracker" && jobCount !== null) ? String(jobCount) : item.badge) && (
                           <span
                             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${item.badge === "New"
-                                ? "bg-primary/15 text-primary"
-                                : "bg-muted text-muted-foreground"
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground"
                               }`}
                           >
                             {item.id === "tracker" && jobCount !== null ? jobCount : item.badge}
@@ -151,36 +142,6 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
         ))}
       </nav>
 
-      <div className="shrink-0 p-3 border-t border-sidebar-border">
-        {collapsed ? (
-          <button className="w-full flex justify-center p-1" onClick={logout}>
-            <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold">
-              {user?.avatar}
-            </div>
-          </button>
-        ) : (
-          <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-sidebar-accent transition-all cursor-pointer group">
-            <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-sm font-bold shrink-0">
-              {user?.avatar}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-sidebar-foreground truncate leading-none">
-                {user?.name}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                {user?.email}
-              </p>
-            </div>
-            <button
-              onClick={logout}
-              title="Sign out"
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 rounded-lg hover:bg-destructive/10"
-            >
-              <LogOut size={13} />
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Briefcase, FileText, LayoutDashboard, LayoutTemplate, MessageSquare, Settings, User, Zap } from "lucide-react";
+import { Briefcase, FileText, LayoutDashboard, MessageSquare } from "lucide-react";
 
 export const NAV_SECTIONS = [
     {
@@ -6,7 +6,6 @@ export const NAV_SECTIONS = [
         items: [
             { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", badge: null },
             { id: "resumes", icon: FileText, label: "Resume", badge: null },
-            { id: "profile", icon: User, label: "Profile Data", badge: null },
         ],
     },
     {
@@ -16,17 +15,5 @@ export const NAV_SECTIONS = [
             { id: "interview", icon: MessageSquare, label: "Interview Prep", badge: null },
         ],
     },
-    {
-        title: "Insights",
-        items: [
-            { id: "settings", icon: Settings, label: "Settings", badge: null },
-        ],
-    },
 ];
 
-export const notifications = [
-    { id: 1, title: "ATS Score improved to 94", body: "Software Engineer resume — Stripe", time: "2m ago", unread: true, icon: "📈" },
-    { id: 2, title: "New job match found", body: "Senior Frontend Dev at Vercel · 91% match", time: "45m ago", unread: true, icon: "💼" },
-    { id: 3, title: "Interview scheduled", body: "Linear · Final round · Tomorrow 3pm", time: "2h ago", unread: false, icon: "🗓️" },
-    { id: 4, title: "Resume generated", body: "Notion Product Engineer v2", time: "5h ago", unread: false, icon: "✨" },
-];

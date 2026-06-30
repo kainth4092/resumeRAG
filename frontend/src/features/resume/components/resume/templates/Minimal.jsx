@@ -1,4 +1,5 @@
 import React from "react";
+import ResumeSkillRenderer from "./ResumeSkillRenderer";
 
 export default function Minimal({ resume }) {
     if (!resume) return null;
@@ -18,9 +19,6 @@ export default function Minimal({ resume }) {
 
     const summaryText = r.summary?.text || r.summary || "";
 
-    const skillsList = (r.skills || []).map((s, idx) =>
-        typeof s === "string" ? { id: idx, name: s } : { id: s.id || idx, name: s.name || "" }
-    );
 
     const experienceList = (r.experience || r.work_experience || []).map((e, idx) => ({
         id: e.id || idx,
@@ -93,18 +91,8 @@ export default function Minimal({ resume }) {
                 )}
 
                 {/* Skills */}
-                {skillsList.length > 0 && (
-                    <div className="grid grid-cols-4 gap-4 border-t border-slate-50 pt-4">
-                        <div className="col-span-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest pt-0.5">
-                            Expertise
-                        </div>
-                        <div className="col-span-3 flex flex-wrap gap-x-3 gap-y-1 font-sans text-slate-600">
-                            {skillsList.map((s) => (
-                                <span key={s.id}>{s.name}</span>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <ResumeSkillRenderer resume={r} variant="minimal" />
+
 
                 {/* Experience */}
                 {experienceList.length > 0 && (

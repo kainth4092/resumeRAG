@@ -188,7 +188,7 @@ def delete_bank_question(
 )
 def retrieve_interview_questions(
     payload: InterviewRetrievalRequest,
-    limit: int = 20,
+    limit: int = 40,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

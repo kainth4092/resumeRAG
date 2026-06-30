@@ -35,8 +35,8 @@ export default function ResumeUpload({
                             <Upload size={16} className={dragging ? "text-primary" : "text-muted-foreground"} />
                         </div>
                         <div className="min-w-0 text-left">
-                            <p className="text-xs font-semibold text-foreground truncate">Drop or select your resume</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">PDF format · Max 10MB</p>
+                            <p className="text-xs font-semibold text-foreground">Drop or select your resume</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">PDF or DOCX format · Max 5MB</p>
                         </div>
                     </div>
                     <button
@@ -45,7 +45,7 @@ export default function ResumeUpload({
                     >
                         Choose File
                     </button>
-                    <input ref={fileRef} type="file" className="hidden" accept=".pdf" onChange={(e) => {
+                    <input ref={fileRef} type="file" className="hidden" accept=".pdf,.docx" onChange={(e) => {
                         const file = e.target.files[0]
                         if (file) {
                             handleUpload(file)
@@ -70,8 +70,16 @@ export default function ResumeUpload({
                 </div>
             ) : (
                 <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl font-sans">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <FileText size={15} className="text-emerald-500" />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        fileName?.toLowerCase().endsWith(".docx")
+                            ? "bg-blue-500/10"
+                            : "bg-red-500/10"
+                    }`}>
+                        <FileText size={15} className={
+                            fileName?.toLowerCase().endsWith(".docx")
+                                ? "text-blue-500"
+                                : "text-red-500"
+                        } />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                         <p className="text-xs font-semibold text-foreground truncate">{fileName}</p>

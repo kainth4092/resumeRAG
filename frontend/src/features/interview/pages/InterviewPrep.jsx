@@ -33,6 +33,8 @@ export default function InterviewPrep() {
     handleDeleteQuestion,
     handleSaveQuestion,
     mapExperienceToDifficulty,
+    loadingQuestionId,
+    handleQuestionExpand,
   } = useInterviewQuestions(location.state);
 
   const {
@@ -322,6 +324,8 @@ export default function InterviewPrep() {
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
                         expandedQuestionId={expandedQuestionId}
+                        onExpandQuestion={handleQuestionExpand}
+                        loadingQuestionId={loadingQuestionId}
                       />
                     ))}
                   </div>

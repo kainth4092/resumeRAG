@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Heart, Download, CheckCircle2, Loader2, Sparkles, Star, Zap } from "lucide-react";
-import { downloadPDF } from "../../../../../utils/exporter";
+import { downloadPDF, downloadDOCX } from "../../../exporters";
 
 export default function TemplatePreviewModal({
   template: tpl,
@@ -65,15 +65,27 @@ export default function TemplatePreviewModal({
 
             <button
               onClick={handleDownload}
-              disabled={downloading || downloaded}
+              disabled={downloading}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted active:scale-[0.97] disabled:opacity-70 transition-all cursor-pointer"
+              title="Download PDF"
             >
-              {downloading
-                ? <><Loader2 size={14} className="animate-spin" /> Downloading…</>
-                : downloaded
-                  ? <><CheckCircle2 size={14} className="text-emerald-500" /> Downloaded!</>
-                  : <><Download size={14} /> Download</>
-              }
+              {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              PDF
+            </button>
+
+            <button
+              onClick={async () => {
+                try {
+                  await downloadDOCX(resume, `${resume.personal_info?.name || "Optimized"}_Resume.docx`, tpl.name);
+                } catch (e) {
+                  console.error("Failed to download DOCX", e);
+                }
+              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted active:scale-[0.97] transition-all cursor-pointer"
+              title="Download DOCX"
+            >
+              <Download size={14} />
+              DOCX
             </button>
 
             <button

@@ -29,6 +29,8 @@ export const QuestionGroup = memo(function QuestionGroup({
   onEdit,
   onDelete,
   expandedQuestionId,
+  onExpandQuestion,
+  loadingQuestionId,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const theme = getCategoryTheme(categoryName);
@@ -105,6 +107,8 @@ export const QuestionGroup = memo(function QuestionGroup({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 isInitiallyExpanded={q.id === expandedQuestionId}
+                onExpand={onExpandQuestion}
+                isLoading={loadingQuestionId === q.id}
               />
             ))}
           </div>

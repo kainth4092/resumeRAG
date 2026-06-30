@@ -58,7 +58,7 @@ def retrieve_questions_rag(
     db: Session,
     resume_skills: list[str],
     jd_skills: list[str],
-    limit: int = 20,
+    limit: int = 40,
 ):
     logger.info("Number of skills extracted from resume: %d", len(resume_skills))
     logger.info("Number of skills extracted from job description: %d", len(jd_skills))
@@ -73,7 +73,7 @@ def retrieve_questions_rag(
 
     logger.info("Query sent to Qdrant:\n%s", query)
 
-    question_ids = search_question_ids(query=query, limit=10)
+    question_ids = search_question_ids(query=query, limit=limit)
 
     logger.info("Number of retrieved question IDs: %d", len(question_ids))
 
@@ -91,7 +91,7 @@ def retrieve_questions_rag(
         logger.warning(
             "Fallback usage triggered: Qdrant returned no results or matching database records."
         )
-        questions = db.query(InterviewQuestionBank).limit(10).all()
+        questions = db.query(InterviewQuestionBank).limit(limit).all()
         logger.info("Retrieved %d questions from database fallback.", len(questions))
 
     return questions

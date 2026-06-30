@@ -63,7 +63,8 @@ def generate_interview(
         generator_service = InterviewGeneratorService()
         questions_to_add = generator_service.generate_session_questions(
             resume_text=resume.parsed_text,
-            job_description=payload.job_description
+            job_description=payload.job_description,
+            db=db
         )
 
         candidate_type = "FRESHER"
@@ -293,7 +294,19 @@ def get_question_details(
                 detail="Access denied",
             )
 
-        if question.details_generated:
+        def has_valid_answer(ans):
+            if not ans:
+                return False
+            if isinstance(ans, dict):
+                return bool(ans.get("sample_answer") or ans.get("answer"))
+            if isinstance(ans, str):
+                return bool(ans.strip())
+            return False
+
+        if question.details_generated or has_valid_answer(question.answer):
+            if not question.details_generated:
+                question.details_generated = True
+                db.commit()
             return {
                 "answer": question.answer,
             }

@@ -1,4 +1,5 @@
 import React from "react";
+import ResumeSkillRenderer from "./ResumeSkillRenderer";
 
 export default function Corporate({ resume }) {
     if (!resume) return null;
@@ -18,9 +19,6 @@ export default function Corporate({ resume }) {
 
     const summaryText = r.summary?.text || r.summary || "";
 
-    const skillsList = (r.skills || []).map((s, idx) =>
-        typeof s === "string" ? { id: idx, name: s } : { id: s.id || idx, name: s.name || "" }
-    );
 
     const experienceList = (r.experience || r.work_experience || []).map((e, idx) => ({
         id: e.id || idx,
@@ -51,8 +49,8 @@ export default function Corporate({ resume }) {
         desc: p.desc || (Array.isArray(p.description) ? p.description.join("\n") : p.description || ""),
     }));
 
-    const primaryColor = "#0f172a"; // Deep Slate
-    const accentColor = "#0369a1"; // Corporate Sky Blue
+    const primaryColor = "#0f172a";
+    const accentColor = "#0369a1";
 
     return (
         <div
@@ -95,21 +93,8 @@ export default function Corporate({ resume }) {
                 )}
 
                 {/* Skills */}
-                {skillsList.length > 0 && (
-                    <div className="space-y-2">
-                        <h2 className="text-xs font-black uppercase tracking-wider" style={{ color: primaryColor }}>
-                            Key Expertise
-                        </h2>
-                        <div className="grid grid-cols-3 gap-2">
-                            {skillsList.map((s) => (
-                                <div key={s.id} className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-sm">
-                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
-                                    <span className="font-semibold text-slate-700 text-[10px]">{s.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <ResumeSkillRenderer resume={r} variant="corporate" primaryColor={primaryColor} accentColor={accentColor} />
+
 
                 {/* Experience */}
                 {experienceList.length > 0 && (

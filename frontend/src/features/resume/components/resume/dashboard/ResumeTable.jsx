@@ -1,7 +1,6 @@
 import {
   Clock,
   Edit2,
-  Eye,
   FileText,
   MoreHorizontal,
   Star,
@@ -9,11 +8,9 @@ import {
   Zap,
   X,
   CheckCircle2,
-  Copy,
 } from "lucide-react";
-import DownloadBtn from "./DownloadButton";
 import { STATUS_STYLES } from "./constants";
-import { downloadPDF } from "../../../../../utils/exporter";
+import { downloadPDF, downloadDOCX } from "../../../exporters";
 
 export default function ResumeTable({
   filtered,
@@ -25,9 +22,7 @@ export default function ResumeTable({
   setMenuOpen,
   menuRef,
   setDeleteTarget,
-  navigate,
   handleSetActive,
-  handleDuplicate,
   handleGenerateInterview,
 }) {
   return (
@@ -36,11 +31,16 @@ export default function ResumeTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {["Resume", "ATS Score", "Status", "Updated", "Template", "Actions"].map(
+              {["Resume", "Status", "Updated", "Template", "Actions"].map(
                 (h, i) => (
                   <th
                     key={h}
-                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 5 ? "text-right pr-10 pl-4" : i === 0 ? "text-left px-5" : "text-left px-4"}`}
+                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 4
+                      ? "text-right px-5"
+                      : i === 0
+                        ? "text-left px-5"
+                        : "text-left px-4"
+                      }`}
                   >
                     {h}
                   </th>
@@ -51,7 +51,7 @@ export default function ResumeTable({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-16 text-center">
+                <td colSpan={5} className="px-5 py-16 text-center">
                   <FileText
                     size={32}
                     className="mx-auto mb-3 text-muted-foreground/30"
@@ -110,17 +110,6 @@ export default function ResumeTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-4">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
-                      r.score >= 80 
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
-                        : r.score >= 60 
-                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20" 
-                          : "bg-red-500/10 text-red-500 border-red-500/20"
-                    }`}>
-                      {r.score || 0}%
-                    </span>
-                  </td>
 
                   <td className="px-4 py-4">
                     <span
@@ -153,18 +142,6 @@ export default function ResumeTable({
                         <Edit2 size={14} />
                       </button>
 
-                      <DownloadBtn
-                        format="PDF"
-                        size="sm"
-                        onDownload={() => {
-                          setPreviewResume(r);
-                          setTimeout(() => {
-                            const el =
-                              document.querySelector(".printable-resume");
-                            downloadPDF(el, `${r.name || "Resume"}.pdf`);
-                          }, 150);
-                        }}
-                      />
 
                       <div className="relative">
                         <button
@@ -220,28 +197,15 @@ export default function ResumeTable({
               </button>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   const target = filtered.find((r) => r.id === menuOpen);
                   if (target) {
                     setPreviewResume(target);
-                  }
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <Eye size={15} className="text-muted-foreground" />
-                Preview Resume
-              </button>
-
-              <button
-                onClick={() => {
-                  const target = filtered.find((r) => r.id === menuOpen);
-                  if (target) {
-                    setPreviewResume(target);
-                    setTimeout(() => {
-                      const el = document.querySelector(".printable-resume");
-                      downloadPDF(el, `${target.name || "Resume"}.pdf`);
-                    }, 150);
+                    // Wait for template to render in DOM
+                    await new Promise((resolve) => setTimeout(resolve, 200));
+                    const resumeData = target.resume || target;
+                    await downloadPDF(resumeData, `${target.name || "Resume"}.pdf`);
+                    setPreviewResume(null);
                   }
                   setMenuOpen(null);
                 }}
@@ -254,15 +218,16 @@ export default function ResumeTable({
               <button
                 onClick={() => {
                   const target = filtered.find((r) => r.id === menuOpen);
-                  if (target && handleDuplicate) {
-                    handleDuplicate(target);
+                  if (target) {
+                    const resumeData = target.resume || target;
+                    downloadDOCX(resumeData, `${target.name || "Resume"}.docx`, target.template || "Professional");
                   }
                   setMenuOpen(null);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
               >
-                <Copy size={15} className="text-muted-foreground" />
-                Duplicate Resume
+                <FileText size={15} className="text-muted-foreground" />
+                Download DOCX
               </button>
 
               <button

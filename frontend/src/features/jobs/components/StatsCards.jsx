@@ -52,11 +52,11 @@ export default function StatsCards({ apps = [] }) {
       {stats.map((s) => (
         <div
           key={s.label}
-          className="bg-card border border-border rounded-2xl p-5 hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200 cursor-default group"
+          className="bg-card border border-border rounded-2xl p-5 hover:shadow-(--shadow-md) hover:-translate-y-0.5 transition-all duration-200 cursor-default group"
         >
           <div className="flex items-start justify-between mb-4">
             <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
               style={{ backgroundColor: s.bg }}
             >
               <s.icon size={18} style={{ color: s.color }} />

@@ -8,6 +8,8 @@ import {
   Edit2,
   CheckCircle2,
   Loader2,
+  Printer,
+  FileText,
 } from "lucide-react";
 
 import PersonalEditor from "../components/resume/editor/PersonalEditor";
@@ -17,8 +19,9 @@ import EducationEditor from "../components/resume/editor/EducationEditor";
 import SkillsEditor from "../components/resume/editor/SkillsEditor";
 import ProjectsEditor from "../components/resume/editor/ProjectsEditor";
 import LivePreview from "../components/resume/editor/LivePreview";
-import { downloadPDF } from "../utils/exporter";
+import { downloadPDF, downloadDOCX, printResume } from "../exporters";
 import { useAuth } from "../../../context/AuthContext";
+import { estimatePageCount } from "../../../utils/resumeUtils";
 
 export default function ResumeEditor() {
   const navigate = useNavigate();
@@ -31,6 +34,7 @@ export default function ResumeEditor() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("edit");
+  const [activeTemplate, setActiveTemplate] = useState("Professional");
 
   const [personal, setPersonal] = useState({
     name: "",
@@ -77,6 +81,9 @@ export default function ResumeEditor() {
       setResumeName(
         activeResume.name || activeResume.title || "Untitled Resume",
       );
+      if (activeResume.template) {
+        setActiveTemplate(activeResume.template);
+      }
     }
 
     const r = activeResume?.resume || activeResume || {};
@@ -188,6 +195,84 @@ export default function ResumeEditor() {
 
       const existing = existingIdx >= 0 ? savedList[existingIdx] : null;
 
+      const newResumeObj = {
+        personal_info: {
+          name: personal.name,
+          title: personal.title,
+          email: personal.email,
+          phone: personal.phone,
+          location: personal.location,
+          linkedin: personal.linkedin,
+          github: personal.github,
+          website: personal.website,
+        },
+        headline: personal.title,
+        summary: summary.text,
+        skills: skills.map((s) => s.name),
+        experience: experience.map((exp) => ({
+          id: exp.id,
+          role: exp.role,
+          company: exp.company,
+          location: exp.location,
+          duration: exp.current
+            ? `${exp.startYear} – Present`
+            : `${exp.startYear} – ${exp.endYear}`,
+          startMonth: exp.startMonth,
+          startYear: exp.startYear,
+          endMonth: exp.endMonth,
+          endYear: exp.endYear,
+          current: exp.current,
+          bullets: exp.bullets,
+          description: exp.bullets,
+        })),
+        projects: projects.map((proj) => ({
+          id: proj.id,
+          name: proj.name,
+          title: proj.name,
+          tech: proj.tech,
+          technologies: proj.tech
+            ? proj.tech.split("·").map((t) => t.trim())
+            : [],
+          url: proj.url,
+          github: proj.url,
+          desc: proj.desc,
+          description: proj.desc ? proj.desc.split("\n") : [],
+        })),
+        education: education.map((edu) => ({
+          id: edu.id,
+          degree: edu.degree,
+          school: edu.school,
+          institution: edu.school,
+          location: edu.location,
+          startYear: edu.startYear,
+          endYear: edu.endYear,
+          start_year: edu.startYear,
+          end_year: edu.endYear,
+          gpa: edu.gpa,
+          honors: edu.honors,
+        })),
+      };
+
+      let newVersion = "v1";
+      if (existing) {
+        const changed = JSON.stringify(existing.resume) !== JSON.stringify(newResumeObj);
+        if (changed) {
+          const currentVer = existing.version || "v1";
+          const match = currentVer.match(/v(\d+)/);
+          if (match) {
+            newVersion = `v${parseInt(match[1], 10) + 1}`;
+          } else {
+            newVersion = "v2";
+          }
+        } else {
+          newVersion = existing.version || "v1";
+        }
+      } else if (state?.resume?.version) {
+        newVersion = state.resume.version;
+      }
+
+      const estimatedPages = estimatePageCount(newResumeObj);
+
       const resumeEntry = {
         id: resumeId,
         title: personal.name ? `${personal.name}'s Resume` : "Untitled Resume",
@@ -200,73 +285,13 @@ export default function ResumeEditor() {
           day: "numeric",
           year: "numeric",
         }),
-        template: existing
-          ? existing.template || "Professional"
-          : state?.resume?.template || "Professional",
+        template: activeTemplate,
         starred: existing
           ? existing.starred || false
           : state?.resume?.starred || false,
-        version: existing
-          ? existing.version || "v1"
-          : state?.resume?.version || "v1",
-        pages: existing ? existing.pages || 1 : state?.resume?.pages || 1,
-        resume: {
-          personal_info: {
-            name: personal.name,
-            title: personal.title,
-            email: personal.email,
-            phone: personal.phone,
-            location: personal.location,
-            linkedin: personal.linkedin,
-            github: personal.github,
-            website: personal.website,
-          },
-          headline: personal.title,
-          summary: summary.text,
-          skills: skills.map((s) => s.name),
-          experience: experience.map((exp) => ({
-            id: exp.id,
-            role: exp.role,
-            company: exp.company,
-            location: exp.location,
-            duration: exp.current
-              ? `${exp.startYear} – Present`
-              : `${exp.startYear} – ${exp.endYear}`,
-            startMonth: exp.startMonth,
-            startYear: exp.startYear,
-            endMonth: exp.endMonth,
-            endYear: exp.endYear,
-            current: exp.current,
-            bullets: exp.bullets,
-            description: exp.bullets,
-          })),
-          projects: projects.map((proj) => ({
-            id: proj.id,
-            name: proj.name,
-            title: proj.name,
-            tech: proj.tech,
-            technologies: proj.tech
-              ? proj.tech.split("·").map((t) => t.trim())
-              : [],
-            url: proj.url,
-            github: proj.url,
-            desc: proj.desc,
-            description: proj.desc ? proj.desc.split("\n") : [],
-          })),
-          education: education.map((edu) => ({
-            id: edu.id,
-            degree: edu.degree,
-            school: edu.school,
-            institution: edu.school,
-            location: edu.location,
-            startYear: edu.startYear,
-            endYear: edu.endYear,
-            start_year: edu.startYear,
-            end_year: edu.endYear,
-            gpa: edu.gpa,
-            honors: edu.honors,
-          })),
-        },
+        version: newVersion,
+        pages: estimatedPages,
+        resume: newResumeObj,
       };
 
       if (existingIdx >= 0) {
@@ -283,21 +308,6 @@ export default function ResumeEditor() {
       console.error(err);
       setSaving(false);
     }
-  };
-
-  const handleDownload = () => {
-    downloadPDF(
-      {
-        personal_info: personal,
-        headline: personal.title,
-        summary: summary.text,
-        skills,
-        experience,
-        education,
-        projects,
-      },
-      `${resumeName}.pdf`,
-    );
   };
 
   return (
@@ -319,6 +329,18 @@ export default function ResumeEditor() {
         </span>
 
         <div className="flex items-center gap-2 ml-auto">
+          <select
+            value={activeTemplate}
+            onChange={(e) => setActiveTemplate(e.target.value)}
+            className="h-9 px-2.5 rounded-xl border border-border text-xs bg-card font-semibold cursor-pointer"
+          >
+            {["Professional", "ATS", "Minimal", "Corporate"].map((name) => (
+              <option key={name} value={name}>
+                {name} Template
+              </option>
+            ))}
+          </select>
+
           <div className="flex items-center bg-muted/50 border border-border rounded-xl p-1 gap-0.5">
             {["edit", "preview"].map((t) => (
               <button
@@ -363,11 +385,43 @@ export default function ResumeEditor() {
           </button>
 
           <button
-            onClick={handleDownload}
+            onClick={() => printResume()}
             className="w-9 h-9 flex items-center justify-center rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
             title="Print Resume"
           >
+            <Printer size={14} />
+          </button>
+
+          <button
+            onClick={() => downloadPDF({
+              personal_info: personal,
+              headline: personal.title,
+              summary: summary.text,
+              skills,
+              experience,
+              education,
+              projects,
+            }, `${resumeName}.pdf`)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            title="Download PDF"
+          >
             <Download size={14} />
+          </button>
+
+          <button
+            onClick={() => downloadDOCX({
+              personal_info: personal,
+              headline: personal.title,
+              summary: summary.text,
+              skills,
+              experience,
+              education,
+              projects,
+            }, `${resumeName}.docx`, activeTemplate)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            title="Download DOCX"
+          >
+            <FileText size={14} />
           </button>
         </div>
       </div>
@@ -407,6 +461,7 @@ export default function ResumeEditor() {
                 experience={experience}
                 education={education}
                 projects={projects}
+                templateName={activeTemplate}
               />
             </div>
           </div>

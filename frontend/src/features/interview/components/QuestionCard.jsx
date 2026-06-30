@@ -119,6 +119,8 @@ export const QuestionCard = memo(function QuestionCard({
   onEdit,
   onDelete,
   isInitiallyExpanded = false,
+  onExpand,
+  isLoading = false,
 }) {
   const { user } = useAuth();
   const isCreatedByCurrentUser = user && question.created_by === user.id;
@@ -128,8 +130,19 @@ export const QuestionCard = memo(function QuestionCard({
   useEffect(() => {
     if (isInitiallyExpanded) {
       setOpen(true);
+      if (onExpand) {
+        onExpand(question.id);
+      }
     }
-  }, [isInitiallyExpanded]);
+  }, [isInitiallyExpanded, onExpand, question.id]);
+
+  const handleToggle = () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && onExpand) {
+      onExpand(question.id);
+    }
+  };
   const cat = CAT_CFG[question.category] || { icon: Sparkles, color: "#7C3AED", bg: "#f5f3ff" };
   const CatIcon = cat.icon;
 
@@ -155,8 +168,8 @@ export const QuestionCard = memo(function QuestionCard({
         role="button"
         tabIndex={0}
         className="flex items-start gap-4 p-5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-t-2xl select-none"
-        onClick={() => setOpen(o => !o)}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(o => !o); } }}
+        onClick={handleToggle}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleToggle(); } }}
       >
 
         <div
@@ -238,11 +251,16 @@ export const QuestionCard = memo(function QuestionCard({
             </div>
 
 
-            {sampleAnswerText && (
+            {isLoading ? (
+              <div className="flex items-center gap-2.5 py-4 px-5 bg-primary/4 border border-primary/12 rounded-2xl text-xs text-muted-foreground animate-pulse">
+                <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>Generating a personalized sample answer tailored to your resume...</span>
+              </div>
+            ) : sampleAnswerText ? (
               <div className="bg-linear-to-br from-primary/4 via-transparent to-transparent border border-primary/12 rounded-2xl p-5">
                 <CodeBlocks content={sampleAnswerText} />
               </div>
-            )}
+            ) : null}
 
             {keyPoints.length > 0 && (
               <div>

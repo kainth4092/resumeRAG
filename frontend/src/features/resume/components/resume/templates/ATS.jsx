@@ -1,4 +1,5 @@
 import React from "react";
+import ResumeSkillRenderer from "./ResumeSkillRenderer";
 
 export default function ATS({ resume }) {
     if (!resume) return null;
@@ -18,9 +19,6 @@ export default function ATS({ resume }) {
 
     const summaryText = r.summary?.text || r.summary || "";
 
-    const skillsList = (r.skills || []).map((s, idx) =>
-        typeof s === "string" ? { id: idx, name: s } : { id: s.id || idx, name: s.name || "" }
-    );
 
     const experienceList = (r.experience || r.work_experience || []).map((e, idx) => ({
         id: e.id || idx,
@@ -90,15 +88,8 @@ export default function ATS({ resume }) {
                 )}
 
                 {/* Skills */}
-                {skillsList.length > 0 && (
-                    <div className="space-y-1">
-                        <h2 className="text-[11px] font-bold uppercase tracking-wider border-b border-black pb-0.5">Technical Skills</h2>
-                        <p className="text-gray-950 font-normal">
-                            <span className="font-bold">Languages & Technologies: </span>
-                            {skillsList.map((s) => s.name).join(", ")}
-                        </p>
-                    </div>
-                )}
+                <ResumeSkillRenderer resume={r} variant="ats" />
+
 
                 {/* Experience */}
                 {experienceList.length > 0 && (

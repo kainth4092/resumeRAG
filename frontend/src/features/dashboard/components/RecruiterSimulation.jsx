@@ -5,7 +5,7 @@ const RecruiterSimulation = () => {
     const navigate = useNavigate()
     return (
 
-        <div className="bg-gradient-to-br from-primary/8 via-primary/5 to-transparent border border-primary/15 rounded-2xl p-5">
+        <div className="bg-linear-to-br from-primary/8 via-primary/5 to-transparent border border-primary/15 rounded-2xl p-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -21,7 +21,7 @@ const RecruiterSimulation = () => {
                 </div>
                 <button
                     onClick={() => navigate("analytics")}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all text-sm font-semibold shadow-sm shadow-primary/25 flex-shrink-0"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all text-sm font-semibold shadow-sm shadow-primary/25 shrink-0"
                 >
                     <Users size={14} /> Run Simulation
                 </button>

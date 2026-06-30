@@ -113,7 +113,15 @@ INTERVIEW_SCHEMA = {
 def generate_interview_questions(
     resume_text: str,
     job_description: str,
+    target_count: int = 40,
 ):
+    fresher_tech = int(target_count * 0.625)
+    fresher_proj = target_count - fresher_tech
+
+    exp_tech = int(target_count * 0.5)
+    exp_exp = int(target_count * 0.25)
+    exp_proj = target_count - exp_tech - exp_exp
+
     prompt = f"""
     You are a Senior Software Engineering Interviewer at Google, Microsoft, Amazon and Atlassian.
     Your task is to generate highly personalized interview questions based on BOTH the candidate's Resume and the target Job Description.
@@ -172,16 +180,16 @@ def generate_interview_questions(
 
     For FRESHER
     Generate EXACTLY
-    25 Technical Questions
-    15 Project Questions
-    Total = 40 Questions
+    {fresher_tech} Technical Questions
+    {fresher_proj} Project Questions
+    Total = {target_count} Questions
 
     For EXPERIENCED
     Generate EXACTLY
-    20 Technical Questions
-    10 Experience Questions
-    10 Project Questions
-    Total = 40 Questions
+    {exp_tech} Technical Questions
+    {exp_exp} Experience Questions
+    {exp_proj} Project Questions
+    Total = {target_count} Questions
 
     ---
 

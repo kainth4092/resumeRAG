@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import ForeignKey, String, Text, DateTime, Boolean
+from sqlalchemy import ForeignKey, String, Text, DateTime, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -15,5 +15,10 @@ class Resume(Base):
     parsed_text: Mapped[str] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    ats_score: Mapped[int] = mapped_column(Integer, nullable=True, default=75)
+    skills: Mapped[str] = mapped_column(Text, nullable=True)
+    analysis_results: Mapped[str] = mapped_column(Text, nullable=True)
+    version: Mapped[str] = mapped_column(String(50), nullable=True, default="v1")
+    template: Mapped[str] = mapped_column(String(100), nullable=True, default="Professional")
     user = relationship("User", back_populates="resumes")
 

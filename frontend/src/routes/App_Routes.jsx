@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
+import PublicOnlyRoute from "../components/layout/PublicOnlyRoute";
 import Layout from "../components/layout/Layout";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
@@ -19,8 +20,10 @@ export default function AppRoutes() {
             <Toaster richColors position="top-right" />
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route element={<PublicOnlyRoute />}>
+                        <Route path="/" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                    </Route>
                     <Route element={<ProtectedRoute />}>
                         <Route element={<Layout />}>
                             <Route path="/dashboard" element={<Dashboard />} />

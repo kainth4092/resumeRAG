@@ -2,7 +2,7 @@ import { RefreshCw, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../../context/AuthContext";
 
-export default function DashboardHeader({ onRefresh, refreshing }) {
+export default function DashboardHeader({ onRefresh, refreshing, greeting }) {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -17,15 +17,14 @@ export default function DashboardHeader({ onRefresh, refreshing }) {
     <div className="flex items-start justify-between gap-4">
       <div>
         <h1 className="text-foreground">
-          {getGreeting()}
-          {user?.name ? `, ${user.name}` : ""} 👋
+          {greeting || `${getGreeting()}${user?.name ? `, ${user.name}` : ""}`} 👋
         </h1>
 
         <p className="text-muted-foreground text-sm mt-1">
           Here's how your job search is performing.
         </p>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={onRefresh}
           disabled={refreshing}

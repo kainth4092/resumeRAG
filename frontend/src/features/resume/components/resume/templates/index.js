@@ -38,3 +38,6 @@ export const TEMPLATE_REGISTRY = {
   },
 
 };
+
+export { default as ResumeSkillRenderer, getTechnicalSkills } from "./ResumeSkillRenderer";
+

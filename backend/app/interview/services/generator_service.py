@@ -1,5 +1,6 @@
 import logging
 from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
 from app.interview.schemas.question import QuestionBankItem, InterviewPipelineConfig
 from app.interview.repository.question_repository import QuestionRepository
 from app.interview.filters.question_filter import QuestionFilter
@@ -7,6 +8,7 @@ from app.interview.services.matching_service import SkillMatchingService
 from app.interview.utils.randomizer import QuestionRandomizer
 
 logger = logging.getLogger(__name__)
+
 
 class InterviewGeneratorService:
     def __init__(self, repository: Optional[QuestionRepository] = None):
@@ -16,7 +18,8 @@ class InterviewGeneratorService:
         self,
         resume_text: str,
         job_description: str,
-        config: Optional[InterviewPipelineConfig] = None
+        config: Optional[InterviewPipelineConfig] = None,
+        db: Optional[Session] = None,
     ) -> List[Dict[str, Any]]:
         """
         Flow:
@@ -26,95 +29,164 @@ class InterviewGeneratorService:
             config = InterviewPipelineConfig()
 
         # Step 1 & 2: Skill Extraction & Matching
-        matched_skills = SkillMatchingService.match_candidate_skills(resume_text, job_description)
+        matched_skills = SkillMatchingService.match_candidate_skills(
+            resume_text, job_description
+        )
         logger.info("Extracted matching skills for interview: %s", matched_skills)
 
         # Step 3: Load Catalog
-        catalog = self.repository.get_all()
-        
+        if db is not None:
+            logger.info("Loading catalog questions from the database.")
+            from app.models.interview_bank import InterviewQuestionBank
+
+            db_questions = db.query(InterviewQuestionBank).all()
+            catalog = []
+            for db_q in db_questions:
+                exp_lower = (db_q.experience_level or "").lower()
+                if (
+                    "fresher" in exp_lower
+                    or "junior" in exp_lower
+                    or "easy" in exp_lower
+                ):
+                    difficulty = "Easy"
+                elif (
+                    "senior" in exp_lower or "hard" in exp_lower or "lead" in exp_lower
+                ):
+                    difficulty = "Hard"
+                else:
+                    difficulty = "Medium"
+
+                catalog.append(
+                    QuestionBankItem(
+                        id=str(db_q.id),
+                        question=db_q.question,
+                        category=db_q.category or "Technical",
+                        difficulty=difficulty,
+                        skills=[db_q.skill] if db_q.skill else [],
+                        question_type="Short Answer",
+                        estimated_duration="2-3 minutes",
+                        sample_answer=db_q.answer,
+                        key_points=db_q.tags or [],
+                    )
+                )
+            logger.info(
+                "Loaded %d questions from the database to populate catalog",
+                len(catalog),
+            )
+        else:
+            catalog = self.repository.get_all()
+
         # Step 4: Question Filtering by skills
         filtered_by_skills = QuestionFilter.filter_by_skills(catalog, matched_skills)
-        logger.info("Matched %d questions matching extracted skills", len(filtered_by_skills))
+        logger.info(
+            "Matched %d questions matching extracted skills", len(filtered_by_skills)
+        )
 
-        # (Optional) If we don't have enough curated questions, fallback to entire catalog
         if len(filtered_by_skills) < config.length:
-            logger.info("Insufficient skill-specific questions, falling back to full catalog")
+            logger.info(
+                "Insufficient skill-specific questions, falling back to full catalog"
+            )
             filtered_by_skills = catalog
 
         # Step 5: Difficulty & Category Filtering
         filtered_pool = filtered_by_skills
 
-        # Step 6: Randomization
-        selected_questions = QuestionRandomizer.select_questions(
-            pool=filtered_pool,
-            length=config.length,
-            difficulty_distribution=config.difficulty_distribution
-        )
-        logger.info("Selected %d questions from local Question Bank", len(selected_questions))
+        # Step 6: Select Technical Questions from the DB (target 50% of config.length)
+        db_target = config.length // 2
 
-        # Step 7: Hybrid Mode or AI Fallback
-        # If the question bank is empty or hybrid mode is requested, or we couldn't fulfill the length:
-        if len(selected_questions) < config.length or config.hybrid_mode:
-            logger.info("Triggering AI Generator fallback/hybrid integration")
-            # Import dynamically to avoid circular dependency
+        tech_db_pool = [
+            q
+            for q in filtered_pool
+            if q.category.lower() in ("technical", "coding", "theory")
+        ]
+        if not tech_db_pool:
+            tech_db_pool = filtered_pool
+
+        selected_db_questions = QuestionRandomizer.select_questions(
+            pool=tech_db_pool,
+            length=db_target,
+            difficulty_distribution=config.difficulty_distribution,
+        )
+        logger.info(
+            "Selected %d technical questions from database", len(selected_db_questions)
+        )
+
+        # Step 7: Format and populate selected DB questions
+        selected_questions_dicts = []
+        for q in selected_db_questions:
+            selected_questions_dicts.append(
+                {
+                    "question": q.question,
+                    "category": q.category.title(),
+                    "difficulty": q.difficulty.title(),
+                    "estimated_duration": q.estimated_duration,
+                    "tech_skill": q.skills[0] if q.skills else None,
+                    "answer": q.sample_answer,
+                }
+            )
+
+        # Step 8: Call AI Generator to get Project/Experience/Behavioral questions
+        try:
+            logger.info("Generating AI questions for Projects and Experience")
             from app.services.interview_service import generate_interview_questions
-            
-            ai_needed = config.length - len(selected_questions)
-            try:
-                ai_payload = generate_interview_questions(resume_text, job_description)
-                
-                # Convert AI response into standard question dicts
-                ai_questions = []
-                for cat in ["technical", "project", "experience"]:
-                    if cat in ai_payload and isinstance(ai_payload[cat], list):
-                        for q in ai_payload[cat]:
-                            ai_questions.append({
+
+            ai_payload = generate_interview_questions(
+                resume_text, job_description, target_count=config.length
+            )
+
+            ai_questions = []
+            for cat in ["project", "experience", "technical"]:
+                if cat in ai_payload and isinstance(ai_payload[cat], list):
+                    for q in ai_payload[cat]:
+                        ai_questions.append(
+                            {
                                 "question": q.get("question", ""),
                                 "category": cat.title(),
                                 "difficulty": q.get("difficulty", "Medium"),
-                                "estimated_duration": q.get("estimated_duration", "2-3 minutes"),
+                                "estimated_duration": q.get(
+                                    "estimated_duration", "2-3 minutes"
+                                ),
                                 "tech_skill": q.get("tech_skill"),
-                                "answer": None
-                            })
-                
-                # Add AI questions to reach target count
-                import random
-                random.shuffle(ai_questions)
-                selected_questions_dicts = []
-                
-                # First add all curated ones
-                for q in selected_questions:
-                    selected_questions_dicts.append({
+                                "answer": None,
+                            }
+                        )
+
+            for ai_q in ai_questions:
+                if len(selected_questions_dicts) >= config.length:
+                    break
+                existing_texts = {
+                    eq["question"].lower().strip() for eq in selected_questions_dicts
+                }
+                if ai_q["question"].lower().strip() not in existing_texts:
+                    selected_questions_dicts.append(ai_q)
+
+        except Exception as e:
+            logger.error(
+                "Failed to generate AI questions: %s. Using DB fallback.", str(e)
+            )
+
+        if len(selected_questions_dicts) < config.length:
+            remaining_needed = config.length - len(selected_questions_dicts)
+            additional_db = QuestionRandomizer.select_questions(
+                pool=[
+                    q
+                    for q in filtered_pool
+                    if q.question
+                    not in {eq["question"] for eq in selected_questions_dicts}
+                ],
+                length=remaining_needed,
+                difficulty_distribution=config.difficulty_distribution,
+            )
+            for q in additional_db:
+                selected_questions_dicts.append(
+                    {
                         "question": q.question,
                         "category": q.category.title(),
                         "difficulty": q.difficulty.title(),
                         "estimated_duration": q.estimated_duration,
                         "tech_skill": q.skills[0] if q.skills else None,
-                        "answer": q.sample_answer
-                    })
-                
-                # Fill up remaining slots with AI questions
-                for ai_q in ai_questions:
-                    if len(selected_questions_dicts) >= config.length:
-                        break
-                    # Avoid duplicates
-                    existing_texts = {eq["question"].lower().strip() for eq in selected_questions_dicts}
-                    if ai_q["question"].lower().strip() not in existing_texts:
-                        selected_questions_dicts.append(ai_q)
-                        
-                return selected_questions_dicts
-            except Exception as e:
-                logger.error("Failed to generate AI fallback questions: %s", str(e))
-                
-        # Format curated questions for database insertion
-        formatted = []
-        for q in selected_questions:
-            formatted.append({
-                "question": q.question,
-                "category": q.category.title(),
-                "difficulty": q.difficulty.title(),
-                "estimated_duration": q.estimated_duration,
-                "tech_skill": q.skills[0] if q.skills else None,
-                "answer": q.sample_answer
-            })
-        return formatted
+                        "answer": q.sample_answer,
+                    }
+                )
+
+        return selected_questions_dicts

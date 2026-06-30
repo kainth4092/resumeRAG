@@ -1,11 +1,12 @@
 import { AreaChart, Area, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { trendData } from "../../data/dashboardData";
+import { trendData as defaultTrendData } from "../../data/dashboardData";
 
-export default function AtsTrendChart() {
+export default function AtsTrendChart({ data }) {
+    const chartData = data || defaultTrendData;
+
     return (
-
         <ResponsiveContainer width="100%" height={190}>
-            <AreaChart data={trendData}>
+            <AreaChart data={chartData}>
                 <defs>
                     <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />

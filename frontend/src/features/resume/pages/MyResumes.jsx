@@ -11,7 +11,8 @@ import DeleteDialog from "../components/resume/dashboard/DeleteDialog";
 import { setActiveResume } from "../services/resumeService";
 import { useAuth } from "../../../context/AuthContext";
 import { ResumeGenerator } from "./Generator";
-import { interviewService } from "../../interview/services/interviewService";
+import { interviewService } from "../../../services/interviewService";
+import { estimatePageCount } from "../../../utils/resumeUtils";
 
 export default function MyResumes() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export default function MyResumes() {
         score: score,
         status: item.status || "Active",
         updated: item.updatedAt || "Just now",
-        pages: item.pages || 1,
+        pages: item.pages || estimatePageCount(item.resume),
         version: item.version || "v1",
         starred: item.starred || false,
         template: item.template || "Professional",
@@ -217,12 +218,6 @@ export default function MyResumes() {
     { value: "All", label: "All Status" },
     { value: "Active", label: "Active" },
     { value: "Draft", label: "Draft" },
-    { value: "Submitted", label: "Submitted" },
-  ];
-  const sortOpts = [
-    { value: "updated", label: "Last Updated" },
-    { value: "score", label: "ATS Score" },
-    { value: "name", label: "Name (A–Z)" },
   ];
 
   if (view === "new") {
@@ -269,7 +264,7 @@ export default function MyResumes() {
               sortBy={sortBy}
               setSortBy={setSortBy}
               statusOpts={statusOpts}
-              sortOpts={sortOpts}
+
             />
 
             <ResumeTable

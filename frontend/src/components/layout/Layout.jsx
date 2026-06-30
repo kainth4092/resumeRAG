@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Outlet } from "react-router";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import { notifications } from "../../data/navigation";
 import { useAuth } from "../../context/AuthContext";
+import { EmailModal } from "../../features/email";
 
 export default function Layout() {
   const { loading } = useAuth();
@@ -11,6 +11,7 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const profileRef = useRef(null);
   const notifRef = useRef(null);
 
@@ -40,8 +41,6 @@ export default function Layout() {
       </div>
     );
   }
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <div className="flex w-full h-full overflow-hidden">
@@ -73,18 +72,22 @@ export default function Layout() {
         <Navbar
           notifRef={notifRef}
           notifOpen={notifOpen}
-          unreadCount={unreadCount}
           profileOpen={profileOpen}
           profileRef={profileRef}
           setNotifOpen={setNotifOpen}
           setProfileOpen={setProfileOpen}
           setMobileOpen={setMobileOpen}
+          onEmailClick={() => setEmailModalOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>
       </div>
+      <EmailModal
+        open={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+      />
     </div>
   );
 }
