@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "../../../services/api";
 
 export const retrieveInterviewQuestions = (payload) => {
   return api.post("/interview-bank/retrieve", payload);

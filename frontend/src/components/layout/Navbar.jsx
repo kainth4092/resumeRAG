@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, LogOut, Mail, Menu, Moon, Sun, User } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../features/auth/context/AuthContext";
 import { useNavigate } from "react-router";
 
 export default function Navbar({ profileRef, setNotifOpen, setProfileOpen, setMobileOpen, profileOpen, onEmailClick }) {

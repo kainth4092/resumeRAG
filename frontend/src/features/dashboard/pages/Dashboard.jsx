@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, AlertTriangle } from "lucide-react";
 import DashboardHeader from "../components/DashboardHeader";
 import ActivityFeed from "../components/ActivityFeed";
 import AtsTrendChart from "../components/charts/ATSTrendChart";
@@ -12,14 +12,21 @@ import { mapApiActivities } from "../data/dashboardData";
 export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [greeting, setGreeting] = useState("");
   const [trend, setTrend] = useState([]);
   const [radar, setRadar] = useState([]);
   const [weekly, setWeekly] = useState([]);
   const [activityFeed, setActivityFeed] = useState([]);
+  const [emptyStates, setEmptyStates] = useState({
+    no_resumes: true,
+    no_jobs: true,
+    no_interviews: true,
+  });
 
   const loadDashboardData = async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
+    setError(null);
     try {
       const localHour = new Date().getHours();
       const data = await dashboardService.getDashboardData(localHour);
@@ -29,9 +36,15 @@ export default function Dashboard() {
       setRadar(data.resume_dna || []);
       setWeekly(data.weekly_activity || []);
       setActivityFeed(mapApiActivities(data.recent_activities));
+      setEmptyStates(data.empty_states || {
+        no_resumes: (data.score_trend || []).length === 0,
+        no_jobs: true,
+        no_interviews: true,
+      });
 
     } catch (e) {
       console.error("Failed to load dashboard statistics:", e);
+      setError(e.response?.data?.detail || e.message || "Failed to load dashboard statistics.");
     } finally {
       setLoading(false);
     }
@@ -59,11 +72,30 @@ export default function Dashboard() {
 
   const deltaText = getImprovementDelta();
 
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-card border border-border rounded-2xl p-6 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Error Loading Dashboard</h3>
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <button
+            onClick={() => loadDashboardData()}
+            className="w-full py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all text-sm font-semibold shadow-sm shadow-primary/25"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <DashboardHeader refreshing={refreshing} onRefresh={refresh} greeting={greeting} />
-
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5">
@@ -88,7 +120,13 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            <AtsTrendChart data={trend} />
+            {loading ? (
+              <div className="h-[190px] flex items-center justify-center text-muted-foreground">
+                Loading ATS Score Trend...
+              </div>
+            ) : (
+              <AtsTrendChart data={trend} />
+            )}
           </div>
 
           <ResumeRadarChart loading={loading} data={radar} />
@@ -99,7 +137,7 @@ export default function Dashboard() {
           <ActivityFeed loading={loading} activities={activityFeed} />
         </div>
 
-        <RecruiterSimulation />
+        <RecruiterSimulation noResumes={emptyStates.no_resumes} />
       </div>
     </div>
   );

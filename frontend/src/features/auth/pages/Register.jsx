@@ -4,7 +4,7 @@ import { AuthLayout } from "./AuthLayout";
 import { SignupIllustration } from "./AuthIllustrations"
 import { AuthAlert } from "./AuthComponents";
 import RegisterForm from "../components/RegisterForm";
-import { registerUser } from "../../../services/authService";
+import { registerUser } from "../services/authService";
 import { useNavigate } from "react-router";
 
 export default function SignupPage() {

@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.resume import Resume
 from app.api.email.schemas import EmailSendRequest, EmailSendResponse
 from app.api.email.services import email_service
+from app.resume.repository.resume_repository import ResumeRepository
 
 router = APIRouter(prefix="/api/email", tags=["Email"])
 
@@ -17,11 +17,7 @@ def send_email(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    resume = (
-        db.query(Resume)
-        .filter(Resume.id == request.resumeId, Resume.user_id == current_user.id)
-        .first()
-    )
+    resume = ResumeRepository.get_resume_by_id(db, request.resumeId, current_user.id)
     if not resume:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

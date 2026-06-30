@@ -91,7 +91,7 @@ class InterviewGeneratorService:
         # Step 5: Difficulty & Category Filtering
         filtered_pool = filtered_by_skills
 
-        # Step 6: Select Technical Questions from the DB (target 50% of config.length)
+        # Step 6: Select Technical Questions from the DB
         db_target = config.length // 2
 
         tech_db_pool = [
@@ -128,7 +128,9 @@ class InterviewGeneratorService:
         # Step 8: Call AI Generator to get Project/Experience/Behavioral questions
         try:
             logger.info("Generating AI questions for Projects and Experience")
-            from app.services.interview_service import generate_interview_questions
+            from app.interview.services.interview_service import (
+                generate_interview_questions,
+            )
 
             ai_payload = generate_interview_questions(
                 resume_text, job_description, target_count=config.length

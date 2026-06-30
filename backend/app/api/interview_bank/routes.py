@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.resume import Resume
+from app.resume.repository.resume_repository import ResumeRepository
 from app.schemas.interview_bank import (
     InterviewQuestionCreate,
     InterviewQuestionUpdate,
     InterviewQuestionResponse,
 )
 from app.schemas.interview_retrieval import InterviewRetrievalRequest
-from app.services.interview_bank_service import (
+from app.interview.services.interview_bank_service import (
     create_question,
     get_question,
     get_question_by_id,
@@ -18,12 +18,11 @@ from app.services.interview_bank_service import (
     delete_question,
     list_questions,
 )
-from app.services.interview_retrieval_service import (
+from app.interview.services.interview_retrieval_service import (
     extract_resume_skills,
     extract_jd_skills,
     retrieve_questions_rag,
 )
-
 
 router = APIRouter(
     prefix="/api/interview-bank",
@@ -193,13 +192,8 @@ def retrieve_interview_questions(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        resume = (
-            db.query(Resume)
-            .filter(
-                Resume.id == payload.resume_id,
-                Resume.user_id == current_user.id,
-            )
-            .first()
+        resume = ResumeRepository.get_resume_by_id(
+            db, payload.resume_id, current_user.id
         )
         if not resume:
             raise HTTPException(

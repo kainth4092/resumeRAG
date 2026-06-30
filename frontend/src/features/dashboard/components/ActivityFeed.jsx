@@ -1,11 +1,10 @@
 import { Clock } from "lucide-react";
 import Skeleton from "./Skeleton";
-import { activities as defaultActivities } from "../data/dashboardData";
 import { useNavigate } from "react-router-dom";
 
 export default function ActivityFeed({ loading, activities }) {
     const navigate = useNavigate();
-    const feed = activities || defaultActivities;
+    const feed = activities || [];
 
     return (
         <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5 flex flex-col">
@@ -24,7 +23,13 @@ export default function ActivityFeed({ loading, activities }) {
                             </div>
                         </div>
                     ))
-                    : feed.map((a, i) => (
+                    : feed.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center py-8">
+                            <p className="text-sm text-muted-foreground">
+                                No recent activity.
+                            </p>
+                        </div>
+                    ) : feed.map((a, i) => (
                         <div key={i} className="flex items-start gap-3 group hover:bg-muted/30 -mx-2 px-2 py-1.5 rounded-xl transition-colors cursor-pointer">
                             <div className={`w-8 h-8 rounded-xl ${a.color} flex items-center justify-center shrink-0 mt-0.5`}>
                                 <a.icon size={13} />
@@ -41,5 +46,5 @@ export default function ActivityFeed({ loading, activities }) {
                 }
             </div>
         </div>
-    )
+    );
 }

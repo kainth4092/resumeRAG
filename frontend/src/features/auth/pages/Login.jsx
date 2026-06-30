@@ -3,10 +3,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { AuthLayout } from "./AuthLayout";
 import { LoginIllustration } from "./AuthIllustrations";
-import { loginUser } from "../../../services/authService";
+import { loginUser } from "../services/authService";
 import LoginForm from "../components/LoginForm";
 import { AuthAlert } from "./AuthComponents";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -46,11 +46,11 @@ export default function Login() {
       illustration={<LoginIllustration />}
       leftTitle="Land interviews 3× faster with AI-optimized resumes"
       leftSubtitle="ResumeRAG analyzes job descriptions and tailors your resume to maximize ATS scores and recruiter attention."
-      // testimonial={{
-      //     quote: "My ATS score went from 61 to 94 in one session. Got a call from Stripe the next week.",
-      //     author: "Alex Chen",
-      //     role: "Software Engineer · Hired at Stripe",
-      // }}
+    // testimonial={{
+    //     quote: "My ATS score went from 61 to 94 in one session. Got a call from Stripe the next week.",
+    //     author: "Alex Chen",
+    //     role: "Software Engineer · Hired at Stripe",
+    // }}
     >
       <div className="space-y-7">
         <div>

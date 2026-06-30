@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
+import logging
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.resume import Resume
-from app.models.interview import InterviewSession, InterviewQuestion
 from app.models.user import User
 from app.schemas.interview import (
     GenerateInterviewRequest,
@@ -11,25 +10,14 @@ from app.schemas.interview import (
     InterviewSessionResponse,
     InterviewHistoryItem,
 )
-from app.services.interview_service import (
-    generate_interview_questions,
-    generate_question_details,
-    generate_sample_answer,
-)
+from app.interview.services.interview_workflow_service import InterviewWorkflowService
 
-import json
-
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/api/interview",
     tags=["Interview Prep"],
 )
-
-CATEGORY_NAMES = {
-    "technical": "Technical",
-    "project": "Project",
-    "experience": "Experience",
-}
 
 
 @router.post(
@@ -41,67 +29,14 @@ def generate_interview(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        resume = (
-            db.query(Resume)
-            .filter(
-                Resume.id == payload.resume_id,
-                Resume.user_id == current_user.id,
-            )
-            .first()
-        )
-        if not resume:
-            raise HTTPException(
-                status_code=404,
-                detail="Resume not found",
-            )
-
-        from app.interview.services.generator_service import InterviewGeneratorService
-        from app.interview.services.session_service import InterviewSessionService
-
-        # Run questions generation pipeline
-        generator_service = InterviewGeneratorService()
-        questions_to_add = generator_service.generate_session_questions(
-            resume_text=resume.parsed_text,
-            job_description=payload.job_description,
-            db=db
-        )
-
-        candidate_type = "FRESHER"
-        if "experienced" in resume.parsed_text.lower() or "experience" in resume.parsed_text.lower():
-            candidate_type = "EXPERIENCED"
-
-        session = InterviewSessionService.create_session(
-            db=db,
-            user_id=current_user.id,
-            resume_id=resume.id,
-            company=payload.company,
-            role=payload.role,
-            candidate_type=candidate_type,
-            job_description=payload.job_description
-        )
-
-        for q_data in questions_to_add:
-            InterviewSessionService.add_question_to_session(
-                db=db,
-                session_id=session.id,
-                question_data=q_data
-            )
-
-        db.commit()
-        db.refresh(session)
-        return {"session": session}
-
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate interview questions: {str(e)}",
-        )
+    return InterviewWorkflowService.generate_interview(
+        db=db,
+        current_user=current_user,
+        resume_id=payload.resume_id,
+        job_description=payload.job_description,
+        company=payload.company,
+        role=payload.role,
+    )
 
 
 @router.get(
@@ -112,26 +47,7 @@ def interview_history(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        history = (
-            db.query(InterviewSession)
-            .options(joinedload(InterviewSession.questions))
-            .filter(
-                InterviewSession.user_id == current_user.id,
-            )
-            .order_by(
-                InterviewSession.created_at.desc(),
-            )
-            .all()
-        )
-
-        return history
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch interview history: {str(e)}",
-        )
+    return InterviewWorkflowService.get_history(db, current_user)
 
 
 @router.get(
@@ -143,33 +59,7 @@ def get_interview_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        session = (
-            db.query(InterviewSession)
-            .options(joinedload(InterviewSession.resume))
-            .filter(
-                InterviewSession.id == session_id,
-                InterviewSession.user_id == current_user.id,
-            )
-            .first()
-        )
-
-        if not session:
-            raise HTTPException(
-                status_code=404,
-                detail="Interview session not found",
-            )
-
-        return session
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch interview session: {str(e)}",
-        )
+    return InterviewWorkflowService.get_session(db, session_id, current_user)
 
 
 @router.patch("/bookmark/{question_id}")
@@ -178,44 +68,7 @@ def toggle_bookmark(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-
-        question = (
-            db.query(InterviewQuestion)
-            .join(InterviewSession)
-            .filter(
-                InterviewQuestion.id == question_id,
-                InterviewSession.user_id == current_user.id,
-            )
-            .first()
-        )
-
-        if not question:
-            raise HTTPException(
-                status_code=404,
-                detail="Interview question not found",
-            )
-
-        question.bookmarked = not question.bookmarked
-
-        db.commit()
-        db.refresh(question)
-
-        return {
-            "message": "Bookmark updated successfully",
-            "bookmarked": question.bookmarked,
-        }
-
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to update bookmark: {str(e)}",
-        )
+    return InterviewWorkflowService.toggle_bookmark(db, question_id, current_user)
 
 
 @router.delete("/{session_id}")
@@ -224,40 +77,7 @@ def delete_interview_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-
-        session = (
-            db.query(InterviewSession)
-            .filter(
-                InterviewSession.id == session_id,
-                InterviewSession.user_id == current_user.id,
-            )
-            .first()
-        )
-
-        if not session:
-            raise HTTPException(
-                status_code=404,
-                detail="Interview session not found",
-            )
-
-        db.delete(session)
-        db.commit()
-
-        return {
-            "message": "Interview session deleted successfully",
-        }
-
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete interview session: {str(e)}",
-        )
+    return InterviewWorkflowService.delete_session(db, session_id, current_user)
 
 
 @router.post("/question/{question_id}/details")
@@ -266,89 +86,4 @@ def get_question_details(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        question = (
-            db.query(InterviewQuestion)
-            .filter(InterviewQuestion.id == question_id)
-            .first()
-        )
-
-        if not question:
-            raise HTTPException(
-                status_code=404,
-                detail="Question not found",
-            )
-
-        session = (
-            db.query(InterviewSession)
-            .filter(
-                InterviewSession.id == question.session_id,
-                InterviewSession.user_id == current_user.id,
-            )
-            .first()
-        )
-
-        if not session:
-            raise HTTPException(
-                status_code=403,
-                detail="Access denied",
-            )
-
-        def has_valid_answer(ans):
-            if not ans:
-                return False
-            if isinstance(ans, dict):
-                return bool(ans.get("sample_answer") or ans.get("answer"))
-            if isinstance(ans, str):
-                return bool(ans.strip())
-            return False
-
-        if question.details_generated or has_valid_answer(question.answer):
-            if not question.details_generated:
-                question.details_generated = True
-                db.commit()
-            return {
-                "answer": question.answer,
-            }
-
-        resume = (
-            db.query(Resume)
-            .filter(
-                Resume.id == session.resume_id,
-                Resume.user_id == current_user.id,
-            )
-            .first()
-        )
-
-        if not resume:
-            raise HTTPException(
-                status_code=404,
-                detail="Resume not found",
-            )
-
-        result = generate_sample_answer(
-            resume.parsed_text,
-            session.job_description,
-            question.question,
-        )
-
-        question.answer = result["answer"]
-        question.details_generated = True
-
-        db.commit()
-        db.refresh(question)
-
-        return {
-            "answer": question.answer,
-        }
-
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate sample answer: {str(e)}",
-        )
+    return InterviewWorkflowService.get_question_details(db, question_id, current_user)

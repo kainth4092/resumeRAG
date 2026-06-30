@@ -52,7 +52,7 @@ export function getRelativeTime(dateString) {
 
 export function mapApiActivities(recentActivities) {
     if (!Array.isArray(recentActivities) || recentActivities.length === 0) {
-        return DEFAULT_ACTIVITIES;
+        return [];
     }
     return recentActivities.map((a) => {
         let icon = Zap;

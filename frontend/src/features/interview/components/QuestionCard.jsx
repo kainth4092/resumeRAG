@@ -3,7 +3,7 @@ import {
   Bookmark, BookmarkCheck, ChevronDown, Sparkles, Edit2, Trash2, Clock, CheckCircle2, AlertCircle, ChevronRight
 } from "lucide-react";
 import { CAT_CFG, DIFF_CFG } from "../../../data/interviewConstants";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 
 function Prose({ content }) {
   if (!content) return null;

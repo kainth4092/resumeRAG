@@ -1,12 +1,19 @@
 import { AreaChart, Area, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { trendData as defaultTrendData } from "../../data/dashboardData";
 
 export default function AtsTrendChart({ data }) {
-    const chartData = data || defaultTrendData;
+    if (!data || data.length === 0) {
+        return (
+            <div className="h-[190px] flex flex-col items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground">
+                    Generate your first resume to see ATS history.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <ResponsiveContainer width="100%" height={190}>
-            <AreaChart data={chartData}>
+            <AreaChart data={data}>
                 <defs>
                     <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />
@@ -20,5 +27,5 @@ export default function AtsTrendChart({ data }) {
                 <Area type="monotone" dataKey="score" stroke="var(--color-primary)" strokeWidth={2.5} fill="url(#sg)" dot={{ r: 3.5, fill: "var(--color-primary)", strokeWidth: 0 }} activeDot={{ r: 5, fill: "var(--color-primary)" }} />
             </AreaChart>
         </ResponsiveContainer>
-    )
+    );
 }

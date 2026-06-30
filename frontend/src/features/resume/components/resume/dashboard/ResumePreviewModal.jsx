@@ -3,7 +3,7 @@ import { FileText, Edit2, Trash2, X, Printer } from "lucide-react";
 import ResumeTemplate from "../ResumeTemplate";
 import { STATUS_STYLES } from "./constants";
 import { TEMPLATE_REGISTRY } from "../templates";
-import { useAuth } from "../../../../../context/AuthContext";
+import { useAuth } from "../../../../auth/context/AuthContext";
 
 function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
   const { user } = useAuth();

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { getAllInterviewQuestions } from "../../../services/interviewBankApi";
+import { getAllInterviewQuestions } from "../services/interviewBankService";
 import { asText, estimateMinutes } from "../../../utils/interviewUtils";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export function useQuestionFilters({
   questions,

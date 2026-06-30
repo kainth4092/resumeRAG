@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TEMPLATE_REGISTRY } from "../components/resume/templates";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 import { MOCK_RESUME, TEMPLATE_METADATA } from "./templatesData";
 import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
 import TemplatePreviewModal from "../components/resume/templates/TemplatePreviewModal";

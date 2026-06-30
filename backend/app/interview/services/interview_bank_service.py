@@ -4,8 +4,8 @@ from app.schemas.interview_bank import (
     InterviewQuestionCreate,
     InterviewQuestionUpdate,
 )
-from app.services.qdrant_service import upsert_question
-from app.services.qdrant_service import delete_question_vector
+from app.services.qdrant_service import upsert_question, delete_question_vector
+from app.interview.repository.question_bank_repository import QuestionBankRepository
 
 
 def create_question(
@@ -16,6 +16,7 @@ def create_question(
     answer_text = payload.answer
     if not answer_text or not answer_text.strip():
         from app.services.llm_service import generate_general_answer
+
         answer_text = generate_general_answer(
             question=payload.question,
             skill=payload.skill,
@@ -36,42 +37,28 @@ def create_question(
         created_by=created_by,
     )
 
-    db.add(question)
-    db.commit()
-    db.refresh(question)
+    saved_question = QuestionBankRepository.create_question(db, question)
 
     try:
-        upsert_question(question)
+        upsert_question(saved_question)
     except Exception as e:
         print(f"Qdrant sync failed: {e}")
 
-    return question
+    return saved_question
 
 
 def get_question(
     db: Session,
     question_id: int,
 ):
-    return (
-        db.query(InterviewQuestionBank)
-        .filter(
-            InterviewQuestionBank.id == question_id,
-        )
-        .first()
-    )
+    return QuestionBankRepository.get_question(db, question_id)
 
 
 def get_question_by_id(
     db: Session,
     question_id: int,
 ):
-    return (
-        db.query(InterviewQuestionBank)
-        .filter(
-            InterviewQuestionBank.id == question_id,
-        )
-        .first()
-    )
+    return QuestionBankRepository.get_question(db, question_id)
 
 
 def update_question(
@@ -97,8 +84,7 @@ def delete_question(
     question: InterviewQuestionBank,
 ):
     question_id = question.id
-    db.delete(question)
-    db.commit()
+    QuestionBankRepository.delete_question(db, question)
     delete_question_vector(question_id)
 
 
@@ -109,24 +95,10 @@ def list_questions(
     experience_level: str | None = None,
     search: str | None = None,
 ):
-    query = db.query(InterviewQuestionBank)
-
-    if skill:
-        query = query.filter(InterviewQuestionBank.skill.ilike(skill))
-    if category:
-        query = query.filter(InterviewQuestionBank.category.ilike(category))
-    if experience_level:
-        query = query.filter(
-            InterviewQuestionBank.experience_level.ilike(experience_level)
-        )
-    if search:
-        search_pattern = f"%{search}%"
-        query = query.filter(
-            InterviewQuestionBank.question.ilike(search_pattern)
-            | InterviewQuestionBank.answer.ilike(search_pattern)
-        )
-
-    return query.order_by(
-        InterviewQuestionBank.skill.asc(),
-        InterviewQuestionBank.question.asc(),
-    ).all()
+    return QuestionBankRepository.list_questions(
+        db,
+        skill=skill,
+        category=category,
+        experience_level=experience_level,
+        search=search,
+    )

@@ -1,17 +1,24 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import Skeleton from "../Skeleton";
-import { weeklyData as defaultWeeklyData } from "../../data/dashboardData";
 
 export default function WeeklyActivityChart({ loading, data }) {
-    const chartData = data || defaultWeeklyData;
+    const isDataEmpty = !data || data.length === 0 || data.every(d => d.applied === 0 && d.interviews === 0);
 
     return (
         <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-foreground mb-0.5">Weekly Activity</h3>
             <p className="text-xs text-muted-foreground mb-4">Applications & interviews</p>
-            {loading ? <Skeleton className="h-36 w-full" /> : (
+            {loading ? (
+                <Skeleton className="h-36 w-full" />
+            ) : isDataEmpty ? (
+                <div className="h-[140px] flex flex-col items-center justify-center text-center">
+                    <p className="text-sm text-muted-foreground">
+                        No activity this week.
+                    </p>
+                </div>
+            ) : (
                 <ResponsiveContainer width="100%" height={140}>
-                    <BarChart data={chartData} barGap={2}>
+                    <BarChart data={data} barGap={2}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
                         <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 11 }} />
@@ -21,5 +28,5 @@ export default function WeeklyActivityChart({ loading, data }) {
                 </ResponsiveContainer>
             )}
         </div>
-    )
+    );
 }

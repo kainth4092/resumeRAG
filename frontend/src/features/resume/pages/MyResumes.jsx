@@ -9,9 +9,9 @@ import ResumeTable from "../components/resume/dashboard/ResumeTable";
 import ResumePreviewModal from "../components/resume/dashboard/ResumePreviewModal";
 import DeleteDialog from "../components/resume/dashboard/DeleteDialog";
 import { setActiveResume } from "../services/resumeService";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 import { ResumeGenerator } from "./Generator";
-import { interviewService } from "../../../services/interviewService";
+import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
 
 export default function MyResumes() {

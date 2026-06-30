@@ -4,10 +4,10 @@ import {
   createInterviewQuestion,
   updateInterviewQuestion,
   deleteInterviewQuestion,
-} from "../../../services/interviewBankApi";
-import { getInterviewSession, getInterviewHistory, getQuestionDetails } from "../../../services/interviewService";
+} from "../services/interviewBankService";
+import { getInterviewSession, getInterviewHistory, getQuestionDetails } from "../services/interviewService";
 import { asText, estimateMinutes } from "../../../utils/interviewUtils";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 
 const mapExperienceToDifficulty = (exp) => {
   if (!exp) return "Medium";

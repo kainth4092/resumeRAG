@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Clock, Trash2, History } from "lucide-react";
-import { getInterviewHistory, deleteInterviewSession } from "../../../services/interviewService";
+import { getInterviewHistory, deleteInterviewSession } from "../services/interviewService";
 
 export default function HistoryDrawer({
   open,

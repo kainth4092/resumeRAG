@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Outlet } from "react-router";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../features/auth/context/AuthContext";
 import { EmailModal } from "../../features/email";
 
 export default function Layout() {
