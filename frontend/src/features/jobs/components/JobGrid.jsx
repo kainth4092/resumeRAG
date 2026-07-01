@@ -8,6 +8,7 @@ export default function JobGrid({
   onSave,
   onViewDetails,
   savingJobId = null,
+  loadingJobId = null,
 }) {
   if (loading) {
     return (
@@ -32,6 +33,7 @@ export default function JobGrid({
             onSave={onSave}
             onViewDetails={() => onViewDetails(job)}
             saving={savingJobId === jobId}
+            loadingDetails={loadingJobId === jobId}
           />
         );
       })}

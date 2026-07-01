@@ -15,7 +15,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
         .then((data) => {
           if (data) setJobCount(data.length);
         })
-        .catch(() => { });
+        .catch(() => {});
     };
 
     fetchCount();
@@ -31,15 +31,12 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
     };
   }, []);
 
-
   const currentPage = location.pathname.split("/")[1] || "dashboard";
 
   const handleNav = (id) => {
     navigate(`/${id}`);
     setMobileOpen(false);
   };
-
-
 
   return (
     <div className="flex flex-col h-full">
@@ -66,15 +63,11 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
           onClick={() => setCollapsed((c) => !c)}
           className="hidden lg:flex w-6 h-6 items-center justify-center rounded-lg hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-foreground transition-all"
         >
-          {collapsed ? (
-            <ChevronRight size={14} />
-          ) : (
-            <ChevronLeft size={14} />
-          )}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title}>
             {!collapsed && (
@@ -94,10 +87,11 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                     className={`
                         w-full flex items-center gap-3 rounded-xl text-md transition-all duration-150 group relative
                         ${collapsed ? "justify-center p-2.5" : "px-3 py-2.5"}
-                        ${active
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      }
+                        ${
+                          active
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        }
                                         `}
                   >
                     {active && !collapsed && (
@@ -112,21 +106,29 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
                         <span className="flex-1 text-left truncate">
                           {item.label}
                         </span>
-                        {((item.id === "tracker" && jobCount !== null) ? String(jobCount) : item.badge) && (
+                        {(item.id === "tracker" && jobCount !== null
+                          ? String(jobCount)
+                          : item.badge) && (
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${item.badge === "New"
-                              ? "bg-primary/15 text-primary"
-                              : "bg-muted text-muted-foreground"
-                              }`}
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${
+                              item.badge === "New"
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}
                           >
-                            {item.id === "tracker" && jobCount !== null ? jobCount : item.badge}
+                            {item.id === "tracker" && jobCount !== null
+                              ? jobCount
+                              : item.badge}
                           </span>
                         )}
                       </>
                     )}
-                    {collapsed && ((item.id === "tracker" && jobCount !== null) ? jobCount > 0 : item.badge) && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
-                    )}
+                    {collapsed &&
+                      (item.id === "tracker" && jobCount !== null
+                        ? jobCount > 0
+                        : item.badge) && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
+                      )}
 
                     {collapsed && (
                       <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-popover text-popover-foreground text-xs rounded-xl shadow-lg border border-border whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity duration-150">
@@ -141,7 +143,6 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
           </div>
         ))}
       </nav>
-
     </div>
   );
 }

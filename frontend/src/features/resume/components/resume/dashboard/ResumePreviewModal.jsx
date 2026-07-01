@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { FileText, Edit2, Trash2, X, Printer } from "lucide-react";
+import  { useState } from "react";
+import { FileText, X  } from "lucide-react";
 import ResumeTemplate from "../ResumeTemplate";
 import { STATUS_STYLES } from "./constants";
 import { TEMPLATE_REGISTRY } from "../templates";
 import { useAuth } from "../../../../auth/context/AuthContext";
+import Select from "./Select";
 
 function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
   const { user } = useAuth();
@@ -24,6 +25,11 @@ function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
       onUpdate();
     }
   };
+
+  const templateOptions = Object.keys(TEMPLATE_REGISTRY).map((name) => ({
+    value: name,
+    label: name,
+  }));
 
   return (
     <div className="fixed inset-0 z-200 flex items-center justify-center p-4 md:p-8">
@@ -51,17 +57,14 @@ function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <select
-              value={activeTemplate}
-              onChange={(e) => handleTemplateChange(e.target.value)}
-              className="h-8 px-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-muted transition-all"
-            >
-              {Object.keys(TEMPLATE_REGISTRY).map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+            <div className="w-40">
+              <Select
+                options={templateOptions}
+                value={activeTemplate}
+                onChange={handleTemplateChange}
+                size="sm"
+              />
+            </div>
 
             <button
               onClick={onClose}

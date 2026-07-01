@@ -8,6 +8,7 @@ from app.schemas.interview_bank import (
     InterviewQuestionCreate,
     InterviewQuestionUpdate,
     InterviewQuestionResponse,
+    InterviewQuestionListResponse,
 )
 from app.schemas.interview_retrieval import InterviewRetrievalRequest
 from app.interview.services.interview_bank_service import (
@@ -53,23 +54,82 @@ def create_bank_question(
         )
 
 
-@router.get("/", response_model=list[InterviewQuestionResponse])
+@router.get("/meta")
+def get_bank_meta(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.interview.services.interview_bank_service import get_filters_meta
+    try:
+        return get_filters_meta(db, current_user.id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch metadata: {str(e)}",
+        )
+
+
+@router.post("/generate-answer")
+def generate_bank_answer(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+):
+    question = payload.get("question")
+    skill = payload.get("skill", "")
+    category = payload.get("category", "")
+    experience_level = payload.get("experience_level", "")
+    
+    if not question or not question.strip():
+        raise HTTPException(status_code=400, detail="Question is required.")
+        
+    from app.services.llm_service import generate_general_answer
+    try:
+        answer = generate_general_answer(
+            question=question,
+            skill=skill,
+            category=category,
+            experience_level=experience_level
+        )
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/", response_model=InterviewQuestionListResponse)
 def list_bank_questions(
     skill: str | None = None,
     category: str | None = None,
     experience: str | None = None,
+    difficulty: str | None = None,
+    company: str | None = None,
+    source: str | None = None,
     search: str | None = None,
+    bookmark_only: bool = False,
+    page: int = 1,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return list_questions(
+        skip = (page - 1) * limit
+        items, total = list_questions(
             db=db,
             skill=skill,
             category=category,
             experience_level=experience,
+            difficulty=difficulty,
+            company=company,
+            source=source,
             search=search,
+            bookmark_only=bookmark_only,
+            user_id=current_user.id,
+            skip=skip,
+            limit=limit,
         )
+        return {
+            "total": total,
+            "questions": items
+        }
 
     except Exception as e:
         raise HTTPException(

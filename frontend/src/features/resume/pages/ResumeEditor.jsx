@@ -20,6 +20,7 @@ import ProjectsEditor from "../components/resume/editor/ProjectsEditor";
 import LivePreview from "../components/resume/editor/LivePreview";
 import { downloadPDF, downloadDOCX, printResume } from "../exporters";
 import { useResumeEditor } from "../hooks/useResumeEditor";
+import Select from "../components/resume/dashboard/Select";
 
 export default function ResumeEditor() {
   const {
@@ -46,6 +47,11 @@ export default function ResumeEditor() {
     handleSave,
   } = useResumeEditor();
 
+  const templateOptions = ["Professional", "ATS", "Minimal", "Corporate"].map((name) => ({
+    value: name,
+    label: `${name} Template`,
+  }));
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
       <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-border bg-card/80 backdrop-blur-xl">
@@ -65,17 +71,14 @@ export default function ResumeEditor() {
         </span>
 
         <div className="flex items-center gap-2 ml-auto">
-          <select
-            value={activeTemplate}
-            onChange={(e) => setActiveTemplate(e.target.value)}
-            className="h-9 px-2.5 rounded-xl border border-border text-xs bg-card font-semibold cursor-pointer"
-          >
-            {["Professional", "ATS", "Minimal", "Corporate"].map((name) => (
-              <option key={name} value={name}>
-                {name} Template
-              </option>
-            ))}
-          </select>
+          <div className="w-40">
+            <Select
+              options={templateOptions}
+              value={activeTemplate}
+              onChange={setActiveTemplate}
+              size="sm"
+            />
+          </div>
 
           <div className="flex items-center bg-muted/50 border border-border rounded-xl p-1 gap-0.5">
             {["edit", "preview"].map((t) => (

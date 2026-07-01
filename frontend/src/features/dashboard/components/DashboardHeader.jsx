@@ -16,8 +16,8 @@ export default function DashboardHeader({ onRefresh, refreshing, greeting }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-foreground">
-          {greeting || `${getGreeting()}${user?.name ? `, ${user.name}` : ""}`} 👋
+        <h1 className="text-foreground ">
+          {greeting || `${getGreeting()}${user?.name ? `, ${user.name}` : ""}`} 
         </h1>
 
         <p className="text-muted-foreground text-sm mt-1">

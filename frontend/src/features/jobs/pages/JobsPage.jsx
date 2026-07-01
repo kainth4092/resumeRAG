@@ -66,6 +66,7 @@ export default function JobsPage() {
     handleSaveJob,
     handleStatusChange,
     handleDeleteTracked,
+    loadingJobId,
 
   } = useJobTracker();
 
@@ -135,21 +136,23 @@ export default function JobsPage() {
               applications in one place.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setAddJobOpen(true)}
-              className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm shadow-primary/20 cursor-pointer"
-            >
-              <Plus size={15} /> Add Job
-            </button>
-          </div>
+          {tab === "applications" && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setAddJobOpen(true)}
+                className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 active:scale-[0.97] transition-all shadow-sm shadow-primary/20 cursor-pointer"
+              >
+                <Plus size={15} /> Add Job
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="relative">
           <div className="flex gap-0 border-b border-border">
             {[
               { id: "discover", label: "Discover Jobs", icon: Search },
-              { id: "applications", label: "My Applications", icon: Briefcase },
+              { id: "applications", label: "Saved Jobs", icon: Briefcase },
             ].map((t) => {
               const active = tab === t.id;
               const Icon = t.icon;
@@ -225,6 +228,7 @@ export default function JobsPage() {
                   onSave={handleSaveJob}
                   onViewDetails={handleViewDetails}
                   savingJobId={saving ? "all" : null}
+                  loadingJobId={loadingJobId}
                 />
               )}
             </div>
@@ -243,7 +247,7 @@ export default function JobsPage() {
                     <input
                       value={appSearch}
                       onChange={(e) => setAppSearch(e.target.value)}
-                      placeholder="Search applications…"
+                      placeholder="Search saved jobs…"
                       className="w-full h-9 pl-9 pr-3 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
                     />
                   </div>
@@ -255,7 +259,7 @@ export default function JobsPage() {
                     />
                   </div>
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {filteredApplications.length} applications
+                    {filteredApplications.length} saved jobs
                   </span>
                 </div>
 
@@ -268,17 +272,17 @@ export default function JobsPage() {
                       />
                     </div>
                     <h3 className="text-foreground font-semibold mb-2">
-                      No applications yet
+                      No saved jobs yet
                     </h3>
                     <p className="text-sm text-muted-foreground max-w-xs mb-5">
                       Start tracking your job search journey. Add your first
-                      application to get started.
+                      saved job to get started.
                     </p>
                     <button
                       onClick={() => setAddJobOpen(true)}
                       className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/15 cursor-pointer"
                     >
-                      <Plus size={15} /> Add First Application
+                      <Plus size={15} /> Add First Job
                     </button>
                   </div>
                 ) : (

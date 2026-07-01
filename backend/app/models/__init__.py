@@ -11,3 +11,4 @@ from app.models.interview_bank import InterviewQuestionBank
 from app.models.bookmark import InterviewBookmark
 from app.models.user_jobs import UserJob
 from app.models.job_cache import SearchCache, JobCache
+from app.models.mock_interview import MockInterviewSession, MockInterviewAnswer

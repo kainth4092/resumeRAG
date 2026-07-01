@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, FileText, Loader2, Upload, X } from "lucide-react";
 
 export default function ResumeUpload({
@@ -18,16 +18,45 @@ export default function ResumeUpload({
     generating }) {
 
     const fileRef = useRef(null);
+    const [openingFileManager, setOpeningFileManager] = useState(false);
+
+    const handleChooseFile = (e) => {
+        e.stopPropagation();
+        setOpeningFileManager(true);
+
+        const handleWindowFocus = () => {
+            setTimeout(() => {
+                setOpeningFileManager(false);
+                window.removeEventListener("focus", handleWindowFocus);
+            }, 1200);
+        };
+
+        window.addEventListener("focus", handleWindowFocus);
+        fileRef.current?.click();
+    };
+
+    const handleFileInputChange = (e) => {
+        const file = e.target.files[0];
+        setOpeningFileManager(false);
+        if (file) {
+            handleUpload(file);
+        }
+    };
+
+    const handleDroppedFile = (e) => {
+        setOpeningFileManager(false);
+        handleDrop(e);
+    };
 
     return (
         <div className="bg-card border border-border rounded-2xl p-4 font-sans">
             <h3 className="text-sm font-bold text-foreground mb-3">Upload Resume</h3>
-            {!uploaded && !uploading ? (
+            {!uploaded && !uploading && !openingFileManager ? (
                 <div
                     onDragOver={e => { e.preventDefault(); setDragging(true); }}
                     onDragLeave={() => setDragging(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileRef.current?.click()}
+                    onDrop={handleDroppedFile}
+                    onClick={handleChooseFile}
                     className={`border border-dashed rounded-xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/20"}`}
                 >
                     <div className="flex items-center gap-3 min-w-0">
@@ -41,16 +70,30 @@ export default function ResumeUpload({
                     </div>
                     <button
                         type="button"
+                        onClick={handleChooseFile}
                         className="px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-foreground bg-card hover:bg-muted hover:border-primary/30 transition-all shrink-0 cursor-pointer"
                     >
                         Choose File
                     </button>
-                    <input ref={fileRef} type="file" className="hidden" accept=".pdf,.docx" onChange={(e) => {
-                        const file = e.target.files[0]
-                        if (file) {
-                            handleUpload(file)
-                        }
-                    }} />
+                </div>
+            ) : openingFileManager ? (
+                <div className="p-4 border border-primary/20 rounded-xl bg-primary/5 flex items-center justify-between gap-3 animate-pulse font-sans">
+                    <div className="flex items-center gap-3 min-w-0 text-left">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <Loader2 size={15} className="text-primary animate-spin" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">Opening file manager...</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Select a file to begin uploading</p>
+                        </div>
+                    </div>
+                    <button
+                        disabled
+                        type="button"
+                        className="px-3 py-1.5 rounded-lg border border-border text-[10px] font-bold text-muted-foreground bg-muted shrink-0 cursor-not-allowed"
+                    >
+                        Please wait
+                    </button>
                 </div>
             ) : uploading ? (
                 <div className="p-4 border border-border rounded-xl bg-muted/10 font-sans">
@@ -98,6 +141,13 @@ export default function ResumeUpload({
                     </button>
                 </div>
             )}
+            <input 
+                ref={fileRef} 
+                type="file" 
+                className="hidden" 
+                accept=".pdf,.docx" 
+                onChange={handleFileInputChange} 
+            />
         </div>
     )
 }

@@ -19,3 +19,15 @@ export const updateInterviewQuestion = (id, payload) => {
 export const deleteInterviewQuestion = (id) => {
   return api.delete(`/interview-bank/${id}`);
 };
+
+export const getInterviewBankMeta = () => {
+  return api.get("/interview-bank/meta");
+};
+
+export const generateAIAnswer = (payload) => {
+  return api.post("/interview-bank/generate-answer", payload);
+};
+
+export const toggleBankBookmark = (questionId) => {
+  return api.post("/bookmarks/", { question_id: questionId });
+};

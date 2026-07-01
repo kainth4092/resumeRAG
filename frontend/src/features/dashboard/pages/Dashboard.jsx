@@ -6,6 +6,7 @@ import AtsTrendChart from "../components/charts/ATSTrendChart";
 import ResumeRadarChart from "../components/charts/ResumeRadarChart";
 import WeeklyActivityChart from "../components/charts/WeeklyActivityChart";
 import RecruiterSimulation from "../components/RecruiterSimulation";
+import Skeleton from "../components/Skeleton";
 import { dashboardService } from "../services/dashboardService";
 import { mapApiActivities } from "../data/dashboardData";
 
@@ -121,9 +122,7 @@ export default function Dashboard() {
               </div>
             </div>
             {loading ? (
-              <div className="h-[190px] flex items-center justify-center text-muted-foreground">
-                Loading ATS Score Trend...
-              </div>
+              <Skeleton className="h-[190px] w-full" />
             ) : (
               <AtsTrendChart data={trend} />
             )}

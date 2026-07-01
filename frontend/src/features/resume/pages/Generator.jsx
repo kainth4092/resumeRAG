@@ -7,12 +7,14 @@ import HeatMap from "../components/generator/HeatMap";
 import ATSScore from "../components/generator/ATSScore";
 import AISuggestions from "../components/generator/AISuggestions";
 import LivePreview from "../components/resume/editor/LivePreview";
-import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
-import { MOCK_RESUME } from "./templatesData";
+import TemplateSelector from "../components/generator/TemplateSelector";
 import { downloadPDF, downloadDOCX, printResume } from "../exporters";
-import { CheckCircle2, AlertCircle, Loader2, Download, Edit2, Printer, ArrowLeft, Zap, Info, Eye, X } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Download, Edit2, Printer, ArrowLeft, Zap, Info, X } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "../components/resume/templates";
 import { useResumeGenerator } from "../hooks/useResumeGenerator";
+import Select from "../components/resume/dashboard/Select";
+import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
+import { MOCK_RESUME } from "./templatesData";
 
 export function ResumeGenerator({ onBack }) {
   const {
@@ -108,40 +110,71 @@ export function ResumeGenerator({ onBack }) {
 
   const canGenerate = uploaded && !!jd && !!selectedTemplateName;
 
-  const wizardSteps = [
-    { number: 1, label: "Upload Resume", active: uploaded },
-    { number: 2, label: "Paste Job description", active: !!jd },
-    { number: 3, label: "Choose Template", active: !!selectedTemplateName },
-    { number: 4, label: "Generate optimized version", active: generated },
+  let currentStepIdx = 0;
+  if (generated) {
+    currentStepIdx = 4; 
+  } else if (generating) {
+    currentStepIdx = 3; 
+  } else if (selectedTemplateName && uploaded && jd) {
+    currentStepIdx = 3;
+  } else if (analysis) {
+    currentStepIdx = 2; 
+  } else if (uploaded && jd) {
+    currentStepIdx = 1;
+  } else if (uploaded) {
+    currentStepIdx = 1; 
+  } else {
+    currentStepIdx = 0; 
+  }
+
+  const stepperSteps = [
+    { number: 1, label: "Upload Resume" },
+    { number: 2, label: "Analyze Resume" },
+    { number: 3, label: "Select Template" },
+    { number: 4, label: "Generate Resume" },
+    { number: 5, label: "Preview Resume" },
   ];
 
-  const activePreviewTemplate = hoveredTemplate || selectedTemplateName;
+  const templateSelectOpts = Object.keys(TEMPLATE_REGISTRY).map((name) => ({
+    value: name,
+    label: name,
+  }));
 
   return (
     <div className="h-full overflow-y-auto bg-background font-sans text-left">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <Header onBack={onBack} />
 
+        {/* Real Dynamic Stepper */}
         <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-4 overflow-x-auto shrink-0 shadow-(--shadow-xs)">
-          <div className="flex items-center justify-between w-full max-w-4xl mx-auto">
-            {wizardSteps.map((s, idx) => (
-              <div key={s.number} className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0 ${s.active || generated
-                  ? "bg-primary text-white"
-                  : idx === 3 && generating
-                    ? "bg-primary/20 text-primary animate-pulse"
-                    : "bg-muted text-muted-foreground border border-border"
+          <div className="flex items-center justify-between w-full max-w-5xl mx-auto">
+            {stepperSteps.map((s, idx) => {
+              const isCompleted = idx < currentStepIdx;
+              const isActive = idx === currentStepIdx;
+              return (
+                <div key={s.number} className="flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
+                    isCompleted
+                      ? "bg-emerald-500 text-white"
+                      : isActive
+                        ? "bg-primary text-white ring-4 ring-primary/20"
+                        : "bg-muted text-muted-foreground border border-border"
                   }`}>
-                  {s.number}
+                    {isCompleted ? <CheckCircle2 size={14} className="stroke-[3]" /> : s.number}
+                  </div>
+                  <span className={`text-xs font-semibold whitespace-nowrap ${
+                    isCompleted || isActive ? "text-foreground" : "text-muted-foreground"
+                  }`}>
+                    {s.label}
+                  </span>
+                  {idx < stepperSteps.length - 1 && (
+                    <div className={`w-8 h-0.5 rounded-full hidden md:block shrink-0 ${
+                      isCompleted ? "bg-emerald-500" : "bg-border"
+                    }`} />
+                  )}
                 </div>
-                <span className={`text-xs font-semibold whitespace-nowrap ${s.active || generated ? "text-foreground" : "text-muted-foreground"}`}>
-                  {s.label}
-                </span>
-                {idx < wizardSteps.length - 1 && (
-                  <div className={`w-12 h-0.5 rounded-full hidden md:block shrink-0 ${s.active && wizardSteps[idx + 1].active ? "bg-primary" : "bg-border"}`} />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -239,120 +272,14 @@ export function ResumeGenerator({ onBack }) {
               </div>
             )}
 
-            {/* Step 3: Choose Resume Template Inline (Split layout with Hover Preview) */}
-            <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-(--shadow-xs)">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">Choose Resume Template</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Select a layout optimization. Hover over any design to see a full layout preview instantly.</p>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-                {/* Left Area: Templates list */}
-                <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {Object.values(TEMPLATE_REGISTRY).map((tpl) => {
-                    const isSelected = selectedTemplateName === tpl.name;
-                    return (
-                      <div
-                        key={tpl.name}
-                        onClick={() => setSelectedTemplateName(tpl.name)}
-                        onMouseEnter={() => setHoveredTemplate(tpl.name)}
-                        onMouseLeave={() => setHoveredTemplate(null)}
-                        className={`group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:scale-[1.01] ${isSelected
-                          ? "border-primary bg-primary/5 ring-1 ring-primary/45 shadow-sm"
-                          : "border-border bg-card hover:border-primary/20 hover:bg-muted/10"
-                          }`}
-                      >
-                        {/* Mobile Preview Action Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMobilePreviewTemplate(tpl.name);
-                          }}
-                          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-xl bg-white/95 border border-border opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 cursor-pointer shadow-sm text-muted-foreground hover:text-foreground z-10 hover:scale-110 active:scale-95"
-                          title="Open Preview Dialog"
-                        >
-                          <Eye size={12} />
-                        </button>
-
-                        <div className="space-y-3">
-                          <div
-                            className={`h-24 w-full rounded-xl bg-linear-to-br ${tpl.thumbnailColor} opacity-90 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between relative overflow-hidden`}
-                          >
-                            <div className="w-full h-full flex gap-1 bg-white/10 rounded-sm p-1">
-                              <div className="w-1/3 bg-white/20 rounded-xs h-full" />
-                              <div className="w-2/3 flex flex-col gap-1">
-                                <div className="h-2 bg-white/30 rounded-xs w-3/4" />
-                                <div className="h-1 bg-white/20 rounded-xs w-full" />
-                                <div className="h-1 bg-white/20 rounded-xs w-2/3" />
-                              </div>
-                            </div>
-
-                            {isSelected && (
-                              <div className="absolute bottom-2 right-2 w-5.5 h-5.5 rounded-full bg-white text-primary flex items-center justify-center shadow-xs animate-in zoom-in-50 duration-200">
-                                <CheckCircle2 size={13} className="stroke-3 text-primary" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="space-y-1 text-left">
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <h4 className="font-bold text-xs text-foreground">{tpl.name}</h4>
-                              {tpl.atsBadge && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                                  ATS Friendly
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground leading-normal line-clamp-2">
-                              {tpl.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t border-border/60 flex items-start gap-1.5 text-[9px] text-muted-foreground text-left">
-                          <Info size={10} className="mt-0.5 text-primary shrink-0" />
-                          <span>
-                            <strong className="text-foreground font-semibold">Recommended: </strong>
-                            {tpl.recommended}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Right Area: Instant Desktop Hover Preview Panel */}
-                <div className="lg:col-span-2 hidden lg:block sticky top-6 self-start bg-muted/20 border border-border rounded-2xl p-4 text-center space-y-3">
-                  <div className="text-left border-b border-border pb-2.5">
-                    <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-primary/10 text-primary">
-                      Instant Design Preview
-                    </span>
-                    <h4 className="font-bold text-sm text-foreground mt-1.5">
-                      {activePreviewTemplate} Layout
-                    </h4>
-                    <p className="text-[10.5px] text-muted-foreground leading-relaxed mt-0.5">
-                      {TEMPLATE_REGISTRY[activePreviewTemplate]?.description}
-                    </p>
-                  </div>
-
-                  <div className="bg-[#fafafa] border border-border/70 rounded-xl p-3 flex items-center justify-center shadow-inner h-[380px] overflow-hidden relative">
-                    <div className="w-[250px] h-[356px] shadow-lg rounded-md overflow-hidden bg-card border border-border/80">
-                      <TemplateThumbnail
-                        TemplateComponent={TEMPLATE_REGISTRY[activePreviewTemplate].component}
-                        scale={250 / 794}
-                        resume={MOCK_RESUME}
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 justify-center">
-                    <Info size={10} className="text-primary" />
-                    Hover other designs to compare immediately.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Modular TemplateSelector */}
+            <TemplateSelector
+              selectedTemplateName={selectedTemplateName}
+              setSelectedTemplateName={setSelectedTemplateName}
+              hoveredTemplate={hoveredTemplate}
+              setHoveredTemplate={setHoveredTemplate}
+              setMobilePreviewTemplate={setMobilePreviewTemplate}
+            />
 
             {/* Step 4: Generate Resume Action */}
             <div className="bg-card border border-border rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-(--shadow-xs) space-y-4">
@@ -402,24 +329,21 @@ export function ResumeGenerator({ onBack }) {
                     <h3 className="text-md font-bold text-foreground">Optimized Resume Preview</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">Preview and print/download your tailored resume</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2"> 
                     {saveMessage && (
                       <span className="text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-lg font-medium flex items-center gap-1">
                         <CheckCircle2 size={12} /> {saveMessage}
                       </span>
                     )}
 
-                    <select
-                      value={activeTemplate}
-                      onChange={(e) => handleSwitchTemplate(e.target.value)}
-                      className="h-8 px-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-muted transition-all"
-                    >
-                      {Object.keys(TEMPLATE_REGISTRY).map((name) => (
-                        <option key={name} value={name}>
-                          Template: {name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="w-40">
+                      <Select
+                        options={templateSelectOpts}
+                        value={activeTemplate}
+                        onChange={(val) => handleSwitchTemplate(val)}
+                        size="sm"
+                      />
+                    </div>
 
                     <button
                       onClick={() => printResume()}
@@ -489,10 +413,10 @@ export function ResumeGenerator({ onBack }) {
           <div className="relative w-full max-w-lg bg-card border border-border rounded-3xl shadow-(--shadow-xl) overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-200 max-h-[85vh]">
             <div className="px-5 py-4 border-b border-border bg-card flex items-center justify-between shrink-0">
               <div className="text-left">
-                <h3 className="text-sm font-bold text-foreground">
+                <h3 className="text-md font-bold text-foreground">
                   Template Preview: {mobilePreviewTemplate}
                 </h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   {TEMPLATE_REGISTRY[mobilePreviewTemplate]?.description}
                 </p>
               </div>

@@ -87,9 +87,12 @@ export function useJobTracker() {
     loadTrackedJobs();
   }, [loadTrackedJobs]);
 
+  const [loadingJobId, setLoadingJobId] = useState(null);
+
   const handleViewDetails = useCallback(async (job) => {
     const jobId = job.job_id || job.id;
     setLoading(true);
+    setLoadingJobId(jobId);
     try {
       const detailedJob = await getJob(jobId);
       setSelectedJob(detailedJob);
@@ -98,6 +101,7 @@ export function useJobTracker() {
       console.error("Failed to fetch job details:", e);
     } finally {
       setLoading(false);
+      setLoadingJobId(null);
     }
   }, []);
 
@@ -207,5 +211,6 @@ export function useJobTracker() {
     handleSaveJob,
     handleStatusChange,
     handleDeleteTracked,
+    loadingJobId,
   };
 }

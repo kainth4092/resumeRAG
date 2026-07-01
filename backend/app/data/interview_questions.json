@@ -6720,5 +6720,855 @@
     ],
     "source": "Admin",
     "approved": true
+  },
+  {
+    "question": "What is JWT?",
+    "answer": "JWT stands for JSON Web Token. It is a compact, URL-safe token format used to securely transmit claims between a client and a server.\n\nA JWT is commonly used for authentication and authorization in web applications. It typically contains three parts: header, payload, and signature. The payload may include user identity, roles, and token expiration. In interviews, explain that JWT is stateless because the server does not need to store session data for each user.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "authentication",
+      "stateless",
+      "web-security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the three parts of a JWT?",
+    "answer": "A JWT has three parts: header, payload, and signature. The header usually describes the token type and signing algorithm. The payload contains claims such as user id, role, and expiration time. The signature is used to verify that the token has not been tampered with.\n\nThese three parts are Base64URL encoded and separated by dots. In interviews, mention that the signature is what gives JWT integrity, but the payload is not encrypted by default, so sensitive data should not be stored inside it.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "cryptography",
+      "data-integrity",
+      "base64"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Is JWT encrypted?",
+    "answer": "No, JWT is usually not encrypted. It is encoded, which means its content can be decoded by anyone who has the token. The signature only proves authenticity and integrity, not secrecy.\n\nIf you need confidentiality, you should use encryption separately or avoid placing sensitive data in the token. In interviews, it is important to distinguish between encoding, signing, and encryption, because many candidates confuse these concepts.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "encryption",
+      "encoding",
+      "security-basics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is JWT popular in modern web applications?",
+    "answer": "JWT is popular because it enables stateless authentication. The server can verify the token without storing session data, which makes it easier to scale applications horizontally.\n\nIt is also convenient for APIs, mobile apps, single-page applications, and microservices. Since the token can be passed in HTTP headers, it works well across services. In interviews, explain that JWT reduces server-side session storage but shifts responsibility to secure token handling on the client side.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "scalability",
+      "microservices",
+      "stateless"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between authentication and authorization?",
+    "answer": "Authentication verifies who the user is, while authorization decides what that user is allowed to do. JWT is often used in both contexts because it can carry identity and role-related claims.\n\nFor example, login is authentication, and checking whether a user can access an admin endpoint is authorization. In interviews, make this distinction clearly, because it is a fundamental backend concept.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "authentication",
+      "authorization",
+      "iam",
+      "security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a refresh token?",
+    "answer": "A refresh token is a long-lived token used to obtain a new access token after the access token expires. This lets users stay logged in without repeatedly entering credentials.\n\nAccess tokens are usually short-lived for security reasons, while refresh tokens live longer and should be stored more securely. In interviews, explain that refresh tokens improve usability while reducing risk from stolen access tokens.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "refresh-token",
+      "oauth2",
+      "session-management",
+      "jwt"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are common JWT security best practices?",
+    "answer": "Common best practices include using short expiration times for access tokens, storing sensitive data outside the token, signing tokens with strong algorithms, and using HTTPS everywhere.\n\nRefresh tokens should be protected carefully, and token revocation or blacklisting should be considered for logout or compromised accounts. In interviews, mention that JWT is secure only when transport, storage, and expiration are handled properly.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt-security",
+      "best-practices",
+      "https",
+      "token-revocation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you validate a JWT on the server?",
+    "answer": "To validate a JWT, the server checks the signature using the expected secret or public key, verifies the token structure, and checks claims such as expiration, issuer, and audience.\n\nIf the signature is valid and the claims are acceptable, the request is authenticated. Otherwise, the token should be rejected. In interviews, explain that validation must not rely only on decoding the payload.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt-validation",
+      "server-side",
+      "cryptography",
+      "middleware"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between HS256 and RS256?",
+    "answer": "HS256 uses a shared secret key for signing and verification, while RS256 uses an asymmetric key pair with a private key for signing and a public key for verification.\n\nHS256 is simpler, but both parties must share the same secret. RS256 is often preferred in distributed systems because services can verify tokens without accessing the private key. In interviews, explain that RS256 is better suited for larger systems with multiple consumers.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "algorithms",
+      "hs256",
+      "rs256",
+      "asymmetric-encryption"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is token expiration and why is it important?",
+    "answer": "Token expiration defines how long a token remains valid. After expiration, the server should reject the token and require a new one.\n\nExpiration limits the damage if a token is stolen. Short-lived access tokens are a common security practice. In interviews, explain that every JWT should have an exp claim and that expiration is a key part of secure token design.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "token-expiry",
+      "jwt-claims",
+      "security-policy",
+      "access-control"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is REST?",
+    "answer": "REST stands for Representational State Transfer. It is an architectural style for designing web APIs using standard HTTP methods and resource-based URLs.\n\nIn REST, resources are identified by URLs, and operations are performed using methods like GET, POST, PUT, PATCH, and DELETE. In interviews, explain that REST is not a strict protocol but a design style that encourages simplicity, statelessness, and predictable API behavior.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rest",
+      "http",
+      "api-design",
+      "architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What makes an API RESTful?",
+    "answer": "A RESTful API follows resource-oriented design, uses HTTP methods correctly, is stateless, and returns meaningful status codes. It should use clear resource names and consistent response formats.\n\nFor example, GET /users retrieves users, POST /users creates one, and DELETE /users/1 removes a specific user. In interviews, mention that good REST APIs are predictable, easy to consume, and aligned with HTTP semantics.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "restful-api",
+      "best-practices",
+      "web-services",
+      "resources"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between PUT and PATCH?",
+    "answer": "PUT is generally used to replace an entire resource, while PATCH is used to partially update a resource. If you send a PUT request, you usually include the full object representation.\n\nPATCH is useful when only one or a few fields need to change. In interviews, explain that PUT is more complete and PATCH is more flexible for partial updates.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "http-methods",
+      "put-vs-patch",
+      "rest-api",
+      "updates"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is statelessness in REST?",
+    "answer": "Statelessness means each API request contains all the information needed to process it. The server does not rely on stored session state from previous requests.\n\nThis makes APIs easier to scale because any server instance can handle any request. In interviews, explain that JWT and stateless REST often work well together because authentication data travels with each request.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "statelessness",
+      "rest-constraints",
+      "scalability",
+      "backend-architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why are HTTP status codes important in REST APIs?",
+    "answer": "HTTP status codes communicate the result of a request in a standard way. For example, 200 means success, 201 means created, 400 means bad request, 401 means unauthorized, 404 means not found, and 500 means server error.\n\nUsing the right status code helps clients understand what happened without parsing the response body. In interviews, explain that good API design includes consistent and meaningful status codes.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "http-status-codes",
+      "api-design",
+      "error-handling",
+      "rest"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is idempotency in REST?",
+    "answer": "An idempotent operation is one that can be repeated multiple times with the same result. In REST, GET, PUT, and DELETE are typically idempotent, while POST is usually not.\n\nFor example, deleting the same resource twice should still leave the system in the same state after the first successful delete. In interviews, explain that idempotency is important for reliability, retries, and distributed systems.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "idempotency",
+      "http-methods",
+      "reliability",
+      "rest-api"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How should you design resource URLs in a REST API?",
+    "answer": "Resource URLs should be clear, consistent, and noun-based. Use plural nouns for collections, such as /users or /orders, and use path parameters to identify specific resources, such as /users/42.\n\nAvoid verbs in URLs when the HTTP method already describes the action. For example, use POST /orders instead of /createOrder. In interviews, explain that good URL design makes APIs intuitive and easier to maintain.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "url-design",
+      "rest-resources",
+      "api-best-practices",
+      "naming-conventions"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is pagination in REST APIs?",
+    "answer": "Pagination is the process of returning data in smaller chunks instead of sending an entire large dataset at once. It improves performance, reduces bandwidth, and makes responses easier to handle.\n\nCommon pagination styles include limit/offset and cursor-based pagination. In interviews, explain that pagination is essential for large collections and that cursor-based pagination is often better for performance and consistency at scale.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "pagination",
+      "performance",
+      "api-optimization",
+      "data-retrieval"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Redis?",
+    "answer": "Redis is an in-memory data store commonly used as acache, message broker, session store, and fast key-value database. It is knownfor very low latency and support for multiple data structures.\n\nBecause datais stored in memory, Redis is extremely fast for read-heavy and ephemeralworkloads. In interviews, explain that Redis is often used to accelerateapplications and reduce load on primary databases.",
+    "skill": "BackendEngineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis",
+      "in-memory-db",
+      "caching",
+      "nosql"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "When would you use Redis in a backend system?",
+    "answer": "Redis is useful for caching database results, storing session data, implementing rate limiting, managing queues, and supporting pub/sub messaging. It is also helpful for leaderboards, counters, and temporary state.\n\nFor example, you might cache user profile data to reduce repeated database calls. In interviews, mention that Redis is best when speed matters and data does not always need to be permanent.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis-use-cases",
+      "rate-limiting",
+      "session-store",
+      "pub-sub"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are common Redis data types?",
+    "answer": "Redis supports several useful data types, including strings, lists, sets, sorted sets, hashes, streams, and bitmaps. Each type is optimized for a different kind of workload.\n\nStrings are good for simple values and counters. Hashes are useful for object-like data. Sets and sorted sets are helpful for membership and ranking use cases. In interviews, explain that choosing the right Redis data type can significantly simplify implementation and improve performance.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis-data-types",
+      "hashes",
+      "sorted-sets",
+      "performance-optimization"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Redis caching and why is it useful?",
+    "answer": "Redis caching stores frequently accessed data in memory so that future requests can be served faster than reading from the primary database. This reduces latency and database load.\n\nA common pattern is cache-aside, where the application checks Redis first and falls back to the database if the key is missing. In interviews, explain that caching is useful for read-heavy systems, but cache invalidation and consistency must be designed carefully.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "caching",
+      "redis",
+      "latency",
+      "cache-aside"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is TTL in Redis?",
+    "answer": "TTL stands for Time To Live. It defines how long a key remains in Redis before it expires automatically.\n\nTTL is useful for caching, temporary sessions, and time-sensitive data. For example, an OTP or cache entry might expire after a few minutes. In interviews, explain that TTL helps keep Redis memory usage under control and ensures stale data is removed automatically.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "ttl",
+      "expiration",
+      "memory-management",
+      "redis"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does Redis help with rate limiting?",
+    "answer": "Redis is commonly used for rate limiting because it is fast and can atomically update counters. A request counter can be stored with an expiration time, allowing you to limit how many requests a user can make in a time window.\n\nFor example, you can allow 100 requests per minute per API key. In interviews, explain that Redis is well suited for rate limiting because of its atomic operations and low latency.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rate-limiting",
+      "atomic-operations",
+      "redis-counters",
+      "api-management"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between Redis cache and a database?",
+    "answer": "Redis is typically used for fast, temporary, or frequently accessed data, while a database is used for durable long-term storage and complex querying. Redis is in-memory first, whereas databases prioritize persistence and structured transactions.\n\nRedis is usually not a replacement for a relational or document database. Instead, it complements one. In interviews, explain that Redis is chosen for speed and transient data, while databases are chosen for persistence and data integrity.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis-vs-db",
+      "persistence",
+      "in-memory",
+      "architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Qdrant?",
+    "answer": "Qdrant is an open-source vector database designed to store, search, and manage embeddings. It is commonly used in semantic search, recommendation systems, and retrieval-augmented generation applications.\n\nIt is optimized for similarity search over high-dimensional vectors and supports filtering, payload metadata, and scalable retrieval. In interviews, explain that Qdrant is useful when you need to search by meaning rather than exact keyword matching.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "qdrant",
+      "vector-database",
+      "semantic-search",
+      "ai-infrastructure"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a vector database?",
+    "answer": "A vector database stores embeddings, which are numerical representations of text, images, or other data. It allows similarity search by comparing vectors using distance metrics such as cosine similarity or dot product.\n\nVector databases are often used in AI systems to retrieve semantically similar documents or items. In interviews, explain that they are important for applications like semantic search and RAG pipelines.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "vector-db",
+      "embeddings",
+      "similarity-search",
+      "ai"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an embedding in the context of Qdrant?",
+    "answer": "An embedding is a numerical vector representation of data, usually generated by an AI model. Similar pieces of content are placed closer together in vector space.\n\nFor example, two sentences with similar meaning may have embeddings that are close in cosine distance. Qdrant stores these vectors so they can be searched efficiently. In interviews, explain that embeddings are the core data unit behind semantic retrieval.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "embeddings",
+      "vector-space",
+      "nlp",
+      "qdrant"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does similarity search work in Qdrant?",
+    "answer": "Similarity search in Qdrant compares a query vector with stored vectors and returns the most similar results based on a distance metric. The database uses approximate nearest neighbor techniques to make this search efficient.\n\nThis is useful when the exact words do not match but the meaning does. For example, searching for “car” may return documents about “automobile.” In interviews, explain that Qdrant is designed for fast approximate similarity search at scale.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "similarity-search",
+      "knn",
+      "qdrant",
+      "search-algorithms"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is metadata filtering important in Qdrant?",
+    "answer": "Metadata filtering allows you to narrow vector search results using structured fields such as category, language, date, or user id. This makes retrieval more precise and relevant.\n\nFor example, you can search only within documents tagged as “finance” or only among records from a specific tenant. In interviews, explain that combining vector similarity with payload filters is essential for practical production search systems.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "metadata",
+      "filtering",
+      "qdrant",
+      "hybrid-search"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is LangChain?",
+    "answer": "LangChain is a framework for building applications with large language models.It provides tools for prompt management, chaining model calls, retrieval,memory, tools, and agents.\n\nIt helps developers move beyond singleprompt-response interactions and build workflows such as question answering,document retrieval, and multi-step reasoning. In interviews, explain thatLangChain is used to compose LLM-powered applications more systematically.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langchain",
+      "llm",
+      "ai-orchestration",
+      "frameworks"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What problem does LangChain solve?",
+    "answer": "LangChain solves the problem of orchestrating LLM-based workflows. Instead of writing everything manually around model calls, it offers reusable abstractions for prompts, memory, retrievers, tools, and chains.\n\nThis reduces boilerplate and makes it easier to build applications like chatbots, retrieval systems, and agentic workflows. In interviews, explain that LangChain helps connect LLMs to external data and tools in a structured way.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langchain",
+      "orchestration",
+      "llm-integration",
+      "ai-development"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a prompt template in LangChain?",
+    "answer": "A prompt template is a reusable structure for generating prompts dynamically. It lets you insert variables such as user input, context, or system instructions into a predefined format.\n\nFor example, a template can include placeholders for a customer question and a retrieved context paragraph. In interviews, explain that prompt templates help keep prompts consistent, maintainable, and easier to version.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "prompt-engineering",
+      "langchain",
+      "templates",
+      "dynamic-prompts"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is retrieval-augmented generation in LangChain?",
+    "answer": "Retrieval-augmented generation, or RAG, is a pattern where relevant documents are retrieved from a knowledge source and passed into the LLM prompt before generating an answer.\n\nThis helps the model respond using up-to-date or domain-specific information without relying only on training data. In interviews, explain that RAG is widely used in enterprise search, support bots, and knowledge assistants.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rag",
+      "langchain",
+      "knowledge-retrieval",
+      "llm"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a chain in LangChain?",
+    "answer": "A chain is a sequence of operations in which the output of one step becomes the input of the next. It is used to structure workflows such as prompt generation, retrieval, model inference, and post-processing.\n\nChains help break complex tasks into manageable steps. In interviews, explain that chaining is useful when a single model call is not enough to solve the problem cleanly.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langchain-chains",
+      "workflow",
+      "composition",
+      "sequential-processing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a tool in LangChain?",
+    "answer": "A tool is an external capability that an LLM can use, such as search, calculator, database lookup, or API calls. Tools extend the model beyond text generation.\n\nThis is especially useful in agent-based systems where the model needs to act on external information. In interviews, explain that tools let LLMs interact with systems rather than only generate text.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "tools",
+      "langchain",
+      "agents",
+      "function-calling"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an agent in LangChain?",
+    "answer": "An agent is an LLM-based system that decides which tools to use and in whatorder to use them. Unlike a fixed chain, an agent can choose actions dynamicallybased on the task.\n\nFor example, it may search documents, call a calculator,then answer the user. In interviews, explain that agents are more flexible thanchains but also harder to control and debug.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "agents",
+      "autonomous-ai",
+      "langchain",
+      "decision-making"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are memory features in LangChain?",
+    "answer": "Memory features help an application remember prior interactions, user preferences, or conversation context across multiple turns. This allows a chatbot or assistant to behave more naturally over time.\n\nMemory can be short-term, long-term, or summarization-based depending on the use case. In interviews, explain that memory is helpful for conversational apps but must be managed carefully to avoid context bloat and high cost.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "memory",
+      "conversational-ai",
+      "langchain",
+      "state-management"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is LangGraph?",
+    "answer": "LangGraph is a framework for building stateful LLM applications as graphs. It is designed for workflows where control flow, loops, branching, and persistent state matter.\n\nUnlike a simple linear chain, a graph allows nodes to represent steps and edges to define transitions. In interviews, explain that LangGraph is especially useful for agentic systems and complex workflow orchestration.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "stateful-ai",
+      "graph-workflows",
+      "agentic-ai"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How is LangGraph different from LangChain?",
+    "answer": "LangChain is broader and focuses on composing LLM applications through chains, tools, retrievers, and agents. LangGraph focuses specifically on building stateful, graph-based workflows with explicit control flow.\n\nLangGraph is better when you need loops, branching, checkpoints, and persistent state. LangChain is often used for higher-level abstractions and reusable components. In interviews, explain that they are complementary: LangChain provides building blocks, while LangGraph provides workflow control.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "langchain",
+      "comparison",
+      "architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is state important in LangGraph?",
+    "answer": "State is important because many real LLM workflows are not one-shot operations. They require tracking inputs, intermediate results, tool outputs, and conversation history across steps.\n\nLangGraph keeps this state explicit, which makes workflows easier to inspect and resume. In interviews, explain that stateful design is especially valuable for multi-step agents and long-running processes.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "state-management",
+      "langgraph",
+      "persistence",
+      "workflows"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a node in LangGraph?",
+    "answer": "A node is a step or function in a graph that performs some work, such as calling an LLM, running a tool, or transforming state. Nodes operate on the graph’s shared state.\n\nEach node can decide what data to produce or update before the workflow continues. In interviews, explain that nodes are the building blocks of a LangGraph workflow.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "graph-nodes",
+      "modular-design",
+      "logic-steps"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an edge in LangGraph?",
+    "answer": "An edge defines how the workflow moves from one node to another. It represents control flow, such as always moving forward, branching based on conditions, or looping back to a previous step.\n\nEdges are what make LangGraph more powerful than a simple linear pipeline. In interviews, explain that edges allow explicit workflow logic and deterministic transitions.",
+    "skill": "Backend Engineering",
+    "category": "AI/ML",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "control-flow",
+      "graph-edges",
+      "branching"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "When would you choose LangGraph over a simple LangChain chain?",
+    "answer": "You would choose LangGraph when the application needs stateful control flow, branching, retries, loops, or human-in-the-loop steps. Simple chains are better for straightforward, linear tasks.\n\nFor example, a support agent that checks a policy, retrieves documents, asks clarifying questions, and loops until confident is a good LangGraph use case. In interviews, explain that LangGraph is better for production-grade agent workflows that need robustness and observability.",
+    "skill": "Backend Engineering",
+    "category": "Scenario Based",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "workflows",
+      "decision-making",
+      "complex-ai"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does Qdrant integrate with LangChain or LangGraph?",
+    "answer": "Qdrant can act as the vector store or retriever in an LLM application. LangChain or LangGraph can send query embeddings to Qdrant, retrieve relevant documents, and use them in prompt generation or agent reasoning.\n\nThis is a common pattern in RAG systems. In interviews, explain that Qdrant handles semantic retrieval while LangChain or LangGraph orchestrates the application logic around it.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "qdrant",
+      "langchain",
+      "integration",
+      "rag"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you secure JWT in a REST API?",
+    "answer": "Use short-lived access tokens, store refresh tokens securely, and always transmit tokens over HTTPS. Keep sensitive claims out of the token payload, validate signature and expiry on every request, and revoke tokens when necessary.\n\nA good design also includes role-based authorization checks on protected endpoints. In interviews, mention that security depends not only on token format but also on storage, transport, and revocation strategy.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt-security",
+      "rest-api",
+      "authentication",
+      "best-practices"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you design a Redis cache strategy for a REST API?",
+    "answer": "A common approach is cache-aside. The API first checks Redis, returns cached data if present, and otherwise reads from the database, stores the result in Redis, and returns it.\n\nYou also need TTLs, cache key naming conventions, and invalidation rules after updates. In interviews, explain that cache design should balance speed, freshness, and complexity.",
+    "skill": "Backend Engineering",
+    "category": "Scenario Based",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "redis",
+      "caching-strategy",
+      "api-performance",
+      "backend-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you build semantic search using Qdrant and REST APIs?",
+    "answer": "You would convert documents into embeddings, store them in Qdrant with metadata, and expose a REST API that accepts a user query. The query is embedded, sent to Qdrant for similarity search, and the results are returned or passed to an LLM.\n\nThis architecture works well for document search, knowledge bases, and support systems. In interviews, explain that metadata filtering and ranking are important for improving relevance.",
+    "skill": "Backend Engineering",
+    "category": "Project Based",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "semantic-search",
+      "qdrant",
+      "rest-api",
+      "ai-search"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a common failure mode in LangChain-based applications?",
+    "answer": "A common failure mode is over-relying on the LLM without enough retrieval, validation, or control flow. This can lead to hallucinations, inconsistent outputs, and hard-to-debug behavior.\n\nGood practices include using structured prompts, adding retrieval when needed, validating tool outputs, and keeping chains or agent steps observable. In interviews, explain that LLM apps need engineering discipline, not just prompt experimentation.",
+    "skill": "Backend Engineering",
+    "category": "Scenario Based",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langchain",
+      "failure-modes",
+      "hallucination",
+      "ai-reliability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are production best practices for LangGraph applications?",
+    "answer": "Production best practices include keeping state explicit, adding checkpoints or persistence, using deterministic branching where possible, logging node inputs and outputs, and limiting uncontrolled agent loops.\n\nYou should also isolate tool calls, validate external data, and design for retries and failures. In interviews, explain that LangGraph is strong for production because it makes complex workflows more inspectable and controllable than ad hoc agent logic.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "langgraph",
+      "production-ready",
+      "best-practices",
+      "observability"
+    ],
+    "source": "Admin",
+    "approved": true
   }
 ]

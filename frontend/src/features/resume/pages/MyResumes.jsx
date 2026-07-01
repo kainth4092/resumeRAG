@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FileText, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { FileText, Sparkles, X } from "lucide-react";
 import Header from "../components/resume/dashboard/Header";
 import StatsCards from "../components/resume/dashboard/StatsCards";
 import SearchFilter from "../components/resume/dashboard/SearchFilter";
@@ -20,9 +19,15 @@ export default function MyResumes() {
   const view = searchParams.get("view") || "list";
 
   const { user } = useAuth();
-  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
-  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
-  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
+  const resumesKey = user?.email
+    ? `saved_resumes_${user.email}`
+    : "saved_resumes";
+  const lastResumeIdKey = user?.email
+    ? `last_resume_id_${user.email}`
+    : "last_resume_id";
+  const lastJobDescKey = user?.email
+    ? `last_job_description_${user.email}`
+    : "last_job_description";
 
   const [resumes, setResumes] = useState([]);
   const [search, setSearch] = useState("");
@@ -36,6 +41,17 @@ export default function MyResumes() {
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const [menuOpen, setMenuOpen] = useState(null);
+
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [generatingPrep, setGeneratingPrep] = useState(false);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, starredFilter, sortBy]);
 
   const menuRef = useRef(null);
 
@@ -98,6 +114,27 @@ export default function MyResumes() {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       return 0;
     });
+
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * limit, page * limit);
+  const totalPages = Math.ceil(total / limit);
+
+  const getPageRange = (current, total) => {
+    const range = [];
+    const delta = 1;
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      } else if (range[range.length - 1] !== "...") {
+        range.push("...");
+      }
+    }
+    return range;
+  };
 
   const toggleStar = (id) => {
     setResumes((prev) => {
@@ -185,33 +222,44 @@ export default function MyResumes() {
     };
     saved.push(dupEntry);
     localStorage.setItem(resumesKey, JSON.stringify(saved));
-    setReloadTrigger(p => p + 1);
-    toast.success(`Duplicated "${resumeToDup.name}" successfully!`);
+    setReloadTrigger((p) => p + 1);
+    setError("");
+    setSuccess(`Duplicated "${resumeToDup.name}" successfully!`);
   };
 
-  const handleGenerateInterview = (resumeObj) => {
-    const jd = resumeObj.jobDescription || localStorage.getItem(lastJobDescKey) || "Software Engineer role";
+  const handleGenerateInterview = async (resumeObj) => {
+    const jd =
+      resumeObj.jobDescription ||
+      localStorage.getItem(lastJobDescKey) ||
+      "Software Engineer role";
     const resumeId = resumeObj.id;
 
-    toast.promise(
-      interviewService.generateInterview({
+    setGeneratingPrep(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await interviewService.generateInterview({
         resume_id: parseInt(resumeId, 10) || resumeId,
         job_description: jd,
-      }),
-      {
-        loading: "Preparing interview questions...",
-        success: (response) => {
-          const sessId = response.data?.session?.id;
-          if (sessId) {
-            navigate("/interview", { state: { sessionId: sessId } });
-            return "Interview prep is ready!";
-          } else {
-            throw new Error("Invalid session ID");
-          }
-        },
-        error: "Failed to generate interview prep. Make sure the resume has correct skills and experience."
+      });
+      const sessId = response.data?.session?.id;
+      if (sessId) {
+        setSuccess("Interview prep generated successfully! Redirecting...");
+        setTimeout(() => {
+          navigate("/interview", { state: { sessionId: sessId } });
+        }, 1500);
+      } else {
+        throw new Error("Invalid session ID received.");
       }
-    );
+    } catch (err) {
+      console.error(err);
+      setError(
+        "Failed to generate interview prep. Make sure the resume has correct skills and experience.",
+      );
+    } finally {
+      setGeneratingPrep(false);
+    }
   };
 
   const statusOpts = [
@@ -221,15 +269,47 @@ export default function MyResumes() {
   ];
 
   if (view === "new") {
-    return (
-      <ResumeGenerator onBack={() => setSearchParams({})} />
-    );
+    return <ResumeGenerator onBack={() => setSearchParams({})} />;
   }
 
   return (
     <div className="h-full overflow-y-auto font-sans bg-background text-left">
       <div className="max-w-7xl mx-auto p-6 space-y-6 animate-in fade-in-0 duration-200">
-        <Header resumes={resumes} onNewResume={() => setSearchParams({ view: "new" })} />
+        <Header
+          resumes={resumes}
+          onNewResume={() => setSearchParams({ view: "new" })}
+        />
+
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
+            <span>{error}</span>
+            <button
+              onClick={() => setError("")}
+              className="text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {success && (
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
+            <span>{success}</span>
+            <button
+              onClick={() => setSuccess("")}
+              className="text-emerald-500 hover:text-emerald-600 transition-colors cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {generatingPrep && (
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl text-primary text-sm font-semibold flex items-center gap-3 animate-in fade-in-0 duration-200">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+            <span>Preparing personalized interview prep questions...</span>
+          </div>
+        )}
 
         {resumes.length === 0 ? (
           <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-2xl p-12 text-center bg-card">
@@ -264,11 +344,11 @@ export default function MyResumes() {
               sortBy={sortBy}
               setSortBy={setSortBy}
               statusOpts={statusOpts}
-
             />
 
             <ResumeTable
-              filtered={filtered}
+              filtered={paginated}
+              allResumes={filtered}
               removingId={removingId}
               toggleStar={toggleStar}
               setPreviewResume={setPreviewResume}
@@ -282,6 +362,96 @@ export default function MyResumes() {
               handleDuplicate={handleDuplicate}
               handleGenerateInterview={handleGenerateInterview}
             />
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border border-border bg-card px-4 py-3 rounded-2xl sm:px-6 mt-4 animate-in fade-in duration-200">
+                <div className="flex flex-1 justify-between sm:hidden">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className="relative inline-flex items-center rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-muted/40 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="relative ml-3 inline-flex items-center rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-muted/40 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold">
+                      Showing{" "}
+                      <span className="font-bold text-foreground">
+                        {(page - 1) * limit + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-bold text-foreground">
+                        {Math.min(page * limit, total)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-bold text-foreground">{total}</span>{" "}
+                      resumes
+                    </p>
+                  </div>
+                  <div>
+                    <nav
+                      className="isolate inline-flex -space-x-px rounded-xl shadow-xs gap-1"
+                      aria-label="Pagination"
+                    >
+                      <button
+                        onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                        disabled={page === 1}
+                        className="relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted/40 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <span className="sr-only">Previous</span>
+                        &larr;
+                      </button>
+                      {getPageRange(page, totalPages).map((pageNum, i) => {
+                        if (pageNum === "...") {
+                          return (
+                            <span
+                              key={`ellipsis-${i}`}
+                              className="inline-flex items-center justify-center w-8 h-8 text-muted-foreground text-xs font-semibold select-none"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        const isCurrent = pageNum === page;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setPage(pageNum)}
+                            className={`relative inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              isCurrent
+                                ? "bg-primary text-white border border-primary shadow-sm"
+                                : "border border-border bg-card text-muted-foreground hover:bg-muted/40"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() =>
+                          setPage((p) => Math.min(p + 1, totalPages))
+                        }
+                        disabled={page === totalPages}
+                        className="relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted/40 disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <span className="sr-only">Next</span>
+                        &rarr;
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

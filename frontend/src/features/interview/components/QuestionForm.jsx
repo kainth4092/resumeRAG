@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import Select from "../../resume/components/resume/dashboard/Select";
 
 export default function QuestionForm({
   isOpen,
@@ -8,9 +9,26 @@ export default function QuestionForm({
   formData,
   setFormData,
   formError,
+  formErrors = {},
   submitting,
+  generatingAI = false,
+  isAISuggested = false,
+  onSuggestAnswer,
 }) {
   if (!isOpen) return null;
+
+  const categoryOptions = [
+    { value: "Technical", label: "Technical" },
+    { value: "Behavioral", label: "Behavioral" },
+    { value: "Projects", label: "Projects" },
+  ];
+
+  const experienceOptions = [
+    { value: "Fresher", label: "Fresher" },
+    { value: "1-3 Years", label: "1-3 Years" },
+    { value: "3-5 Years", label: "3-5 Years" },
+    { value: "5+ Years", label: "5+ Years" },
+  ];
 
   return (
     <div className="fixed inset-0 z-300 flex items-center justify-center p-4">
@@ -39,73 +57,122 @@ export default function QuestionForm({
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Question</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              Question *
+            </label>
             <textarea
-              required
               value={formData.question}
-              onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, question: e.target.value })
+              }
               placeholder="What is the difference between state and props in React?"
-              className="w-full h-20 px-3 py-2 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all resize-none"
+              className={`w-full h-20 px-3 py-2 text-sm bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all resize-none ${
+                formErrors.question
+                  ? "border-red-500/80 focus:ring-red-500/25 focus:border-red-500"
+                  : "border-border focus:ring-primary/25 focus:border-primary/50"
+              }`}
             />
+            {formErrors.question && (
+              <p className="text-[11px] font-semibold text-red-500 mt-1 flex items-center gap-1 animate-in fade-in-0 duration-150">
+                {formErrors.question}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Sample Answer (Optional)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Sample Answer (Optional)
+              </label>
+              {formData.question && onSuggestAnswer && (
+                <button
+                  type="button"
+                  onClick={onSuggestAnswer}
+                  disabled={generatingAI}
+                  className="text-[11px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50 select-none animate-in fade-in duration-200"
+                >
+                  {generatingAI ? "✨ Generating..." : "✨ Suggest with AI"}
+                </button>
+              )}
+            </div>
             <textarea
               value={formData.answer}
-              onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, answer: e.target.value })
+              }
               placeholder="Provide a clear sample answer, or leave blank to automatically generate with AI..."
               className="w-full h-24 px-3 py-2 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all resize-none"
             />
+            {isAISuggested && (
+              <p className="text-[10px] text-amber-500 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10 flex items-center gap-1 w-fit mt-1 animate-in fade-in-0 duration-150">
+                ✨ AI Suggested Answer (Editable)
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Skill</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Skill *
+              </label>
               <input
-                required
                 type="text"
                 value={formData.skill}
-                onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, skill: e.target.value })
+                }
                 placeholder="e.g. React"
-                className="w-full h-9 px-3 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
+                className={`w-full h-9 px-3 text-sm bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
+                  formErrors.skill
+                    ? "border-red-500/80 focus:ring-red-500/25 focus:border-red-500"
+                    : "border-border focus:ring-primary/25 focus:border-primary/50"
+                }`}
+              />
+              {formErrors.skill && (
+                <p className="text-[11px] font-semibold text-red-500 mt-1 flex items-center gap-1 animate-in fade-in-0 duration-150">
+                  {formErrors.skill}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Category
+              </label>
+              <Select
+                options={categoryOptions}
+                value={formData.category}
+                onChange={(val) => setFormData({ ...formData, category: val })}
+                size="sm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Experience Level
+              </label>
+              <Select
+                options={experienceOptions}
+                value={formData.experience_level}
+                onChange={(val) =>
+                  setFormData({ ...formData, experience_level: val })
+                }
+                size="sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full h-9 px-3 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
-              >
-                <option value="Technical">Technical</option>
-                <option value="Behavioral">Behavioral</option>
-                <option value="Projects">Projects</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Experience Level</label>
-              <select
-                value={formData.experience_level}
-                onChange={(e) => setFormData({ ...formData, experience_level: e.target.value })}
-                className="w-full h-9 px-3 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
-              >
-                <option value="Fresher">Fresher</option>
-                <option value="1-3 Years">1-3 Years</option>
-                <option value="3-5 Years">3-5 Years</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Tags</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Tags
+              </label>
               <input
                 type="text"
                 value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, tags: e.target.value })
+                }
                 placeholder="e.g. react, hooks, state"
                 className="w-full h-9 px-3 text-sm bg-input-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all"
               />

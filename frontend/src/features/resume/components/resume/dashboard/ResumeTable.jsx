@@ -14,6 +14,7 @@ import { downloadPDF, downloadDOCX } from "../../../exporters";
 
 export default function ResumeTable({
   filtered,
+  allResumes = filtered,
   removingId,
   toggleStar,
   setPreviewResume,
@@ -171,7 +172,7 @@ export default function ResumeTable({
           >
             <div className="px-6 py-5 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-foreground text-sm truncate pr-4">
-                {filtered.find((r) => r.id === menuOpen)?.name ||
+                {allResumes.find((r) => r.id === menuOpen)?.name ||
                   "Resume Actions"}
               </h3>
               <button
@@ -184,7 +185,7 @@ export default function ResumeTable({
             <div className="p-3 space-y-1.5">
               <button
                 onClick={() => {
-                  const target = filtered.find((r) => r.id === menuOpen);
+                  const target = allResumes.find((r) => r.id === menuOpen);
                   if (target) {
                     handleSetActive(target.id);
                   }
@@ -198,7 +199,7 @@ export default function ResumeTable({
 
               <button
                 onClick={async () => {
-                  const target = filtered.find((r) => r.id === menuOpen);
+                  const target = allResumes.find((r) => r.id === menuOpen);
                   if (target) {
                     setPreviewResume(target);
                     // Wait for template to render in DOM
@@ -217,7 +218,7 @@ export default function ResumeTable({
 
               <button
                 onClick={() => {
-                  const target = filtered.find((r) => r.id === menuOpen);
+                  const target = allResumes.find((r) => r.id === menuOpen);
                   if (target) {
                     const resumeData = target.resume || target;
                     downloadDOCX(resumeData, `${target.name || "Resume"}.docx`, target.template || "Professional");
@@ -232,7 +233,7 @@ export default function ResumeTable({
 
               <button
                 onClick={() => {
-                  const target = filtered.find((r) => r.id === menuOpen);
+                  const target = allResumes.find((r) => r.id === menuOpen);
                   if (target && handleGenerateInterview) {
                     handleGenerateInterview(target);
                   }
@@ -246,7 +247,7 @@ export default function ResumeTable({
 
               <button
                 onClick={() => {
-                  const target = filtered.find((r) => r.id === menuOpen);
+                  const target = allResumes.find((r) => r.id === menuOpen);
                   setDeleteTarget(target);
                   setMenuOpen(null);
                 }}

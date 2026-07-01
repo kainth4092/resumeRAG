@@ -2,12 +2,13 @@ import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useInterviewQuestions } from "./useInterviewQuestions";
 import { useQuestionFilters } from "./useQuestionFilters";
+import { generateAIAnswer } from "../services/interviewBankService";
 
 export function useInterviewPrep() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState("questions");
+  const [activeTab, setActiveTab] = useState("personalized");
 
   const {
     questions,
@@ -37,6 +38,7 @@ export function useInterviewPrep() {
     setBookmarkOnly,
     importantOnly,
     setImportantOnly,
+    activeFilter,
     setActiveFilter,
     filteredQuestions,
   } = useQuestionFilters({
@@ -60,62 +62,60 @@ export function useInterviewPrep() {
     experience_level: "Fresher",
     tags: "",
   });
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [isAISuggested, setIsAISuggested] = useState(false);
+
+  const handleSuggestAnswer = useCallback(async () => {
+    if (!formData.question?.trim()) {
+      setFormError("Please enter a question first.");
+      return;
+    }
+    setGeneratingAI(true);
+    setFormError("");
+    try {
+      const res = await generateAIAnswer({
+        question: formData.question,
+        skill: formData.skill || "General",
+        category: formData.category || "Technical",
+        experience_level: formData.experience_level || "Fresher",
+      });
+      if (res.data?.answer) {
+        setFormData((prev) => ({
+          ...prev,
+          answer: res.data.answer,
+        }));
+        setIsAISuggested(true);
+        setSuccess(
+          "AI suggested answer generated! Review and click Share to submit.",
+        );
+      } else {
+        setFormError("Failed to generate AI suggested answer.");
+      }
+    } catch (err) {
+      console.error("Failed to generate suggested answer:", err);
+      setFormError("Failed to generate AI suggested answer.");
+    } finally {
+      setGeneratingAI(false);
+    }
+  }, [
+    formData.question,
+    formData.skill,
+    formData.category,
+    formData.experience_level,
+    setFormData,
+    setSuccess,
+  ]);
+
   const [formError, setFormError] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedQuestionId, setExpandedQuestionId] = useState(null);
 
-  const getQuestionTabCategory = useCallback((q) => {
-    let cat = q.skill || q.category || "General";
-    const lower = cat.toLowerCase();
-
-    if (lower === "hr") {
-      cat = "Behavioral";
-    } else if (lower === "react") {
-      cat = "React";
-    } else if (lower === "python") {
-      cat = "Python";
-    } else if (lower === "fastapi") {
-      cat = "FastAPI";
-    } else if (lower === "postgresql") {
-      cat = "PostgreSQL";
-    } else if (lower === "javascript") {
-      cat = "JavaScript";
-    } else if (lower === "project" || lower === "projects") {
-      cat = "Project";
-    } else if (lower === "behavioral") {
-      cat = "Behavioral";
-    } else if (lower === "technical") {
-      cat = "Technical";
-    } else if (lower === "coding") {
-      cat = "Coding";
-    } else {
-      cat = cat.charAt(0).toUpperCase() + cat.slice(1);
-    }
-    return cat;
-  }, []);
-
   const finalFilteredQuestions = filteredQuestions;
-
-  const groupedQuestions = useMemo(() => {
-    const groups = {};
-    finalFilteredQuestions.forEach((q) => {
-      const cat = getQuestionTabCategory(q);
-      if (!groups[cat]) {
-        groups[cat] = [];
-      }
-      groups[cat].push(q);
-    });
-    return groups;
-  }, [finalFilteredQuestions, getQuestionTabCategory]);
-
-  const sortedGroupedCategories = useMemo(() => {
-    return Object.entries(groupedQuestions).sort(([a], [b]) => a.localeCompare(b));
-  }, [groupedQuestions]);
 
   const handleEditClick = useCallback((q) => {
     setEditingQuestion(q);
@@ -125,9 +125,15 @@ export function useInterviewPrep() {
       skill: q.skill || "",
       category: q.category || "Technical",
       experience_level: q.experience_level || "Fresher",
-      tags: Array.isArray(q.tags) ? q.tags.join(", ") : typeof q.tags === "string" ? q.tags : "",
+      tags: Array.isArray(q.tags)
+        ? q.tags.join(", ")
+        : typeof q.tags === "string"
+          ? q.tags
+          : "",
     });
     setFormError("");
+    setFormErrors({});
+    setIsAISuggested(false);
     setShowModal(true);
   }, []);
 
@@ -147,35 +153,71 @@ export function useInterviewPrep() {
     }
   }, [questionToDelete, handleDeleteQuestion]);
 
-  const handleFormSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setFormError("");
+  const handleFormSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    try {
-      const tagsArray = formData.tags
-        ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [];
-
-      const payload = {
-        question: formData.question,
-        answer: formData.answer,
-        skill: formData.skill,
-        category: formData.category,
-        experience_level: formData.experience_level,
-        tags: tagsArray,
-      };
-
-      const ok = await handleSaveQuestion(payload, editingQuestion?.id);
-      if (ok) {
-        setShowModal(false);
+      const errors = {};
+      if (!formData.question?.trim()) {
+        errors.question = "Question is required.";
       }
-    } catch (err) {
-      setFormError(err.response?.data?.detail || err.message || "Failed to save question.");
-    } finally {
-      setSubmitting(false);
-    }
-  }, [formData, editingQuestion, handleSaveQuestion]);
+      if (!formData.skill?.trim()) {
+        errors.skill = "Skill is required.";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        return;
+      }
+
+      if (!formData.answer?.trim() && !isAISuggested) {
+        await handleSuggestAnswer();
+        return;
+      }
+
+      setSubmitting(true);
+      setFormError("");
+      setFormErrors({});
+
+      try {
+        const tagsArray = formData.tags
+          ? formData.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+          : [];
+
+        const payload = {
+          question: formData.question,
+          answer: formData.answer,
+          skill: formData.skill,
+          category: formData.category,
+          experience_level: formData.experience_level,
+          tags: tagsArray,
+        };
+
+        const ok = await handleSaveQuestion(payload, editingQuestion?.id);
+        if (ok) {
+          setShowModal(false);
+        }
+      } catch (err) {
+        setFormError(
+          err.response?.data?.detail ||
+            err.message ||
+            "Failed to save question.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      formData,
+      editingQuestion,
+      handleSaveQuestion,
+      isAISuggested,
+      handleSuggestAnswer,
+    ],
+  );
 
   const handleShareClick = useCallback(() => {
     setEditingQuestion(null);
@@ -188,6 +230,8 @@ export function useInterviewPrep() {
       tags: "",
     });
     setFormError("");
+    setFormErrors({});
+    setIsAISuggested(false);
     setShowModal(true);
   }, []);
 
@@ -195,18 +239,26 @@ export function useInterviewPrep() {
     const next = finalFilteredQuestions[0];
     if (next) {
       setTimeout(
-        () => document.getElementById(`q-${next.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
-        100
+        () =>
+          document
+            .getElementById(`q-${next.id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+        100,
       );
     }
   }, [finalFilteredQuestions]);
 
   const jumpToRandom = useCallback(() => {
     if (!finalFilteredQuestions.length) return;
-    const q = finalFilteredQuestions[Math.floor(Math.random() * finalFilteredQuestions.length)];
+    const q =
+      finalFilteredQuestions[
+        Math.floor(Math.random() * finalFilteredQuestions.length)
+      ];
     setExpandedQuestionId(q.id);
     setTimeout(() => {
-      document.getElementById(`q-${q.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`q-${q.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
   }, [finalFilteredQuestions]);
 
@@ -239,10 +291,10 @@ export function useInterviewPrep() {
     setBookmarkOnly,
     importantOnly,
     setImportantOnly,
+    activeFilter,
     setActiveFilter,
     filteredQuestions,
     finalFilteredQuestions,
-    sortedGroupedCategories,
     showModal,
     setShowModal,
     editingQuestion,
@@ -259,13 +311,10 @@ export function useInterviewPrep() {
     setQuestionToDelete,
     deleting,
     setDeleting,
-    showSidebar,
-    setShowSidebar,
     historyOpen,
     setHistoryOpen,
     expandedQuestionId,
     setExpandedQuestionId,
-    getQuestionTabCategory,
     handleEditClick,
     handleDeleteClick,
     handleDeleteConfirm,
@@ -273,5 +322,10 @@ export function useInterviewPrep() {
     handleShareClick,
     jumpToNext,
     jumpToRandom,
+    formErrors,
+    setFormErrors,
+    generatingAI,
+    isAISuggested,
+    handleSuggestAnswer,
   };
 }

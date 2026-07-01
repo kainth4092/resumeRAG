@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.database import Base, engine
+import app.models
+
+Base.metadata.create_all(bind=engine)
 from app.api.auth.routes import router as auth_router
 from app.api.profile.routes import router as profile_router
 from app.api.resume.routes import router as resume_router
@@ -16,6 +20,7 @@ from app.api.jobs.routes import router as jobs_router
 from app.api.tracker.routes import router as tracker_router
 from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
+from app.api.mock_interview.routes import router as mock_interview_router
 
 app = FastAPI(title="ResumeRAG API")
 
@@ -43,6 +48,7 @@ app.include_router(jobs_router)
 app.include_router(tracker_router)
 app.include_router(email_router)
 app.include_router(dashboard_router)
+app.include_router(mock_interview_router)
 
 
 @app.get("/")

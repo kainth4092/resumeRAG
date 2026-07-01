@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import { AuthLayout } from "./AuthLayout";
 import { SignupIllustration } from "./AuthIllustrations"
 import { AuthAlert } from "./AuthComponents";
@@ -23,6 +22,30 @@ export default function SignupPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const newErrors = {};
+        if (!form.name.trim()) {
+            newErrors.name = "Full name is required";
+        }
+        if (!form.email.trim()) {
+            newErrors.email = "Email address is required";
+        } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+            newErrors.email = "Please enter a valid email address";
+        }
+        if (!form.password) {
+            newErrors.password = "Password is required";
+        } else if (form.password.length < 6) {
+            newErrors.password = "Password must be at least 6 characters";
+        }
+        if (form.confirm !== form.password) {
+            newErrors.confirm = "Passwords do not match";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         try {
             setLoading(true)
             await registerUser({ name: form.name, email: form.email, password: form.password })
@@ -47,11 +70,6 @@ export default function SignupPage() {
             illustration={<SignupIllustration />}
             leftTitle="Build a resume that gets past every ATS filter"
             leftSubtitle="Our AI analyzes your target role, identifies skill gaps, and generates a tailored resume in seconds."
-        // testimonial={{
-        //     quote: "Created a perfectly tailored resume for 6 different roles in one afternoon. This tool is incredible.",
-        //     author: "Priya Sharma",
-        //     role: "Product Manager · Hired at Notion",
-        // }}
         >
             <div className="space-y-6">
                 <div>

@@ -1,16 +1,16 @@
 import { Zap } from "lucide-react";
 
-// const STATS = [
-//     { value: "94%", label: "Avg ATS Score" },
-//     { value: "3×", label: "More Interviews" },
-//     { value: "50K+", label: "Resumes Created" },
-// ];
+const STATS = [
+    { value: "94%", label: "Avg ATS Score" },
+    { value: "3×", label: "More Interviews" },
+    // { value: "50K+", label: "Resumes Created" },
+];
 
 export function AuthLayout({
   illustration,
   leftTitle,
   leftSubtitle,
-  // testimonial,
+  testimonial,
   children,
 }) {
   return (
@@ -19,9 +19,9 @@ export function AuthLayout({
       style={{ minHeight: "calc(105vh - 28px)" }}
     >
       <div className="hidden lg:flex lg:w-[52%] xl:w-[55%] relative overflow-hidden flex-col">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#464547] via-[#5b21b6] to-[#6d28d9]" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#464547] via-[#5b21b6] to-[#6d28d9]" />
 
-        {/* <div
+        <div
                     className="absolute inset-0 opacity-[0.03]"
                     style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
@@ -29,7 +29,7 @@ export function AuthLayout({
                 />
                 <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-3xl" />
                 <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-purple-800/40 rounded-full blur-3xl" />
-                <div className="absolute top-[40%] left-[60%] w-[200px] h-[200px] bg-indigo-500/20 rounded-full blur-2xl" /> */}
+                <div className="absolute top-[40%] left-[60%] w-[200px] h-[200px] bg-indigo-500/20 rounded-full blur-2xl" />
 
         <div className="relative flex-1 flex flex-col px-12 py-10 z-10">
           <div className="flex items-center gap-2.5">
@@ -59,16 +59,16 @@ export function AuthLayout({
             </p>
           </div>
 
-          {/* <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-8">
                         {STATS.map(s => (
                             <div key={s.label} className="bg-white/8 border border-white/15 rounded-xl p-3 text-center backdrop-blur-sm">
                                 <p className="text-xl font-bold text-white">{s.value}</p>
                                 <p className="text-[11px] text-violet-200/70 mt-0.5">{s.label}</p>
                             </div>
                         ))}
-                    </div> */}
+                    </div>
 
-          {/* {testimonial && (
+          {testimonial && (
                         <div className="bg-white/8 border border-white/15 rounded-2xl p-4 backdrop-blur-sm">
                             <p className="text-sm text-white/85 leading-relaxed mb-3">"{testimonial.quote}"</p>
                             <div className="flex items-center gap-2.5">
@@ -81,7 +81,7 @@ export function AuthLayout({
                                 </div>
                             </div>
                         </div>
-                    )} */}
+                    )}
         </div>
       </div>
 

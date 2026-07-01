@@ -4,6 +4,7 @@ import Section from "./common/Section";
 import EditableCard from "./common/EditableCard";
 import Modal from "./common/Modal";
 import Field from "./common/Field";
+import Select from "../../resume/components/resume/dashboard/Select";
 import {
   createExperience,
   deleteExperience,
@@ -140,6 +141,8 @@ export default function ExperienceSection() {
     return `${start} – ${end}`;
   };
 
+  const monthOptions = MONTHS.map((m) => ({ value: m, label: m }));
+
   return (
     <>
       <Section
@@ -220,23 +223,13 @@ export default function ExperienceSection() {
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
                 Start Month
               </label>
-              <select
-                value={expDraft.start_month || ""}
-                onChange={(e) =>
-                  setExpDraft((prev) => ({
-                    ...prev,
-                    start_month: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
-              >
-                <option value="">Select Month</option>
-                {MONTHS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+              <Select
+                options={monthOptions}
+                value={expDraft.start_month}
+                onChange={(val) => setExpDraft((prev) => ({ ...prev, start_month: val }))}
+                placeholder="Select Month"
+                size="sm"
+              />
             </div>
             <div>
               <Field
@@ -282,23 +275,13 @@ export default function ExperienceSection() {
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
                   End Month
                 </label>
-                <select
-                  value={expDraft.end_month || ""}
-                  onChange={(e) =>
-                    setExpDraft((prev) => ({
-                      ...prev,
-                      end_month: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
-                >
-                  <option value="">Select Month</option>
-                  {MONTHS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={monthOptions}
+                  value={expDraft.end_month}
+                  onChange={(val) => setExpDraft((prev) => ({ ...prev, end_month: val }))}
+                  placeholder="Select Month"
+                  size="sm"
+                />
               </div>
               <div>
                 <Field

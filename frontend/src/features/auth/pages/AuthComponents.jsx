@@ -22,7 +22,7 @@ export const AuthInput = forwardRef(
                     }
         `}>
                     {icon && (
-                        <div className="pl-3.5 flex items-center flex-shrink-0 text-muted-foreground">
+                        <div className="pl-3.5 flex items-center shrink-0 text-muted-foreground">
                             {icon}
                         </div>
                     )}
@@ -40,15 +40,15 @@ export const AuthInput = forwardRef(
                         {...props}
                     />
                     {suffix && (
-                        <div className="pr-3 flex items-center flex-shrink-0">{suffix}</div>
+                        <div className="pr-3 flex items-center shrink-0">{suffix}</div>
                     )}
                     {error && !suffix && (
-                        <div className="pr-3 flex-shrink-0">
+                        <div className="pr-3 shrink-0">
                             <AlertCircle size={16} className="text-destructive" />
                         </div>
                     )}
                     {success && !error && !suffix && (
-                        <div className="pr-3 flex-shrink-0">
+                        <div className="pr-3 shrink-0">
                             <CheckCircle2 size={16} className="text-emerald-500" />
                         </div>
                     )}
@@ -138,8 +138,8 @@ export function PasswordStrengthMeter({ password }) {
                 ].map(r => (
                     <div key={r.key} className="flex items-center gap-1.5">
                         {checks[r.key]
-                            ? <CheckCircle2 size={11} className="text-emerald-500 flex-shrink-0" />
-                            : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/30 flex-shrink-0" />
+                            ? <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
+                            : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/30 shrink-0" />
                         }
                         <span className={`text-[11px] ${checks[r.key] ? "text-foreground" : "text-muted-foreground"}`}>{r.label}</span>
                     </div>
@@ -156,7 +156,7 @@ export function AuthCheckbox({
         <div>
             <label htmlFor={id} className="flex items-start gap-2.5 cursor-pointer group">
                 <div className={`
-          w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all
+          w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all
           ${checked ? "bg-primary border-primary" : error ? "border-destructive" : "border-border group-hover:border-primary/60"}
         `}>
                     <input
@@ -195,7 +195,7 @@ export function AuthButton({
             disabled={disabled || loading}
             className={`${base} ${variants[variant]} ${className}`}
         >
-            {loading && <Loader2 size={16} className="animate-spin flex-shrink-0" />}
+            {loading && <Loader2 size={16} className="animate-spin shrink-0" />}
             {children}
         </button>
     );
@@ -243,8 +243,8 @@ export function AuthAlert({
         info: "bg-primary/10 border-primary/25 text-primary",
     };
     const icons = {
-        error: <AlertCircle size={15} className="flex-shrink-0" />,
-        success: <CheckCircle2 size={15} className="flex-shrink-0" />,
+        error: <AlertCircle size={15} className="shrink-0" />,
+        success: <CheckCircle2 size={15} className="shrink-0" />,
         info: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>,
     };
     return (

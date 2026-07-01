@@ -20,6 +20,21 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = "Email address is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!password) {
+      newErrors.password = "Password is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await loginUser({ email, password });

@@ -88,7 +88,7 @@ export function LoginIllustration() {
 
             <FloatingCard className="top-1/3 -right-14 w-40">
                 <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-violet-400/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-violet-400/30 flex items-center justify-center shrink-0 mt-0.5">
                         <span className="text-[9px] text-violet-200">✦</span>
                     </div>
                     <p className="text-[10px] text-white/75 leading-relaxed">Add quantified metrics to boost impact by 34%</p>
@@ -117,7 +117,7 @@ export function SignupIllustration() {
                         { label: "System Design", val: 55, color: "bg-amber-400" },
                     ].map(s => (
                         <div key={s.label} className="flex items-center gap-2">
-                            <span className="text-[10px] text-white/60 w-20 flex-shrink-0">{s.label}</span>
+                            <span className="text-[10px] text-white/60 w-20 shrink-0">{s.label}</span>
                             <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.val}%` }} />
                             </div>
@@ -141,7 +141,7 @@ export function SignupIllustration() {
 
             <FloatingCard className="-bottom-4 -right-10 w-44">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-400/20 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-400/20 flex items-center justify-center shrink-0">
                         <span className="text-emerald-300 text-sm">✓</span>
                     </div>
                     <div>
