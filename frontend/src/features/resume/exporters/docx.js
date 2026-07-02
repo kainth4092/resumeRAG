@@ -38,9 +38,6 @@ export const downloadDOCX = async (resumeData, filename = "Resume.docx", templat
   const website = personal.website || "";
 
   const summaryText = r.summary?.text || r.summary || "";
-  const skillsList = (r.skills || []).map((s, idx) =>
-    typeof s === "string" ? { id: idx, name: s } : { id: s.id || idx, name: s.name || "" }
-  );
 
   const experienceList = (r.experience || r.work_experience || []).map((e, idx) => ({
     id: e.id || idx,

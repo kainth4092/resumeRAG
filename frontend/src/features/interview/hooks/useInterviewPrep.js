@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useInterviewQuestions } from "./useInterviewQuestions";
 import { useQuestionFilters } from "./useQuestionFilters";
@@ -64,6 +64,8 @@ export function useInterviewPrep() {
   });
   const [generatingAI, setGeneratingAI] = useState(false);
   const [isAISuggested, setIsAISuggested] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
   const handleSuggestAnswer = useCallback(async () => {
     if (!formData.question?.trim()) {
@@ -105,9 +107,6 @@ export function useInterviewPrep() {
     setFormData,
     setSuccess,
   ]);
-
-  const [formError, setFormError] = useState("");
-  const [formErrors, setFormErrors] = useState({});
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);

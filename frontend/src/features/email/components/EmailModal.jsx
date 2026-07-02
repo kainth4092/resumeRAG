@@ -22,6 +22,7 @@ export function EmailModal({ open, onClose, initialResume = null }) {
     selectedResume,
     setSelectedResume,
     attachments,
+    setAttachments,
     sendState,
     setSendState,
     errorMessage,

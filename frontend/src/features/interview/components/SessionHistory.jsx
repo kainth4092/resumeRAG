@@ -25,9 +25,11 @@ export default function SessionHistory({ onSelectSession, activeSessionId }) {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchHistory();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();

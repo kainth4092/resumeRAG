@@ -43,9 +43,11 @@ export default function ExperienceSection() {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadExperiences();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openExpModal = () => {
     setExpDraft({

@@ -166,6 +166,7 @@ export const QuestionCard = memo(function QuestionCard({
 
   const [open, setOpen] = useState(isInitiallyExpanded);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isInitiallyExpanded) {
       setOpen(true);
@@ -174,6 +175,7 @@ export const QuestionCard = memo(function QuestionCard({
       }
     }
   }, [isInitiallyExpanded, onExpand, question.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggle = () => {
     const nextOpen = !open;
@@ -223,32 +225,27 @@ export const QuestionCard = memo(function QuestionCard({
 
   const diff = DIFF_CFG[difficultyText];
 
+  const answerObj =
+    typeof question.answer === "object" ? question.answer : null;
+  const keyPoints = question.keyPoints || answerObj?.key_points || [];
+  const commonMistakes =
+    question.commonMistakes || answerObj?.common_mistakes || [];
+  const followUps = question.followUps || answerObj?.follow_up_questions || [];
   const sampleAnswerText = toText(question.sampleAnswer || question.answer);
 
   const getEstimatedMins = (q) => {
-    if (q.estimatedMins !== undefined && q.estimatedMins !== null) {
-      return q.estimatedMins;
+    let text = (q.question || "") + " " + sampleAnswerText;
+    if (keyPoints.length > 0) {
+      text += " " + keyPoints.join(" ");
     }
-    const duration = q.estimated_duration;
-    if (duration) {
-      if (typeof duration === "number") return duration;
-      if (typeof duration === "string") {
-        const numbers = duration.match(/\d+/g);
-        if (numbers && numbers.length > 0) {
-          const parsed = Number(numbers[0]);
-          if (Number.isFinite(parsed)) return parsed;
-        }
-      }
+    if (commonMistakes.length > 0) {
+      text += " " + commonMistakes.join(" ");
     }
-    const answerVal = q.sampleAnswer || q.answer;
-    if (answerVal) {
-      const text = toText(answerVal);
-      const wordCount = text.split(/\s+/).filter(Boolean).length;
-      if (wordCount > 0) {
-        return Math.max(1, Math.ceil(wordCount / 150));
-      }
+    if (followUps.length > 0) {
+      text += " " + followUps.join(" ");
     }
-    return 2;
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.ceil(wordCount / 180));
   };
 
   const readMins = getEstimatedMins(question);
@@ -269,13 +266,6 @@ export const QuestionCard = memo(function QuestionCard({
   };
 
   const displayReadMins = getDisplayReadMins(readMins);
-
-  const answerObj =
-    typeof question.answer === "object" ? question.answer : null;
-  const keyPoints = question.keyPoints || answerObj?.key_points || [];
-  const commonMistakes =
-    question.commonMistakes || answerObj?.common_mistakes || [];
-  const followUps = question.followUps || answerObj?.follow_up_questions || [];
 
   return (
     <div

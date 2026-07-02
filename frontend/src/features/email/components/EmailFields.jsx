@@ -11,7 +11,6 @@ export function EmailFields({
   emailError,
   ccError,
   bccError,
-  userEmail,
 }) {
   const [showCcBcc, setShowCcBcc] = useState(false);
 
@@ -38,10 +37,17 @@ export function EmailFields({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="name@example.com"
-          className={`w-full px-3.5 py-2.5 text-sm bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${emailError ? "border-destructive" : "border-border focus:border-primary/50"
-            }`}
+          className={`w-full px-3.5 py-2.5 text-sm bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${
+            emailError
+              ? "border-destructive"
+              : "border-border focus:border-primary/50"
+          }`}
         />
-        {emailError && <p className="text-[11px] text-destructive mt-1 font-medium">{emailError}</p>}
+        {emailError && (
+          <p className="text-[11px] text-destructive mt-1 font-medium">
+            {emailError}
+          </p>
+        )}
       </div>
 
       {showCcBcc && (
@@ -55,10 +61,17 @@ export function EmailFields({
               value={cc}
               onChange={(e) => setCc(e.target.value)}
               placeholder="cc@company.com"
-              className={`w-full px-3.5 py-2 text-xs bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${ccError ? "border-destructive" : "border-border focus:border-primary/50"
-                }`}
+              className={`w-full px-3.5 py-2 text-xs bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${
+                ccError
+                  ? "border-destructive"
+                  : "border-border focus:border-primary/50"
+              }`}
             />
-            {ccError && <p className="text-[10px] text-destructive mt-1 font-medium">{ccError}</p>}
+            {ccError && (
+              <p className="text-[10px] text-destructive mt-1 font-medium">
+                {ccError}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
@@ -69,10 +82,17 @@ export function EmailFields({
               value={bcc}
               onChange={(e) => setBcc(e.target.value)}
               placeholder="bcc@company.com"
-              className={`w-full px-3.5 py-2 text-xs bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${bccError ? "border-destructive" : "border-border focus:border-primary/50"
-                }`}
+              className={`w-full px-3.5 py-2 text-xs bg-input-background border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 transition-all ${
+                bccError
+                  ? "border-destructive"
+                  : "border-border focus:border-primary/50"
+              }`}
             />
-            {bccError && <p className="text-[10px] text-destructive mt-1 font-medium">{bccError}</p>}
+            {bccError && (
+              <p className="text-[10px] text-destructive mt-1 font-medium">
+                {bccError}
+              </p>
+            )}
           </div>
         </div>
       )}

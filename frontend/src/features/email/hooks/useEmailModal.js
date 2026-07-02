@@ -24,6 +24,19 @@ export function useEmailModal({ open, onClose, initialResume }) {
 
   const modalRef = useRef(null);
 
+  const handleClose = () => {
+    if (sendState === "loading") return;
+    setSendState("idle");
+    setEmail("");
+    setCc("");
+    setBcc("");
+    setEmailError("");
+    setCcError("");
+    setBccError("");
+    onClose();
+  };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setSubject("");
@@ -114,6 +127,7 @@ export function useEmailModal({ open, onClose, initialResume }) {
       setAttachments([]);
     }
   }, [selectedResume]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -123,6 +137,7 @@ export function useEmailModal({ open, onClose, initialResume }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, sendState]);
 
   const validate = () => {
@@ -210,18 +225,6 @@ export function useEmailModal({ open, onClose, initialResume }) {
       setSendState("error");
       setErrorMessage(err.message || "Failed to deliver email.");
     }
-  };
-
-  const handleClose = () => {
-    if (sendState === "loading") return;
-    setSendState("idle");
-    setEmail("");
-    setCc("");
-    setBcc("");
-    setEmailError("");
-    setCcError("");
-    setBccError("");
-    onClose();
   };
 
   const handleRestoreAttachment = () => {

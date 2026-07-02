@@ -57,9 +57,11 @@ export default function ProfileCard({ setProfileSaved }) {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadProfile();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const saveProfile = async () => {
     try {

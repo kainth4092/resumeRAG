@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Plus,
-  X,
-  RefreshCw,
-  CheckCircle2,
-} from "lucide-react";
+import { Plus, X, RefreshCw, CheckCircle2 } from "lucide-react";
 import Select from "../../resume/components/resume/dashboard/Select";
 import { saveJob, updateJobStatus } from "../services/jobs.service";
 
@@ -58,20 +53,20 @@ export default function AddJobModal({ onClose, onAdd }) {
       }
 
       onAdd();
-    } catch {
-      // Failed silently as requested
+    } catch (error) {
+      console.error("Failed to save manual application:", error);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-4 animate-fade-in">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-[var(--shadow-lg)] overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-(--shadow-lg) overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">

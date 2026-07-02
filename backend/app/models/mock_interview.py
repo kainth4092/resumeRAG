@@ -19,6 +19,7 @@ class MockInterviewSession(Base):
     overall_grade = Column(String(10), nullable=True)
     questions_attempted = Column(Integer, nullable=False, default=0)
     performance_summary = Column(Text, nullable=True)
+    evaluation_report = Column(JSONB, nullable=True)
 
     user = relationship("User")
     answers = relationship(

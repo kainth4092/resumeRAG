@@ -311,3 +311,95 @@ def generate_general_answer(
     except Exception as e:
         print(f"Failed to generate AI answer: {e}")
         return f"AI generated sample answer for: {question}"
+
+
+def analyze_resume_health(resume_text: str):
+    prompt = f"""
+    You are an expert ATS Resume Analyzer, Technical Recruiter, and Resume Reviewer.
+    Your task is to perform a comprehensive health audit of the candidate's resume and generate an ATS health report.
+    This analysis does NOT compare against any specific job description, but evaluates overall professional resume quality, ATS-friendliness, structure, and readability.
+
+    #########################
+    INPUT
+    #########################
+    Resume:
+    {resume_text}
+
+    #########################
+    INSTRUCTIONS
+    #########################
+    Evaluate the resume structure, wording, formatting, grammar, and completeness.
+    Ensure to detect missing sections specifically checking for the presence of:
+    - Projects
+    - Certifications
+    - Achievements
+    - Portfolio
+    - GitHub
+    - LinkedIn
+    - Languages
+    - Volunteer Experience
+    - Publications
+
+    #########################
+    OUTPUT SCHEMA
+    #########################
+    Return ONLY valid JSON with the following structure:
+    {{
+      "ats_score": 0,               
+      "resume_health_score": 0,    
+      "formatting_score": 0,    
+      "readability_score": 0,    
+      "skills_coverage": 0,    
+      "experience_quality": 0,    
+      "projects_quality": 0,    
+      "education_quality": 0,    
+      "keyword_optimization": 0,   
+      "grammar_writing": 0,        
+      "section_completeness": 0,   
+      "recruiter_readiness": 0,     
+      
+      "suggestions": {{
+        "quick_fixes": [],          
+        "medium_improvements": [],   
+        "high_impact_improvements": [] 
+      }},
+      "missing_sections": [],       
+      "strengths": [],              
+      "weaknesses": []             
+    }}
+    """
+    response = call_llm_with_retry(prompt)
+    return extract_json(response)
+
+
+def improve_resume_section(
+    resume_text: str, section_name: str, section_content: str = None
+) -> str:
+    prompt = f"""
+    You are an expert ATS Resume Writer and Senior Technical Recruiter.
+    Your task is to write a highly optimized, professional, and ATS-friendly version of a specific section in the candidate's resume.
+    
+    #########################
+    INPUT
+    #########################
+    Full Resume Context:
+    {resume_text}
+    
+    Target Section to Improve:
+    {section_name}
+    
+    Current Section Content (if any):
+    {section_content or "Not provided. Please extract/generate from the resume context."}
+    
+    #########################
+    INSTRUCTIONS
+    #########################
+    - Improve vocabulary, impact, and ATS keywords.
+    - Use strong action verbs and professional phrasing.
+    - Keep it factual and truthful to the original context. Do not invent new jobs or degrees.
+    - If improving summary, write a compelling 3-4 sentence professional summary.
+    - If improving experience/projects, write bullet points with measurable impact where possible.
+    - Return ONLY the improved plain text of the section. Do not wrap in JSON, markdown code blocks, or include any extra commentary.
+    """
+    response = call_llm_with_retry(prompt)
+    return response.strip()

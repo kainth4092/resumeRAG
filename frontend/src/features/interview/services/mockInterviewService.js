@@ -8,7 +8,25 @@ export const mockInterviewService = {
 
   transcribeAudio: (audioBlob) => {
     const formData = new FormData();
-    formData.append("file", audioBlob, "recording.webm");
+    let filename = "recording.webm";
+    if (audioBlob && audioBlob.type) {
+      if (audioBlob.type.includes("wav")) {
+        filename = "recording.wav";
+      } else if (
+        audioBlob.type.includes("mp4") ||
+        audioBlob.type.includes("m4a")
+      ) {
+        filename = "recording.mp4";
+      } else if (audioBlob.type.includes("ogg")) {
+        filename = "recording.ogg";
+      } else if (
+        audioBlob.type.includes("mpeg") ||
+        audioBlob.type.includes("mp3")
+      ) {
+        filename = "recording.mp3";
+      }
+    }
+    formData.append("file", audioBlob, filename);
     return api
       .post("/mock-interview/transcribe", formData, {
         headers: {

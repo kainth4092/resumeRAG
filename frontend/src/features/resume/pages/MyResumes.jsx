@@ -49,9 +49,11 @@ export default function MyResumes() {
   const [success, setSuccess] = useState("");
   const [generatingPrep, setGeneratingPrep] = useState(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, starredFilter, sortBy]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const menuRef = useRef(null);
 
@@ -65,6 +67,7 @@ export default function MyResumes() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user) return;
     const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
@@ -100,6 +103,7 @@ export default function MyResumes() {
     });
     setResumes(mapped);
   }, [user, resumesKey, reloadTrigger]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const filtered = resumes
     .filter((r) => {
@@ -459,8 +463,6 @@ export default function MyResumes() {
       <ResumePreviewModal
         previewResume={previewResume}
         setPreviewResume={setPreviewResume}
-        handleEdit={handleEdit}
-        setDeleteTarget={setDeleteTarget}
         onUpdate={() => setReloadTrigger((p) => p + 1)}
       />
 

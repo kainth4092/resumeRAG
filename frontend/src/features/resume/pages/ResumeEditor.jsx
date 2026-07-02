@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
@@ -13,7 +12,6 @@ import {
 
 import PersonalEditor from "../components/resume/editor/PersonalEditor";
 import SummaryEditor from "../components/resume/editor/SummaryEditor";
-import ExperienceEditor from "../components/resume/editor/ExperienceEditor";
 import EducationEditor from "../components/resume/editor/EducationEditor";
 import SkillsEditor from "../components/resume/editor/SkillsEditor";
 import ProjectsEditor from "../components/resume/editor/ProjectsEditor";
@@ -39,7 +37,6 @@ export default function ResumeEditor() {
     skills,
     setSkills,
     experience,
-    setExperience,
     education,
     setEducation,
     projects,

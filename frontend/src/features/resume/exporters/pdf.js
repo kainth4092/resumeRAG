@@ -36,21 +36,35 @@ export const downloadPDF = async (resumeData, filename = "Resume.pdf") => {
       const b_ = c * Math.sin(hRad);
       const l_ = l + 0.3963377774 * a_ + 0.2158037573 * b_;
       const m_ = l - 0.1055613458 * a_ - 0.0638541728 * b_;
-      const s_ = l - 0.0894841775 * a_ - 1.2914855480 * b_;
+      const s_ = l - 0.0894841775 * a_ - 1.291485548 * b_;
       const l3 = l_ * l_ * l_;
       const m3 = m_ * m_ * m_;
       const s3 = s_ * s_ * s_;
-      const r_linear = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
-      const g_linear = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
-      const b_linear = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
-      const gamma = (x) => x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
-      const rVal = Math.min(255, Math.max(0, Math.round(gamma(r_linear) * 255)));
-      const gVal = Math.min(255, Math.max(0, Math.round(gamma(g_linear) * 255)));
-      const bVal = Math.min(255, Math.max(0, Math.round(gamma(b_linear) * 255)));
+      const r_linear =
+        +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+      const g_linear =
+        -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+      const b_linear =
+        -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3;
+      const gamma = (x) =>
+        x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+      const rVal = Math.min(
+        255,
+        Math.max(0, Math.round(gamma(r_linear) * 255)),
+      );
+      const gVal = Math.min(
+        255,
+        Math.max(0, Math.round(gamma(g_linear) * 255)),
+      );
+      const bVal = Math.min(
+        255,
+        Math.max(0, Math.round(gamma(b_linear) * 255)),
+      );
       return `rgba(${rVal}, ${gVal}, ${bVal}, ${a})`;
     };
 
-    const oklchRegex = /oklch\(\s*([\d\.]+%?)\s+([\d\.]+)\s+([\d\.]+)(?:\s*\/\s*([\d\.]+%?))?\s*\)/gi;
+    const oklchRegex =
+      /oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/gi;
     const replaceOklch = (str) => {
       if (typeof str !== "string") return str;
       return str.replace(oklchRegex, (match, lStr, cStr, hStr, aStr) => {
@@ -81,7 +95,7 @@ export const downloadPDF = async (resumeData, filename = "Resume.pdf") => {
         "fill",
         "stroke",
         "backgroundImage",
-        "boxShadow"
+        "boxShadow",
       ];
       colorProps.forEach((prop) => {
         const val = computed[prop];
@@ -124,7 +138,16 @@ export const downloadPDF = async (resumeData, filename = "Resume.pdf") => {
     while (heightLeft >= 0) {
       position = heightLeft - imgHeight;
       pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        0,
+        position,
+        imgWidth,
+        imgHeight,
+        "",
+        "FAST",
+      );
       heightLeft -= pageHeight;
     }
 

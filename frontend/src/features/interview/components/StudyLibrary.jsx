@@ -83,6 +83,7 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchMeta();
   }, [fetchMeta]);
@@ -141,6 +142,7 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
   useEffect(() => {
     loadQuestions(page);
   }, [page, loadQuestions]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggleBookmark = async (id) => {
     setQuestions((prev) =>
@@ -180,11 +182,14 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
     selectedCompany ||
     bookmarkOnly;
 
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
   const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start mt-6">
-      <div className="lg:col-span-1">
+      <div className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}>
         <InterviewFilterSidebar
           search={search}
           setSearch={setSearch}
@@ -196,7 +201,6 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
           setActiveSkill={setSelectedSkill}
           difficulty={selectedDifficulty}
           setDifficulty={setSelectedDifficulty}
-          difficultyCounts={meta.difficulties}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           categories={meta.categories}
@@ -204,11 +208,14 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
           setSelectedCompany={setSelectedCompany}
           companies={meta.companies}
           onReset={clearAllFilters}
+          isOpenMobile={mobileFiltersOpen}
+          onCloseMobile={() => setMobileFiltersOpen(false)}
+          showDesktop={showSidebar}
         />
       </div>
 
       {/* Main Questions List Content Area */}
-      <div className="lg:col-span-3 space-y-5">
+      <div className={`${showSidebar ? "lg:col-span-3" : "lg:col-span-4"} space-y-5 transition-all duration-300`}>
         {error && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
             <span>{error}</span>
@@ -248,11 +255,27 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
               of <strong className="text-foreground">{total}</strong> Questions
             </span>
           </div>
-          {isFiltered && (
-            <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full select-none">
-              Filtered Active
-            </span>
-          )}
+          
+          <div className="flex items-center gap-3">
+            {isFiltered && (
+              <span className="hidden sm:inline-block text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full select-none">
+                Filtered Active
+              </span>
+            )}
+            <button
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setMobileFiltersOpen(true);
+                } else {
+                  setShowSidebar(!showSidebar);
+                }
+              }}
+              className="flex items-center gap-1.5 h-8 px-3 bg-muted hover:bg-muted/80 border border-border/40 text-foreground rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              <SlidersHorizontal size={13} className={showSidebar ? "text-primary" : "text-muted-foreground"} />
+              <span>Filters</span>
+            </button>
+          </div>
         </div>
 
         {loading ? (

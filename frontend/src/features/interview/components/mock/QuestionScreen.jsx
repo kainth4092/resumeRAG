@@ -45,10 +45,56 @@ export function QuestionScreen({
     setError("");
     audioChunksRef.current = [];
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (firstErr) {
+        console.warn(
+          "Standard getUserMedia({audio:true}) failed, checking for specific input devices:",
+          firstErr,
+        );
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          console.log("Found devices:", devices);
+          const audioInputs = devices.filter((d) => d.kind === "audioinput");
+          if (audioInputs.length > 0) {
+            // Find a device with a valid deviceId, preferably not the default if default failed
+            const targetDevice =
+              audioInputs.find((d) => d.deviceId && d.deviceId !== "default") ||
+              audioInputs[0];
+            console.log(
+              "Attempting to connect to specific audio input:",
+              targetDevice,
+            );
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: targetDevice.deviceId } },
+            });
+          } else {
+            throw firstErr;
+          }
+        } else {
+          throw firstErr;
+        }
+      }
+
+      // Detect supported mimeType
+      let mimeType = "audio/webm";
+      if (typeof MediaRecorder !== "undefined") {
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          if (MediaRecorder.isTypeSupported("audio/mp4")) {
+            mimeType = "audio/mp4";
+          } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+            mimeType = "audio/ogg";
+          } else if (MediaRecorder.isTypeSupported("audio/wav")) {
+            mimeType = "audio/wav";
+          } else {
+            mimeType = "";
+          }
+        }
+      }
+
+      const recorderOptions = mimeType ? { mimeType } : undefined;
+      mediaRecorderRef.current = new MediaRecorder(stream, recorderOptions);
 
       mediaRecorderRef.current.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
@@ -58,7 +104,7 @@ export function QuestionScreen({
 
       mediaRecorderRef.current.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
+          type: mimeType || "audio/webm",
         });
         stream.getTracks().forEach((track) => track.stop());
         uploadAndTranscribe(audioBlob);
@@ -73,10 +119,20 @@ export function QuestionScreen({
       }, 1000);
     } catch (err) {
       console.error("Microphone access failed:", err);
-      setError(
-        "Could not access your microphone. Please grant permission and try again.",
-      );
-      setStep("idle");
+      if (
+        err.name === "NotFoundError" ||
+        err.message?.includes("device not found")
+      ) {
+        setError(
+          "No microphone detected on your system. You can type your answer manually below.",
+        );
+      } else {
+        setError(
+          "Could not access your microphone. Please grant permission or type your answer manually below.",
+        );
+      }
+      setTranscript("");
+      setStep("editing");
     }
   };
 
@@ -202,12 +258,23 @@ export function QuestionScreen({
             </p>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex items-center gap-3">
             <button
               onClick={handleSkipQuestion}
               className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
             >
               Skip Question <SkipForward size={12} />
+            </button>
+            <span className="text-muted-foreground/40 text-xs">|</span>
+            <button
+              onClick={() => {
+                setError("");
+                setTranscript("");
+                setStep("editing");
+              }}
+              className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            >
+              Type Answer Manually
             </button>
           </div>
         </div>
@@ -249,7 +316,7 @@ export function QuestionScreen({
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground">
-              Your Spoken Answer
+              Your Answer
             </label>
             <p className="text-[10px] text-muted-foreground">
               Review and correct any spelling/transcription errors below before

@@ -2,6 +2,9 @@ import os
 import logging
 from typing import BinaryIO
 from faster_whisper import WhisperModel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -12,20 +15,18 @@ class SpeechToTextService:
     @classmethod
     def get_model(cls) -> WhisperModel:
         if cls._model_instance is None:
-            model_size = os.getenv("WHISPER_MODEL_SIZE")
-            device = os.getenv("WHISPER_DEVICE")
-            compute_type = os.getenv("WHISPER_COMPUTE_TYPE")
+            model_size = os.getenv("WHISPER_MODEL_SIZE", "base")
+            device = os.getenv("WHISPER_DEVICE", "cpu")
+            compute_type = os.getenv("WHISPER_COMPUTE_TYPE", "float32")
             logger.info(
                 f"Initializing Faster-Whisper Model: {model_size} on {device} ({compute_type})"
             )
             try:
-                # Load the model only once
                 cls._model_instance = WhisperModel(
                     model_size, device=device, compute_type=compute_type
                 )
             except Exception as e:
                 logger.error(f"Failed to load Faster-Whisper model: {e}")
-                # Fallback to cpu/float32 if int8 is not supported on CPU
                 cls._model_instance = WhisperModel(
                     model_size, device="cpu", compute_type="float32"
                 )

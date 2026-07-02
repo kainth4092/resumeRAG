@@ -1,13 +1,10 @@
 import {
   Trophy,
   Clock,
-  Star,
   Sparkles,
-  BookOpen,
   AlertCircle,
   RefreshCw,
   ClipboardList,
-  HelpCircle,
 } from "lucide-react";
 
 export function FinalReport({ report, onRetake }) {
@@ -188,6 +185,57 @@ export function FinalReport({ report, onRetake }) {
         </div>
       </div>
 
+      {/* Session Feedback Summary */}
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
+        <div>
+          <h3 className="text-sm font-bold text-foreground">General Feedback Summary</h3>
+          <p className="text-[10px] text-muted-foreground">Aggregated analysis across your entire mock interview session.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Key Strengths */}
+          <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4.5 space-y-2">
+            <h4 className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+              <Trophy size={14} /> Key Strengths
+            </h4>
+            {uniqueStrengths.length > 0 ? (
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
+                {uniqueStrengths.map((str, idx) => <li key={idx}>{str}</li>)}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No strengths logged.</p>
+            )}
+          </div>
+          
+          {/* Areas for Growth (Weaknesses) */}
+          <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4.5 space-y-2">
+            <h4 className="text-xs font-bold text-red-600 flex items-center gap-1.5">
+              <AlertCircle size={14} className="text-red-500" /> Areas for Growth
+            </h4>
+            {uniqueWeaknesses.length > 0 ? (
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
+                {uniqueWeaknesses.map((wk, idx) => <li key={idx}>{wk}</li>)}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No weaknesses logged.</p>
+            )}
+          </div>
+          
+          {/* Actionable Steps (Improvements) */}
+          <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4.5 space-y-2">
+            <h4 className="text-xs font-bold text-amber-600 flex items-center gap-1.5">
+              <Sparkles size={14} /> Actionable Steps
+            </h4>
+            {uniqueImprovements.length > 0 ? (
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
+                {uniqueImprovements.map((imp, idx) => <li key={idx}>{imp}</li>)}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No improvements logged.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Detailed Question Review */}
       <div className="space-y-4">
         <div>
@@ -228,8 +276,8 @@ export function FinalReport({ report, onRetake }) {
                 "{ans.transcript || "Skipped question."}"
               </div>
 
-              {/* Answer Strengths & Improvements */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Answer Strengths, Weaknesses & Improvements */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {ans.strengths && ans.strengths.length > 0 && (
                   <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3.5 space-y-1">
                     <span className="text-[10px] font-bold text-emerald-600 block">
@@ -238,6 +286,18 @@ export function FinalReport({ report, onRetake }) {
                     <ul className="text-[10px] text-muted-foreground list-disc pl-3.5 space-y-1">
                       {ans.strengths.map((str, i) => (
                         <li key={i}>{str}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {ans.weaknesses && ans.weaknesses.length > 0 && (
+                  <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3.5 space-y-1">
+                    <span className="text-[10px] font-bold text-red-600 block">
+                      WEAKNESSES
+                    </span>
+                    <ul className="text-[10px] text-muted-foreground list-disc pl-3.5 space-y-1">
+                      {ans.weaknesses.map((wk, i) => (
+                        <li key={i}>{wk}</li>
                       ))}
                     </ul>
                   </div>

@@ -7,10 +7,6 @@ export default function Header({ resumes = [], onNewResume }) {
     <div className="flex items-start justify-between gap-4 font-sans">
       <div>
         <h1 className="text-2xl font-bold text-foreground">My Resumes</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {resumes.length} resumes ·{" "}
-          {activeCount} active
-        </p>
       </div>
       <button
         onClick={onNewResume}

@@ -28,7 +28,7 @@ export const emailService = {
     } catch (error) {
       console.error("[Email Service] API Error:", error);
       const errorMsg = error.response?.data?.detail || error.message || "Failed to deliver email.";
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: error });
     }
   },
 };

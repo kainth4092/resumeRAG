@@ -75,6 +75,7 @@ export function useJobTracker() {
     [loadRecommended, location, jobType, remote],
   );
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (search.trim()) {
       handleSearch(search);
@@ -86,6 +87,7 @@ export function useJobTracker() {
   useEffect(() => {
     loadTrackedJobs();
   }, [loadTrackedJobs]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const [loadingJobId, setLoadingJobId] = useState(null);
 

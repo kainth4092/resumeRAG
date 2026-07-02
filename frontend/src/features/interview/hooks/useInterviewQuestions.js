@@ -5,17 +5,32 @@ import {
   updateInterviewQuestion,
   deleteInterviewQuestion,
 } from "../services/interviewBankService";
-import { getInterviewSession, getInterviewHistory, getQuestionDetails, bookmarkQuestion } from "../services/interviewService";
+import {
+  getInterviewSession,
+  getInterviewHistory,
+  getQuestionDetails,
+  bookmarkQuestion,
+} from "../services/interviewService";
 import { asText, estimateMinutes } from "../../../utils/interviewUtils";
 import { useAuth } from "../../auth/context/AuthContext";
 
 const mapExperienceToDifficulty = (exp) => {
   if (!exp) return "Medium";
   const str = String(exp).toLowerCase();
-  if (str.includes("fresher") || str.includes("junior") || str.includes("easy") || str.includes("0-")) {
+  if (
+    str.includes("fresher") ||
+    str.includes("junior") ||
+    str.includes("easy") ||
+    str.includes("0-")
+  ) {
     return "Easy";
   }
-  if (str.includes("3-5") || str.includes("senior") || str.includes("hard") || str.includes("5+")) {
+  if (
+    str.includes("3-5") ||
+    str.includes("senior") ||
+    str.includes("hard") ||
+    str.includes("5+")
+  ) {
     return "Hard";
   }
   return "Medium";
@@ -23,10 +38,9 @@ const mapExperienceToDifficulty = (exp) => {
 
 export function useInterviewQuestions(locationState) {
   const { user } = useAuth();
-  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
-  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
-  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
-  const bookmarkedQuestionsKey = user?.email ? `bookmarked_questions_${user.email}` : "bookmarked_questions";
+  const bookmarkedQuestionsKey = user?.email
+    ? `bookmarked_questions_${user.email}`
+    : "bookmarked_questions";
 
   const [viewState, setViewState] = useState("loading");
   const [questions, setQuestions] = useState([]);
@@ -50,7 +64,10 @@ export function useInterviewQuestions(locationState) {
             sessionId = history[0].id;
           }
         } catch (historyErr) {
-          console.error("Failed to load interview history for auto-load:", historyErr);
+          console.error(
+            "Failed to load interview history for auto-load:",
+            historyErr,
+          );
         }
       }
 
@@ -59,9 +76,11 @@ export function useInterviewQuestions(locationState) {
         const transformed = (res.questions || []).map((q) => ({
           ...q,
           skill: q.tech_skill || q.skill,
-          difficulty: q.difficulty || mapExperienceToDifficulty(q.experience_level),
+          difficulty:
+            q.difficulty || mapExperienceToDifficulty(q.experience_level),
           bookmarked: q.bookmarked,
-          is_personalized: q.is_personalized !== undefined ? q.is_personalized : true,
+          is_personalized:
+            q.is_personalized !== undefined ? q.is_personalized : true,
           source: q.source || "resume_generated",
           sampleAnswer: asText(q.answer),
           estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
@@ -88,7 +107,9 @@ export function useInterviewQuestions(locationState) {
         return;
       }
 
-      const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
+      const savedBookmarks = JSON.parse(
+        localStorage.getItem(bookmarkedQuestionsKey) || "[]",
+      );
       const res = await getAllInterviewQuestions();
       const data = res.data || [];
 
@@ -96,7 +117,8 @@ export function useInterviewQuestions(locationState) {
         ...q,
         difficulty: mapExperienceToDifficulty(q.experience_level),
         bookmarked: savedBookmarks.includes(q.id),
-        is_personalized: q.is_personalized !== undefined ? q.is_personalized : false,
+        is_personalized:
+          q.is_personalized !== undefined ? q.is_personalized : false,
         source: q.source || "question_bank",
         sampleAnswer: asText(q.answer),
         estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
@@ -114,9 +136,15 @@ export function useInterviewQuestions(locationState) {
           generatedAt: new Date().toLocaleDateString(),
           questionCount: transformed.length,
           difficulty: {
-            easy: transformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Easy").length,
-            medium: transformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Medium").length,
-            hard: transformed.filter((q) => mapExperienceToDifficulty(q.experience_level) === "Hard").length,
+            easy: transformed.filter(
+              (q) => mapExperienceToDifficulty(q.experience_level) === "Easy",
+            ).length,
+            medium: transformed.filter(
+              (q) => mapExperienceToDifficulty(q.experience_level) === "Medium",
+            ).length,
+            hard: transformed.filter(
+              (q) => mapExperienceToDifficulty(q.experience_level) === "Hard",
+            ).length,
           },
           status: "Ready",
         });
@@ -126,83 +154,96 @@ export function useInterviewQuestions(locationState) {
       }
     } catch (err) {
       console.error("Failed to load session:", err);
-      const detail = err.response?.data?.detail || err.message || "An unexpected error occurred.";
+      const detail =
+        err.response?.data?.detail ||
+        err.message ||
+        "An unexpected error occurred.";
       setError(detail);
       setViewState("empty");
       setSession(null);
-      setQuestions([]);
     }
-  }, [locationState, user, resumesKey, lastResumeIdKey, lastJobDescKey, bookmarkedQuestionsKey]);
+  }, [locationState, user, bookmarkedQuestionsKey]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadSession();
   }, [loadSession]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleToggleBookmark = useCallback(async (questionId) => {
-    setQuestions((prev) =>
-      prev.map((q) => {
-        if (q.id === questionId) {
-          const nextBookmarked = !q.bookmarked;
-          const saved = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
+  const handleToggleBookmark = useCallback(
+    async (questionId) => {
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id === questionId) {
+            const nextBookmarked = !q.bookmarked;
+            const saved = JSON.parse(
+              localStorage.getItem(bookmarkedQuestionsKey) || "[]",
+            );
 
-          if (nextBookmarked) {
-            if (!saved.includes(questionId)) {
-              saved.push(questionId);
+            if (nextBookmarked) {
+              if (!saved.includes(questionId)) {
+                saved.push(questionId);
+              }
+            } else {
+              const idx = saved.indexOf(questionId);
+              if (idx > -1) {
+                saved.splice(idx, 1);
+              }
             }
-          } else {
-            const idx = saved.indexOf(questionId);
-            if (idx > -1) {
-              saved.splice(idx, 1);
-            }
+
+            localStorage.setItem(bookmarkedQuestionsKey, JSON.stringify(saved));
+            return { ...q, bookmarked: nextBookmarked };
           }
+          return q;
+        }),
+      );
 
-          localStorage.setItem(bookmarkedQuestionsKey, JSON.stringify(saved));
-          return { ...q, bookmarked: nextBookmarked };
-        }
-        return q;
-      })
-    );
+      try {
+        await bookmarkQuestion(questionId);
+      } catch (err) {
+        console.error("Failed to persist bookmark to backend:", err);
+      }
+    },
+    [bookmarkedQuestionsKey],
+  );
 
-    try {
-      await bookmarkQuestion(questionId);
-    } catch (err) {
-      console.error("Failed to persist bookmark to backend:", err);
-    }
-  }, [bookmarkedQuestionsKey]);
+  const handleQuestionExpand = useCallback(
+    async (questionId) => {
+      const q = questions.find((item) => item.id === questionId);
+      if (!q) return;
 
-
-  const handleQuestionExpand = useCallback(async (questionId) => {
-    const q = questions.find((item) => item.id === questionId);
-    if (!q) return;
-
-    setQuestions((prev) =>
-      prev.map((item) => (item.id === questionId ? { ...item, details_generated: true } : item))
-    );
-
-    if (q.sampleAnswer || q.answer) {
-      return;
-    }
-
-    setLoadingQuestionId(questionId);
-    try {
-      const res = await getQuestionDetails(questionId);
       setQuestions((prev) =>
         prev.map((item) =>
-          item.id === questionId
-            ? {
-              ...item,
-              answer: res.answer,
-              sampleAnswer: asText(res.answer),
-            }
-            : item
-        )
+          item.id === questionId ? { ...item, details_generated: true } : item,
+        ),
       );
-    } catch (err) {
-      console.error("Failed to generate/retrieve sample answer:", err);
-    } finally {
-      setLoadingQuestionId(null);
-    }
-  }, [questions]);
+
+      if (q.sampleAnswer || q.answer) {
+        return;
+      }
+
+      setLoadingQuestionId(questionId);
+      try {
+        const res = await getQuestionDetails(questionId);
+        setQuestions((prev) =>
+          prev.map((item) =>
+            item.id === questionId
+              ? {
+                  ...item,
+                  answer: res.answer,
+                  sampleAnswer: asText(res.answer),
+                }
+              : item,
+          ),
+        );
+      } catch (err) {
+        console.error("Failed to generate/retrieve sample answer:", err);
+      } finally {
+        setLoadingQuestionId(null);
+      }
+    },
+    [questions],
+  );
 
   const handleDeleteQuestion = useCallback(async (questionId) => {
     setError("");
@@ -214,58 +255,79 @@ export function useInterviewQuestions(locationState) {
       return true;
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || err.message || "Failed to delete question.");
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Failed to delete question.",
+      );
       return false;
     }
   }, []);
 
-  const handleSaveQuestion = useCallback(async (payload, editingQuestionId = null) => {
-    setError("");
-    setSuccess("");
-    try {
-      if (editingQuestionId) {
-        setLoadingQuestionId(editingQuestionId);
-        const res = await updateInterviewQuestion(editingQuestionId, payload);
-        setQuestions((prev) =>
-          prev.map((q) =>
-            q.id === editingQuestionId
-              ? {
-                ...q,
-                ...res.data,
-                skill: res.data.tech_skill || res.data.skill || q.skill,
-                difficulty: mapExperienceToDifficulty(res.data.experience_level),
-                sampleAnswer: asText(res.data.answer),
-                estimatedMins: res.data.estimated_duration || estimateMinutes(res.data.answer),
-              }
-              : q
-          )
+  const handleSaveQuestion = useCallback(
+    async (payload, editingQuestionId = null) => {
+      setError("");
+      setSuccess("");
+      try {
+        if (editingQuestionId) {
+          setLoadingQuestionId(editingQuestionId);
+          const res = await updateInterviewQuestion(editingQuestionId, payload);
+          setQuestions((prev) =>
+            prev.map((q) =>
+              q.id === editingQuestionId
+                ? {
+                    ...q,
+                    ...res.data,
+                    skill: res.data.tech_skill || res.data.skill || q.skill,
+                    difficulty: mapExperienceToDifficulty(
+                      res.data.experience_level,
+                    ),
+                    sampleAnswer: asText(res.data.answer),
+                    estimatedMins:
+                      res.data.estimated_duration ||
+                      estimateMinutes(res.data.answer),
+                  }
+                : q,
+            ),
+          );
+          setSuccess("Question updated successfully.");
+        } else {
+          const res = await createInterviewQuestion(payload);
+          const savedBookmarks = JSON.parse(
+            localStorage.getItem(bookmarkedQuestionsKey) || "[]",
+          );
+          const newQ = {
+            ...res.data,
+            skill: res.data.tech_skill || res.data.skill,
+            difficulty: mapExperienceToDifficulty(res.data.experience_level),
+            bookmarked: savedBookmarks.includes(res.data.id),
+            is_personalized:
+              res.data.is_personalized !== undefined
+                ? res.data.is_personalized
+                : false,
+            source: res.data.source || "question_bank",
+            sampleAnswer: asText(res.data.answer),
+            estimatedMins:
+              res.data.estimated_duration || estimateMinutes(res.data.answer),
+          };
+          setQuestions((prev) => [newQ, ...prev]);
+          setSuccess("Question shared successfully.");
+        }
+        return true;
+      } catch (err) {
+        console.error(err);
+        setError(
+          err.response?.data?.detail ||
+            err.message ||
+            "Failed to save question.",
         );
-        setSuccess("Question updated successfully.");
-      } else {
-        const res = await createInterviewQuestion(payload);
-        const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
-        const newQ = {
-          ...res.data,
-          skill: res.data.tech_skill || res.data.skill,
-          difficulty: mapExperienceToDifficulty(res.data.experience_level),
-          bookmarked: savedBookmarks.includes(res.data.id),
-          is_personalized: res.data.is_personalized !== undefined ? res.data.is_personalized : false,
-          source: res.data.source || "question_bank",
-          sampleAnswer: asText(res.data.answer),
-          estimatedMins: res.data.estimated_duration || estimateMinutes(res.data.answer),
-        };
-        setQuestions((prev) => [newQ, ...prev]);
-        setSuccess("Question shared successfully.");
+        throw err;
+      } finally {
+        setLoadingQuestionId(null);
       }
-      return true;
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.detail || err.message || "Failed to save question.");
-      throw err;
-    } finally {
-      setLoadingQuestionId(null);
-    }
-  }, [bookmarkedQuestionsKey]);
+    },
+    [bookmarkedQuestionsKey],
+  );
 
   return {
     questions,

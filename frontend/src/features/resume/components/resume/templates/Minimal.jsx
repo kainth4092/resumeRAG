@@ -1,4 +1,3 @@
-import React from "react";
 import ResumeSkillRenderer from "./ResumeSkillRenderer";
 
 export default function Minimal({ resume }) {

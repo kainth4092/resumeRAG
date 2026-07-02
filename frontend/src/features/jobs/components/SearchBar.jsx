@@ -34,11 +34,13 @@ export default function SearchBar({
     };
   }, [inputValue, onSearch, setQuery]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (query !== inputValue) {
       setInputValue(query);
     }
   }, [query, inputValue]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {

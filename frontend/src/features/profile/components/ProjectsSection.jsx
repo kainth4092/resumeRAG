@@ -38,9 +38,11 @@ export default function ProjectSection() {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadProjects();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openProjModal = () => {
     setProjDraft({

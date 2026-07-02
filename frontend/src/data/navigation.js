@@ -3,6 +3,7 @@ import {
   FileText,
   LayoutDashboard,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 
 export const NAV_SECTIONS = [
@@ -16,6 +17,7 @@ export const NAV_SECTIONS = [
         badge: null,
       },
       { id: "resumes", icon: FileText, label: "Resume", badge: null },
+      { id: "analysis", icon: Sparkles, label: "Resume Analysis", badge: "AI" },
     ],
   },
   {

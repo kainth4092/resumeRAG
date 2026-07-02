@@ -1,14 +1,17 @@
-import React from "react";
 import { TEMPLATE_REGISTRY } from "./templates";
 
-export default function ResumeTemplate({ resume, templateName = "Professional" }) {
-    if (!resume) return null;
+export default function ResumeTemplate({
+  resume,
+  templateName = "Professional",
+}) {
+  if (!resume) return null;
 
-    const r = resume.resume || resume;
-    // Resolve which template layout to render
-    const activeTemplate = templateName || r.template || "Professional";
-    const registryItem = TEMPLATE_REGISTRY[activeTemplate] || TEMPLATE_REGISTRY.Professional;
-    const TargetTemplate = registryItem.component;
+  const r = resume.resume || resume;
 
-    return <TargetTemplate resume={resume} />;
+  const activeTemplate = templateName || r.template || "Professional";
+  const registryItem =
+    TEMPLATE_REGISTRY[activeTemplate] || TEMPLATE_REGISTRY.Professional;
+  const TargetTemplate = registryItem.component;
+
+  return <TargetTemplate resume={resume} />;
 }

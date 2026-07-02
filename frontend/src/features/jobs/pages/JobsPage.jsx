@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
-
   Search,
   Briefcase,
   Eye,
@@ -67,7 +66,6 @@ export default function JobsPage() {
     handleStatusChange,
     handleDeleteTracked,
     loadingJobId,
-
   } = useJobTracker();
 
   const [menuCoords, setMenuCoords] = useState({ top: 0, left: 0 });
@@ -160,19 +158,21 @@ export default function JobsPage() {
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`relative flex items-center gap-2 px-5 py-3.5 text-sm font-semibold transition-all cursor-pointer ${active
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                    }`}
+                  className={`relative flex items-center gap-2 px-5 py-3.5 text-sm font-semibold transition-all cursor-pointer ${
+                    active
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   <Icon size={14} />
                   {t.label}
                   {t.id === "applications" && trackedJobs.length > 0 && (
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active
-                        ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
-                        }`}
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        active
+                          ? "bg-primary text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}
                     >
                       {trackedJobs.length}
                     </span>
@@ -235,8 +235,9 @@ export default function JobsPage() {
           ) : (
             <div className="flex gap-4 overflow-hidden">
               <div
-                className={`flex-1 min-w-0 transition-all duration-300 ${selectedApp ? "lg:max-w-[calc(100%-440px)]" : ""
-                  } space-y-4`}
+                className={`flex-1 min-w-0 transition-all duration-300 ${
+                  selectedApp ? "lg:max-w-[calc(100%-440px)]" : ""
+                } space-y-4`}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="relative flex-1 min-w-40">
@@ -301,12 +302,13 @@ export default function JobsPage() {
                             ].map((h, i) => (
                               <th
                                 key={h}
-                                className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 5
-                                  ? "text-right pr-5 pl-3"
-                                  : i === 0
-                                    ? "text-left px-5"
-                                    : "text-left px-3"
-                                  }`}
+                                className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${
+                                  i === 5
+                                    ? "text-right pr-5 pl-3"
+                                    : i === 0
+                                      ? "text-left px-5"
+                                      : "text-left px-3"
+                                }`}
                               >
                                 {h}
                               </th>
@@ -323,10 +325,11 @@ export default function JobsPage() {
                                 onClick={() =>
                                   setSelectedApp(isSelected ? null : app)
                                 }
-                                className={`border-b border-border last:border-0 cursor-pointer transition-all group ${isSelected
-                                  ? "bg-primary/5"
-                                  : "hover:bg-muted/30"
-                                  }`}
+                                className={`border-b border-border last:border-0 cursor-pointer transition-all group ${
+                                  isSelected
+                                    ? "bg-primary/5"
+                                    : "hover:bg-muted/30"
+                                }`}
                               >
                                 <td className="px-5 py-3.5">
                                   <div className="flex items-center gap-3">

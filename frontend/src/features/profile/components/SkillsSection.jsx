@@ -21,9 +21,11 @@ export default function SkillSection() {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadSkills();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;

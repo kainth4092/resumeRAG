@@ -37,9 +37,11 @@ export default function EducationSection() {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadEducations();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openEduModal = () => {
     setEduDraft({

@@ -117,15 +117,21 @@ class MockInterviewService:
     def get_interview_questions(
         self,
         db: Session,
-        interview_type: str,
+        interview_type: Optional[str] = None,
         user_id: Optional[int] = None,
-        count: int = 5,
     ) -> List[Dict[str, Any]]:
         """
-        Retrieves a balanced set of 5 questions prioritizing unseen questions.
+        Generates a balanced mock interview sequence containing 8 questions:
+        1. 1 Introduction question (typically fixed or selected from behavioral)
+        2. 1 Project-based question
+        3. 4 Skill/technical-based questions
+        4. 2 Scenario-based questions
+
+        Ensures questions are random and change every time (except introduction)
+        by avoiding questions the user has already answered.
         """
         logger.info(
-            f"Retrieving balanced questions for mock type: {interview_type} (user_id: {user_id})"
+            f"Retrieving balanced real voice interview questions (user_id: {user_id})"
         )
 
         # Ensure database has behavioral questions seeded
@@ -148,97 +154,138 @@ class MockInterviewService:
             except Exception as e:
                 logger.error(f"Error fetching answered questions: {e}")
 
-        type_lower = interview_type.lower()
-        selected_questions = []
+        # --- Phase 1: Introduction (1 question) ---
+        intro_q = (
+            db.query(InterviewQuestionBank)
+            .filter(
+                InterviewQuestionBank.category == "Behavioral",
+                InterviewQuestionBank.question.ilike("%introduce yourself%"),
+            )
+            .first()
+        )
 
-        try:
-            if "technical" in type_lower:
-                selected_questions = self._get_balanced_technical(db, answered_q_ids)
-            elif "hr" in type_lower:
-                selected_questions = self._get_balanced_hr(db, answered_q_ids)
-            elif "project" in type_lower:
-                selected_questions = self._get_balanced_project(db, answered_q_ids)
-            else:
-                selected_questions = self._get_balanced_behavioral(db, answered_q_ids)
-
-            # Map the interview type to corresponding DB categories for filling fallbacks
-            fallback_categories = [
-                "Technical",
-                "Database",
-                "Security",
-                "AI/ML",
-                "Coding",
-            ]
-            if "hr" in type_lower or "behavioral" in type_lower:
-                fallback_categories = ["Behavioral"]
-            elif "project" in type_lower:
-                fallback_categories = ["Project Based", "Project\nBased", "Project"]
-
-            if len(selected_questions) < count:
-                needed = count - len(selected_questions)
-                existing_ids = [q.id for q in selected_questions]
-
-                for prioritize_unseen in [True, False]:
-                    fill_query = db.query(InterviewQuestionBank).filter(
-                        InterviewQuestionBank.category.in_(fallback_categories)
-                    )
-                    if existing_ids:
-                        fill_query = fill_query.filter(
-                            InterviewQuestionBank.id.notin_(existing_ids)
-                        )
-
-                    if prioritize_unseen and answered_q_ids:
-                        fill_query = fill_query.filter(
-                            InterviewQuestionBank.id.notin_(answered_q_ids)
-                        )
-
-                    extra = fill_query.order_by(func.random()).limit(needed).all()
-                    selected_questions.extend(extra)
-                    existing_ids.extend([q.id for q in extra])
-                    needed = count - len(selected_questions)
-                    if needed <= 0:
-                        break
-
-            formatted = []
-            for q in selected_questions[:count]:
-                formatted.append(
-                    {
-                        "id": q.id,
-                        "question": q.question,
-                        "answer": q.answer,
-                        "skill": q.skill,
-                        "category": q.category,
-                        "experience_level": q.experience_level,
-                        "company": q.company,
-                        "estimated_duration": "2-3 minutes",
-                    }
-                )
-
-            return formatted
-
-        except Exception as e:
-            logger.error(f"Error selecting balanced questions: {e}")
-            # Absolute fallback matching the category type
-            fallback_categories = [
-                "Technical",
-                "Database",
-                "Security",
-                "AI/ML",
-                "Coding",
-            ]
-            if "hr" in type_lower or "behavioral" in type_lower:
-                fallback_categories = ["Behavioral"]
-            elif "project" in type_lower:
-                fallback_categories = ["Project Based", "Project\nBased", "Project"]
-
-            fallback_qs = (
+        if not intro_q:
+            intro_q = (
                 db.query(InterviewQuestionBank)
-                .filter(InterviewQuestionBank.category.in_(fallback_categories))
+                .filter(
+                    InterviewQuestionBank.category == "Behavioral",
+                    InterviewQuestionBank.question.ilike("%background%"),
+                )
+                .first()
+            )
+
+        if not intro_q:
+            intro_q_dict = {
+                "id": None,
+                "question": "Can you introduce yourself and walk me through your background?",
+                "answer": "Provide a brief 2-minute elevator pitch summarizing your education, core technical skills, key projects/achievements, and interest in this role.",
+                "skill": "HR Fundamentals",
+                "category": "Behavioral",
+                "experience_level": "Fresher",
+                "company": None,
+                "estimated_duration": "2-3 minutes",
+            }
+        else:
+            intro_q_dict = {
+                "id": intro_q.id,
+                "question": intro_q.question,
+                "answer": intro_q.answer,
+                "skill": intro_q.skill,
+                "category": intro_q.category,
+                "experience_level": intro_q.experience_level,
+                "company": intro_q.company,
+                "estimated_duration": "2-3 minutes",
+            }
+
+        # --- Phase 2: Project-based (1 question) ---
+        project_q_candidates = db.query(InterviewQuestionBank).filter(
+            InterviewQuestionBank.category.in_(
+                ["Project", "Project Based", "Project\nBased"]
+            )
+        )
+
+        unseen_projects = (
+            project_q_candidates.filter(InterviewQuestionBank.id.notin_(answered_q_ids))
+            .order_by(func.random())
+            .limit(1)
+            .all()
+        )
+
+        if unseen_projects:
+            project_q = unseen_projects[0]
+        else:
+            fallback_projects = (
+                project_q_candidates.order_by(func.random()).limit(1).all()
+            )
+            if fallback_projects:
+                project_q = fallback_projects[0]
+            else:
+                project_q = None
+
+        if not project_q:
+            project_q = (
+                db.query(InterviewQuestionBank)
+                .filter(
+                    InterviewQuestionBank.category == "Behavioral",
+                    InterviewQuestionBank.question.ilike("%project%"),
+                )
                 .order_by(func.random())
-                .limit(count)
+                .first()
+            )
+
+        if not project_q:
+            project_q_dict = {
+                "id": None,
+                "question": "Describe a difficult project challenge you faced and how you overcame it.",
+                "answer": "Explain the technical or team constraint, your plan of action, the implementation details, and what you successfully delivered.",
+                "skill": "Problem Solving",
+                "category": "Project Based",
+                "experience_level": "Intermediate",
+                "company": None,
+                "estimated_duration": "2-3 minutes",
+            }
+        else:
+            project_q_dict = {
+                "id": project_q.id,
+                "question": project_q.question,
+                "answer": project_q.answer,
+                "skill": project_q.skill,
+                "category": project_q.category,
+                "experience_level": project_q.experience_level,
+                "company": project_q.company,
+                "estimated_duration": "2-3 minutes",
+            }
+
+        # --- Phase 3: Skills (4 questions) ---
+        tech_q_candidates = db.query(InterviewQuestionBank).filter(
+            InterviewQuestionBank.category == "Technical"
+        )
+
+        unseen_techs = (
+            tech_q_candidates.filter(InterviewQuestionBank.id.notin_(answered_q_ids))
+            .order_by(func.random())
+            .limit(4)
+            .all()
+        )
+
+        selected_techs = list(unseen_techs)
+
+        if len(selected_techs) < 4:
+            needed = 4 - len(selected_techs)
+            exclude_ids = answered_q_ids + [q.id for q in selected_techs]
+            extra_techs = (
+                tech_q_candidates.filter(
+                    InterviewQuestionBank.id.notin_([q.id for q in selected_techs])
+                )
+                .order_by(func.random())
+                .limit(needed)
                 .all()
             )
-            return [
+            selected_techs.extend(extra_techs)
+
+        tech_qs_list = []
+        for q in selected_techs:
+            tech_qs_list.append(
                 {
                     "id": q.id,
                     "question": q.question,
@@ -249,250 +296,118 @@ class MockInterviewService:
                     "company": q.company,
                     "estimated_duration": "2-3 minutes",
                 }
-                for q in fallback_qs
-            ]
-
-    def _get_balanced_technical(
-        self, db: Session, answered_ids: List[int]
-    ) -> List[InterviewQuestionBank]:
-        """
-        Technical Interview: 1 Easy, 2 Medium, 2 Hard
-        """
-        easy_terms = ["beginner", "entry-level", "easy", "junior"]
-        med_terms = ["intermediate", "medium", "mid-level"]
-        hard_terms = ["senior", "advanced", "hard", "architect"]
-
-        result = []
-        # 1 Easy
-        q_easy = self._query_with_fallback(
-            db,
-            category="Technical",
-            difficulty_list=easy_terms,
-            answered_ids=answered_ids,
-            limit=1,
-        )
-        result.extend(q_easy)
-
-        # 2 Medium
-        q_medium = self._query_with_fallback(
-            db,
-            category="Technical",
-            difficulty_list=med_terms,
-            answered_ids=answered_ids,
-            limit=2,
-        )
-        result.extend(q_medium)
-
-        # 2 Hard
-        q_hard = self._query_with_fallback(
-            db,
-            category="Technical",
-            difficulty_list=hard_terms,
-            answered_ids=answered_ids,
-            limit=2,
-        )
-        result.extend(q_hard)
-
-        return result
-
-    def _get_balanced_hr(
-        self, db: Session, answered_ids: List[int]
-    ) -> List[InterviewQuestionBank]:
-        """
-        HR Interview: Introduction, Behavioral, Conflict, Leadership, Future Goals
-        """
-        result = []
-        topics = [
-            ("Introduction", ["introduce", "yourself", "background", "career summary"]),
-            (
-                "Behavioral",
-                [
-                    "tell me about a time",
-                    "situation",
-                    "behavioral",
-                    "strength",
-                    "weakness",
-                ],
-            ),
-            ("Conflict", ["conflict", "disagree", "difficult coworker", "criticism"]),
-            ("Leadership", ["lead", "leadership", "initiative", "mentor", "guide"]),
-            (
-                "Future Goals",
-                ["future", "goals", "career", "5 years", "why this company"],
-            ),
-        ]
-
-        for topic_name, keywords in topics:
-            q_list = self._query_topic_with_fallback(
-                db,
-                category="Behavioral",
-                keywords=keywords,
-                answered_ids=answered_ids,
-                exclude_ids=[q.id for q in result],
-                limit=1,
             )
-            result.extend(q_list)
 
-        return result
+        if not tech_qs_list:
+            default_techs = [
+                {
+                    "question": "What is a closure in JavaScript?",
+                    "answer": "A closure is the combination of a function bundled together with references to its surrounding state (the lexical environment).",
+                    "skill": "JavaScript",
+                },
+                {
+                    "question": "What is the Global Interpreter Lock (GIL) in Python?",
+                    "answer": "The GIL is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes at once.",
+                    "skill": "Python",
+                },
+                {
+                    "question": "What is the difference between SQL and NoSQL databases?",
+                    "answer": "SQL databases are relational, table-based, and have predefined schemas. NoSQL databases are non-relational, document or key-value based, and have dynamic schemas.",
+                    "skill": "Databases",
+                },
+                {
+                    "question": "What is a RESTful API and how does it work?",
+                    "answer": "A RESTful API is an architectural style for an application programming interface (API) that uses HTTP requests to GET, PUT, POST and DELETE data.",
+                    "skill": "APIs",
+                },
+            ]
+            for item in default_techs:
+                tech_qs_list.append(
+                    {
+                        "id": None,
+                        "question": item["question"],
+                        "answer": item["answer"],
+                        "skill": item["skill"],
+                        "category": "Technical",
+                        "experience_level": "Intermediate",
+                        "company": None,
+                        "estimated_duration": "2-3 minutes",
+                    }
+                )
 
-    def _get_balanced_project(
-        self, db: Session, answered_ids: List[int]
-    ) -> List[InterviewQuestionBank]:
-        """
-        Project Interview: Architecture, Challenges, Database, Performance, Deployment
-        """
-        result = []
-        topics = [
-            ("Architecture", ["architecture", "structure", "design", "system design"]),
-            ("Challenges", ["challenge", "difficult", "problem", "bug", "stuck"]),
-            ("Database", ["database", "postgres", "nosql", "sql", "schema", "query"]),
-            (
-                "Performance",
-                ["performance", "optimize", "speed", "scale", "bottleneck", "cache"],
-            ),
-            ("Deployment", ["deploy", "ci/cd", "docker", "cloud", "aws", "production"]),
-        ]
-
-        for topic_name, keywords in topics:
-            q_list = self._query_topic_with_fallback(
-                db,
-                category="Project",
-                keywords=keywords,
-                answered_ids=answered_ids,
-                exclude_ids=[q.id for q in result],
-                limit=1,
+        # --- Phase 4: Scenario-based (2 questions) ---
+        scenario_q_candidates = db.query(InterviewQuestionBank).filter(
+            InterviewQuestionBank.category.in_(
+                ["Scenario Based", "Scenario\nBased", "Scenario"]
             )
-            result.extend(q_list)
-
-        return result
-
-    def _get_balanced_behavioral(
-        self, db: Session, answered_ids: List[int]
-    ) -> List[InterviewQuestionBank]:
-        """
-        Behavioral: general standard behavioral questions
-        """
-        query = db.query(InterviewQuestionBank).filter(
-            InterviewQuestionBank.category == "Behavioral"
         )
-        unseen_query = query.filter(InterviewQuestionBank.id.notin_(answered_ids))
-        questions = unseen_query.order_by(func.random()).limit(5).all()
-        if len(questions) < 5:
-            questions = query.order_by(func.random()).limit(5).all()
-        return questions
 
-    def _query_with_fallback(
-        self,
-        db: Session,
-        category: str,
-        difficulty_list: List[str],
-        answered_ids: List[int],
-        limit: int,
-    ) -> List[InterviewQuestionBank]:
-        # Map category names flexibly
-        categories = [category]
-        if category == "Project":
-            categories = ["Project Based", "Project\nBased", "Project"]
-        elif category == "Behavioral":
-            categories = ["Behavioral"]
-        elif category == "Technical":
-            categories = [
-                "Technical",
-                "Database",
-                "Security",
-                "AI/ML",
-                "Coding",
-                "Scenario Based",
-                "Scenario\nBased",
+        unseen_scenarios = (
+            scenario_q_candidates.filter(
+                InterviewQuestionBank.id.notin_(answered_q_ids)
+            )
+            .order_by(func.random())
+            .limit(2)
+            .all()
+        )
+
+        selected_scenarios = list(unseen_scenarios)
+
+        if len(selected_scenarios) < 2:
+            needed = 2 - len(selected_scenarios)
+            extra_scenarios = (
+                scenario_q_candidates.filter(
+                    InterviewQuestionBank.id.notin_([q.id for q in selected_scenarios])
+                )
+                .order_by(func.random())
+                .limit(needed)
+                .all()
+            )
+            selected_scenarios.extend(extra_scenarios)
+
+        scenario_qs_list = []
+        for q in selected_scenarios:
+            scenario_qs_list.append(
+                {
+                    "id": q.id,
+                    "question": q.question,
+                    "answer": q.answer,
+                    "skill": q.skill,
+                    "category": q.category,
+                    "experience_level": q.experience_level,
+                    "company": q.company,
+                    "estimated_duration": "2-3 minutes",
+                }
+            )
+
+        if not scenario_qs_list:
+            default_scenarios = [
+                {
+                    "question": "How would you handle a sudden traffic spike on your web application that causes database latency?",
+                    "answer": "Introduce caching (e.g. Redis), scale the application horizontally, optimize slow queries, or use read-replicas for the database.",
+                    "skill": "System Design",
+                },
+                {
+                    "question": "Your production deployment just failed and users are seeing 500 errors. What is your immediate action plan?",
+                    "answer": "Roll back to the last stable deployment immediately, check error logs, identify the root cause, and apply a hotfix after testing locally.",
+                    "skill": "DevOps",
+                },
             ]
+            for item in default_scenarios:
+                scenario_qs_list.append(
+                    {
+                        "id": None,
+                        "question": item["question"],
+                        "answer": item["answer"],
+                        "skill": item["skill"],
+                        "category": "Scenario Based",
+                        "experience_level": "Advanced",
+                        "company": None,
+                        "estimated_duration": "2-3 minutes",
+                    }
+                )
 
-        # Filter questions matching criteria
-        base_query = db.query(InterviewQuestionBank).filter(
-            InterviewQuestionBank.category.in_(categories),
-            InterviewQuestionBank.experience_level.in_(difficulty_list),
-        )
-
-        # Try unseen first
-        unseen_q = (
-            base_query.filter(InterviewQuestionBank.id.notin_(answered_ids))
-            .order_by(func.random())
-            .limit(limit)
-            .all()
-        )
-        if len(unseen_q) >= limit:
-            return unseen_q
-
-        # Fall back to any questions including seen
-        return base_query.order_by(func.random()).limit(limit).all()
-
-    def _query_topic_with_fallback(
-        self,
-        db: Session,
-        category: str,
-        keywords: List[str],
-        answered_ids: List[int],
-        exclude_ids: List[int],
-        limit: int,
-    ) -> List[InterviewQuestionBank]:
-        # Map category names flexibly
-        categories = [category]
-        if category == "Project":
-            categories = ["Project Based", "Project\nBased", "Project"]
-        elif category == "Behavioral":
-            categories = ["Behavioral"]
-        elif category == "Technical":
-            categories = [
-                "Technical",
-                "Database",
-                "Security",
-                "AI/ML",
-                "Coding",
-                "Scenario Based",
-                "Scenario\nBased",
-            ]
-
-        # Create keyword search filters
-        keyword_filters = [
-            InterviewQuestionBank.question.ilike(f"%{kw}%") for kw in keywords
-        ]
-
-        base_query = db.query(InterviewQuestionBank).filter(
-            InterviewQuestionBank.category.in_(categories)
-        )
-        if exclude_ids:
-            base_query = base_query.filter(InterviewQuestionBank.id.notin_(exclude_ids))
-
-        # Filter by keywords
-        keyword_query = base_query.filter(or_(*keyword_filters))
-
-        # Unseen + keywords
-        unseen_kw = (
-            keyword_query.filter(InterviewQuestionBank.id.notin_(answered_ids))
-            .order_by(func.random())
-            .limit(limit)
-            .all()
-        )
-        if len(unseen_kw) >= limit:
-            return unseen_kw
-
-        # Any + keywords
-        kw_q = keyword_query.order_by(func.random()).limit(limit).all()
-        if len(kw_q) >= limit:
-            return kw_q
-
-        # Unseen in category (no keywords)
-        unseen_cat = (
-            base_query.filter(InterviewQuestionBank.id.notin_(answered_ids))
-            .order_by(func.random())
-            .limit(limit)
-            .all()
-        )
-        if len(unseen_cat) >= limit:
-            return unseen_cat
-
-        # Any in category
-        return base_query.order_by(func.random()).limit(limit).all()
+        return [intro_q_dict, project_q_dict] + tech_qs_list[:4] + scenario_qs_list[:2]
 
 
-# Singleton instance
 mock_interview_service = MockInterviewService()

@@ -37,23 +37,30 @@ export default function Dashboard() {
       setRadar(data.resume_dna || []);
       setWeekly(data.weekly_activity || []);
       setActivityFeed(mapApiActivities(data.recent_activities));
-      setEmptyStates(data.empty_states || {
-        no_resumes: (data.score_trend || []).length === 0,
-        no_jobs: true,
-        no_interviews: true,
-      });
-
+      setEmptyStates(
+        data.empty_states || {
+          no_resumes: (data.score_trend || []).length === 0,
+          no_jobs: true,
+          no_interviews: true,
+        },
+      );
     } catch (e) {
       console.error("Failed to load dashboard statistics:", e);
-      setError(e.response?.data?.detail || e.message || "Failed to load dashboard statistics.");
+      setError(
+        e.response?.data?.detail ||
+          e.message ||
+          "Failed to load dashboard statistics.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadDashboardData();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const refresh = async () => {
     setRefreshing(true);
@@ -80,7 +87,9 @@ export default function Dashboard() {
           <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
             <AlertTriangle size={24} />
           </div>
-          <h3 className="text-lg font-semibold text-foreground">Error Loading Dashboard</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            Error Loading Dashboard
+          </h3>
           <p className="text-sm text-muted-foreground">{error}</p>
           <button
             onClick={() => loadDashboardData()}
@@ -96,7 +105,11 @@ export default function Dashboard() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <DashboardHeader refreshing={refreshing} onRefresh={refresh} greeting={greeting} />
+        <DashboardHeader
+          refreshing={refreshing}
+          onRefresh={refresh}
+          greeting={greeting}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5">
@@ -104,15 +117,20 @@ export default function Dashboard() {
               <div>
                 <h3 className="text-foreground">ATS Score Trend</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {trend.length <= 1 ? "Historical progress" : `${trend.length} Resumes Trend`}
+                  {trend.length <= 1
+                    ? "Historical progress"
+                    : `${trend.length} Resumes Trend`}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {deltaText && (
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${deltaText.startsWith("+")
-                    ? "text-emerald-500 bg-emerald-500/10"
-                    : "text-amber-500 bg-amber-500/10"
-                    }`}>
+                  <span
+                    className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                      deltaText.startsWith("+")
+                        ? "text-emerald-500 bg-emerald-500/10"
+                        : "text-amber-500 bg-amber-500/10"
+                    }`}
+                  >
                     {deltaText}
                   </span>
                 )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, memo } from "react";
-import { BrainCircuit, SearchIcon } from "lucide-react";
+import { BrainCircuit, SearchIcon, SlidersHorizontal } from "lucide-react";
 import HeroCard from "./HeroCard";
 import { QuestionCard } from "./QuestionCard";
 import InterviewFilterSidebar from "./InterviewFilterSidebar";
@@ -31,6 +31,8 @@ export const PersonalizedPrep = memo(function PersonalizedPrep({
   showPersonalizedEmpty,
 }) {
   const [page, setPage] = useState(1);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const limit = 10;
 
   const skillsList = useMemo(() => {
@@ -106,8 +108,9 @@ export const PersonalizedPrep = memo(function PersonalizedPrep({
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start mt-6">
-        {/* Sidebar Filters Panel */}
-        <div className="lg:col-span-1">
+        <div
+          className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}
+        >
           <InterviewFilterSidebar
             search={search}
             setSearch={setSearch}
@@ -129,10 +132,15 @@ export const PersonalizedPrep = memo(function PersonalizedPrep({
               setImportantOnly(false);
               setActiveFilter("All");
             }}
+            isOpenMobile={mobileFiltersOpen}
+            onCloseMobile={() => setMobileFiltersOpen(false)}
+            showDesktop={showSidebar}
           />
         </div>
 
-        <div className="lg:col-span-3 space-y-5 animate-in fade-in duration-200">
+        <div
+          className={`${showSidebar ? "lg:col-span-3" : "lg:col-span-4"} space-y-5 transition-all duration-305`}
+        >
           <div className="flex items-center justify-between bg-card border border-border rounded-2xl px-5 py-3.5 shadow-sm">
             <div className="flex items-center gap-2">
               <BrainCircuit size={16} className="text-primary" />
@@ -149,11 +157,32 @@ export const PersonalizedPrep = memo(function PersonalizedPrep({
                 Questions
               </span>
             </div>
-            {isFiltered && (
-              <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full select-none">
-                Filtered Active
-              </span>
-            )}
+
+            <div className="flex items-center gap-3">
+              {isFiltered && (
+                <span className="hidden sm:inline-block text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full select-none">
+                  Filtered Active
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  if (window.innerWidth < 1024) {
+                    setMobileFiltersOpen(true);
+                  } else {
+                    setShowSidebar(!showSidebar);
+                  }
+                }}
+                className="flex items-center gap-1.5 h-8 px-3 bg-muted hover:bg-muted/80 border border-border/40 text-foreground rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                <SlidersHorizontal
+                  size={13}
+                  className={
+                    showSidebar ? "text-primary" : "text-muted-foreground"
+                  }
+                />
+                <span>Filters</span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">

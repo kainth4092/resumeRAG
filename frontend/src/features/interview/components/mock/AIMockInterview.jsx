@@ -18,10 +18,6 @@ export function AIMockInterview() {
   const [startTime, setStartTime] = useState(null);
   const [activeReport, setActiveReport] = useState(null);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
   const fetchHistory = async () => {
     try {
       const res = await mockInterviewService.getHistory();
@@ -30,6 +26,12 @@ export function AIMockInterview() {
       console.error("Failed to load mock interview history:", err);
     }
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleStartInterview = async (type) => {
     setLoading(true);

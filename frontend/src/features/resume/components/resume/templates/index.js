@@ -39,5 +39,5 @@ export const TEMPLATE_REGISTRY = {
 
 };
 
-export { default as ResumeSkillRenderer, getTechnicalSkills } from "./ResumeSkillRenderer";
-
+export { default as ResumeSkillRenderer } from "./ResumeSkillRenderer";
+export { getTechnicalSkills } from "../../../utils/skills.utils";

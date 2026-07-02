@@ -43,12 +43,14 @@ class SaveSessionRequest(BaseModel):
 
 @router.get("/questions")
 def get_mock_questions(
-    type: str,
+    type: str = "Real Voice Interview",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     try:
-        questions = mock_interview_service.get_interview_questions(db, type)
+        questions = mock_interview_service.get_interview_questions(
+            db, interview_type=type, user_id=current_user.id
+        )
         return {"questions": questions}
     except Exception as e:
         logger.error(f"Error fetching mock questions: {e}")

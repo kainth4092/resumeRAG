@@ -1,15 +1,19 @@
-import  { useState } from "react";
-import { FileText, X  } from "lucide-react";
+import { useState } from "react";
+import { FileText, X } from "lucide-react";
 import ResumeTemplate from "../ResumeTemplate";
 import { STATUS_STYLES } from "./constants";
 import { TEMPLATE_REGISTRY } from "../templates";
 import { useAuth } from "../../../../auth/context/AuthContext";
 import Select from "./Select";
 
-function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
+function PreviewModal({ resume, onClose, onUpdate }) {
   const { user } = useAuth();
-  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
-  const [activeTemplate, setActiveTemplate] = useState(resume.template || "Professional");
+  const resumesKey = user?.email
+    ? `saved_resumes_${user.email}`
+    : "saved_resumes";
+  const [activeTemplate, setActiveTemplate] = useState(
+    resume.template || "Professional",
+  );
 
   const handleTemplateChange = (newTemplate) => {
     setActiveTemplate(newTemplate);
@@ -88,8 +92,6 @@ function PreviewModal({ resume, onClose, onEdit, onDelete, onUpdate }) {
 export default function ResumePreviewModal({
   previewResume,
   setPreviewResume,
-  handleEdit,
-  setDeleteTarget,
   onUpdate,
 }) {
   return (
@@ -98,11 +100,6 @@ export default function ResumePreviewModal({
         <PreviewModal
           resume={previewResume}
           onClose={() => setPreviewResume(null)}
-          onEdit={() => handleEdit(previewResume)}
-          onDelete={() => {
-            setDeleteTarget(previewResume);
-            setPreviewResume(null);
-          }}
           onUpdate={onUpdate}
         />
       )}

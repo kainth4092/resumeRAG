@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 import { getCurrentUser } from "../services/authService";
 
@@ -38,9 +39,11 @@ export function AuthProvider({ children }) {
     setLoading(false);
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchUser();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const logout = () => {
     localStorage.removeItem("access_token");

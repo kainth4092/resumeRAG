@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import DashboardSelect from "../dashboard/Select";
 
 export function Select({ options = [], value, onChange, placeholder = "Select...", size = "md", pill = false, disabled = false }) {

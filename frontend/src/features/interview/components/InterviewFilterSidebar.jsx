@@ -7,6 +7,7 @@ import {
   Briefcase,
   Shuffle,
   Star,
+  X,
 } from "lucide-react";
 
 export default function InterviewFilterSidebar({
@@ -23,7 +24,6 @@ export default function InterviewFilterSidebar({
   setActiveSkill,
   difficulty,
   setDifficulty,
-  difficultyCounts,
   selectedCategory,
   setSelectedCategory,
   categories = [],
@@ -32,6 +32,9 @@ export default function InterviewFilterSidebar({
   companies = [],
   onPracticeRandom,
   onReset,
+  isOpenMobile = false,
+  onCloseMobile,
+  showDesktop = true,
 }) {
   const isFiltered =
     search ||
@@ -42,25 +45,8 @@ export default function InterviewFilterSidebar({
     selectedCategory ||
     selectedCompany;
 
-  return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-6 shrink-0 shadow-sm animate-in fade-in duration-200">
-      <div className="flex items-center justify-between pb-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Filter size={15} className="text-primary" />
-          <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">
-            Filters
-          </h3>
-        </div>
-        {isFiltered && onReset && (
-          <button
-            onClick={onReset}
-            className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <RotateCcw size={11} /> Reset
-          </button>
-        )}
-      </div>
-
+  const renderFilters = () => (
+    <div className="space-y-6">
       {/* Search */}
       <div className="space-y-2">
         <label className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
@@ -168,7 +154,6 @@ export default function InterviewFilterSidebar({
           <div className="grid grid-cols-3 gap-1.5">
             {["Easy", "Medium", "Hard"].map((diff) => {
               const active = difficulty === diff;
-              const count = difficultyCounts ? difficultyCounts[diff] : null;
               return (
                 <button
                   key={diff}
@@ -262,5 +247,75 @@ export default function InterviewFilterSidebar({
         </div>
       )}
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Drawer Backdrop */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity lg:hidden ${
+          isOpenMobile
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onCloseMobile}
+      />
+
+      {/* Mobile Drawer Content */}
+      <div
+        className={`fixed top-0 left-0 bottom-0 z-50 w-[280px] sm:w-[320px] bg-card border-r border-border p-5 overflow-y-auto transition-transform duration-300 ease-in-out lg:hidden ${
+          isOpenMobile ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-border mb-5">
+          <div className="flex items-center gap-2">
+            <Filter size={15} className="text-primary" />
+            <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">
+              Filters
+            </h3>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {isFiltered && onReset && (
+              <button
+                onClick={onReset}
+                className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw size={11} /> Reset
+              </button>
+            )}
+            <button
+              onClick={onCloseMobile}
+              className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        {renderFilters()}
+      </div>
+
+      {/* Desktop Sidebar */}
+      {showDesktop && (
+        <div className="hidden lg:block bg-card border border-border rounded-2xl p-5 space-y-6 shrink-0 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Filter size={15} className="text-primary" />
+              <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">
+                Filters
+              </h3>
+            </div>
+            {isFiltered && onReset && (
+              <button
+                onClick={onReset}
+                className="text-[11px] font-bold text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw size={11} /> Reset
+              </button>
+            )}
+          </div>
+          {renderFilters()}
+        </div>
+      )}
+    </>
   );
 }

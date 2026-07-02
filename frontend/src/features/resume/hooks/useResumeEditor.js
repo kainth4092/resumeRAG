@@ -32,6 +32,7 @@ export function useResumeEditor() {
   const [education, setEducation] = useState([]);
   const [projects, setProjects] = useState([]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user) return;
     let activeResume = state?.resume;
@@ -154,6 +155,7 @@ export function useResumeEditor() {
       setProjects([]);
     }
   }, [user, resumesKey, editingResumeIdKey, state?.resume]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSave = async () => {
     setSaving(true);

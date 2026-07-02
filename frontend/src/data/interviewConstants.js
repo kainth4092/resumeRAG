@@ -18,6 +18,7 @@ import {
   Cpu,
   Server,
   Globe,
+  BookmarkCheck,
 } from "lucide-react";
 
 export const CAT_CFG = {
