@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Dict, Any, List
@@ -59,7 +59,10 @@ def get_mock_questions(
 
 @router.post("/transcribe")
 def transcribe_audio(
-    file: UploadFile = File(...), current_user: User = Depends(get_current_user)
+    file: UploadFile = File(...),
+    prompt: str = Form(None),
+    language: str = Form("en"),
+    current_user: User = Depends(get_current_user),
 ):
     # Save the file temporarily
     suffix = os.path.splitext(file.filename)[1] or ".wav"
@@ -68,7 +71,9 @@ def transcribe_audio(
         temp_path = temp_file.name
 
     try:
-        transcript = speech_to_text_service.transcribe(temp_path)
+        transcript = speech_to_text_service.transcribe(
+            temp_path, prompt=prompt, language=language
+        )
         return {"transcript": transcript}
     except Exception as e:
         logger.error(f"Failed to transcribe audio: {e}")

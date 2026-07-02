@@ -6,7 +6,7 @@ export const mockInterviewService = {
       .get(`/mock-interview/questions?type=${encodeURIComponent(type)}`)
       .then((res) => res.data),
 
-  transcribeAudio: (audioBlob) => {
+  transcribeAudio: (audioBlob, prompt, language = "en") => {
     const formData = new FormData();
     let filename = "recording.webm";
     if (audioBlob && audioBlob.type) {
@@ -27,6 +27,12 @@ export const mockInterviewService = {
       }
     }
     formData.append("file", audioBlob, filename);
+    if (prompt) {
+      formData.append("prompt", prompt);
+    }
+    if (language) {
+      formData.append("language", language);
+    }
     return api
       .post("/mock-interview/transcribe", formData, {
         headers: {

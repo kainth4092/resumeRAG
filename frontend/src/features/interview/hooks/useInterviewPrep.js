@@ -169,11 +169,6 @@ export function useInterviewPrep() {
         return;
       }
 
-      if (!formData.answer?.trim() && !isAISuggested) {
-        await handleSuggestAnswer();
-        return;
-      }
-
       setSubmitting(true);
       setFormError("");
       setFormErrors({});

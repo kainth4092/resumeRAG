@@ -47,33 +47,52 @@ export function QuestionScreen({
     try {
       let stream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
       } catch (firstErr) {
         console.warn(
-          "Standard getUserMedia({audio:true}) failed, checking for specific input devices:",
+          "Standard getUserMedia with audio constraints failed, trying simple audio:true:",
           firstErr,
         );
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          console.log("Found devices:", devices);
-          const audioInputs = devices.filter((d) => d.kind === "audioinput");
-          if (audioInputs.length > 0) {
-            // Find a device with a valid deviceId, preferably not the default if default failed
-            const targetDevice =
-              audioInputs.find((d) => d.deviceId && d.deviceId !== "default") ||
-              audioInputs[0];
-            console.log(
-              "Attempting to connect to specific audio input:",
-              targetDevice,
-            );
-            stream = await navigator.mediaDevices.getUserMedia({
-              audio: { deviceId: { exact: targetDevice.deviceId } },
-            });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (secErr) {
+          console.warn(
+            "Simple getUserMedia({audio:true}) failed, checking for specific input devices:",
+            secErr,
+          );
+          if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            console.log("Found devices:", devices);
+            const audioInputs = devices.filter((d) => d.kind === "audioinput");
+            if (audioInputs.length > 0) {
+              // Find a device with a valid deviceId, preferably not the default if default failed
+              const targetDevice =
+                audioInputs.find((d) => d.deviceId && d.deviceId !== "default") ||
+                audioInputs[0];
+              console.log(
+                "Attempting to connect to specific audio input:",
+                targetDevice,
+              );
+              stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                  deviceId: { exact: targetDevice.deviceId },
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                  autoGainControl: true,
+                },
+              });
+            } else {
+              throw secErr;
+            }
           } else {
-            throw firstErr;
+            throw secErr;
           }
-        } else {
-          throw firstErr;
         }
       }
 
@@ -153,7 +172,16 @@ export function QuestionScreen({
 
   const uploadAndTranscribe = async (audioBlob) => {
     try {
-      const res = await mockInterviewService.transcribeAudio(audioBlob);
+      // Build a contextual prompt based on the current interview question
+      const questionPrompt = question?.question
+        ? `The user is in a professional technical mock interview answering the question: "${question.question}". Common technical terms: React, Angular, Vue, Javascript, TypeScript, HTML, CSS, Python, Django, FastAPI, Flask, Java, Spring, C++, backend, frontend, API, database, SQL, NoSQL, Git, Docker, Kubernetes, AWS, Cloud, system design, software engineering.`
+        : "";
+
+      const res = await mockInterviewService.transcribeAudio(
+        audioBlob,
+        questionPrompt,
+        "en",
+      );
       setTranscript(res.transcript || "");
       setStep("editing");
     } catch (err) {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -34,6 +34,7 @@ router = APIRouter(
 @router.post("/", response_model=InterviewQuestionResponse)
 def create_bank_question(
     payload: InterviewQuestionCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -42,6 +43,7 @@ def create_bank_question(
             db=db,
             payload=payload,
             created_by=current_user.id,
+            background_tasks=background_tasks,
         )
 
     except HTTPException:

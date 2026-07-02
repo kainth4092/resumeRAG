@@ -19,7 +19,6 @@ export function FinalReport({ report, onRetake }) {
     answers = [],
   } = report;
 
-  // Calculate averages from answers array
   const getAverage = (key) => {
     if (answers.length === 0) return 0;
     const sum = answers.reduce((acc, curr) => acc + (curr[key] || 0), 0);
@@ -49,7 +48,6 @@ export function FinalReport({ report, onRetake }) {
   const uniqueWeaknesses = [...new Set(allWeaknesses)].slice(0, 4);
   const uniqueImprovements = [...new Set(allImprovements)].slice(0, 4);
 
-  // Formatting date & duration
   const dateStr = created_at
     ? new Date(created_at).toLocaleDateString()
     : new Date().toLocaleDateString();
@@ -61,7 +59,6 @@ export function FinalReport({ report, onRetake }) {
     return mins > 0 ? `${mins}m ${remainingSecs}s` : `${remainingSecs}s`;
   };
 
-  // Helper to color overall score badge
   const overallScoreColor = (score) => {
     if (score >= 80)
       return "text-emerald-600 bg-emerald-500/10 border-emerald-500/20";
@@ -102,7 +99,6 @@ export function FinalReport({ report, onRetake }) {
           <RefreshCw size={13} /> Retake Interview
         </button>
       </div>
-
       {/* Stats Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Score & Grade Card */}
@@ -153,179 +149,6 @@ export function FinalReport({ report, onRetake }) {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Weakest/Strongest highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-            <Trophy size={16} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-foreground">
-              Strongest Topic
-            </h4>
-            <p className="text-sm font-semibold text-emerald-600 mt-1">
-              {strongestTopic}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-            <AlertCircle size={16} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-foreground">Weakest Topic</h4>
-            <p className="text-sm font-semibold text-amber-600 mt-1">
-              {weakestTopic}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Session Feedback Summary */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
-        <div>
-          <h3 className="text-sm font-bold text-foreground">General Feedback Summary</h3>
-          <p className="text-[10px] text-muted-foreground">Aggregated analysis across your entire mock interview session.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Key Strengths */}
-          <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4.5 space-y-2">
-            <h4 className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
-              <Trophy size={14} /> Key Strengths
-            </h4>
-            {uniqueStrengths.length > 0 ? (
-              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
-                {uniqueStrengths.map((str, idx) => <li key={idx}>{str}</li>)}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No strengths logged.</p>
-            )}
-          </div>
-          
-          {/* Areas for Growth (Weaknesses) */}
-          <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4.5 space-y-2">
-            <h4 className="text-xs font-bold text-red-600 flex items-center gap-1.5">
-              <AlertCircle size={14} className="text-red-500" /> Areas for Growth
-            </h4>
-            {uniqueWeaknesses.length > 0 ? (
-              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
-                {uniqueWeaknesses.map((wk, idx) => <li key={idx}>{wk}</li>)}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No weaknesses logged.</p>
-            )}
-          </div>
-          
-          {/* Actionable Steps (Improvements) */}
-          <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4.5 space-y-2">
-            <h4 className="text-xs font-bold text-amber-600 flex items-center gap-1.5">
-              <Sparkles size={14} /> Actionable Steps
-            </h4>
-            {uniqueImprovements.length > 0 ? (
-              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1.5">
-                {uniqueImprovements.map((imp, idx) => <li key={idx}>{imp}</li>)}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No improvements logged.</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Question Review */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-bold text-foreground">
-            Question-by-Question Review
-          </h3>
-          <p className="text-[10px] text-muted-foreground">
-            Review each response, individual score metrics, and ideal model
-            answers.
-          </p>
-        </div>
-
-        <div className="space-y-5">
-          {answers.map((ans, index) => (
-            <div
-              key={index}
-              className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-sm"
-            >
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="text-[10px] font-bold text-muted-foreground">
-                  QUESTION {index + 1}
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${overallScoreColor(ans.overall_score || 0)}`}
-                >
-                  {ans.overall_score || 0}% Score
-                </span>
-              </div>
-
-              <h4 className="text-xs font-bold text-foreground">
-                {ans.question_text}
-              </h4>
-
-              <div className="bg-muted/40 border border-border rounded-xl p-4 text-[11px] leading-relaxed text-muted-foreground">
-                <span className="font-bold block mb-1 text-foreground">
-                  Your Answer ({ans.answer_duration || 0}s):
-                </span>
-                "{ans.transcript || "Skipped question."}"
-              </div>
-
-              {/* Answer Strengths, Weaknesses & Improvements */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {ans.strengths && ans.strengths.length > 0 && (
-                  <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3.5 space-y-1">
-                    <span className="text-[10px] font-bold text-emerald-600 block">
-                      STRENGTHS
-                    </span>
-                    <ul className="text-[10px] text-muted-foreground list-disc pl-3.5 space-y-1">
-                      {ans.strengths.map((str, i) => (
-                        <li key={i}>{str}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {ans.weaknesses && ans.weaknesses.length > 0 && (
-                  <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3.5 space-y-1">
-                    <span className="text-[10px] font-bold text-red-600 block">
-                      WEAKNESSES
-                    </span>
-                    <ul className="text-[10px] text-muted-foreground list-disc pl-3.5 space-y-1">
-                      {ans.weaknesses.map((wk, i) => (
-                        <li key={i}>{wk}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {ans.improvements && ans.improvements.length > 0 && (
-                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3.5 space-y-1">
-                    <span className="text-[10px] font-bold text-amber-600 block">
-                      IMPROVEMENTS
-                    </span>
-                    <ul className="text-[10px] text-muted-foreground list-disc pl-3.5 space-y-1">
-                      {ans.improvements.map((imp, i) => (
-                        <li key={i}>{imp}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {ans.ideal_answer && (
-                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-[11px] leading-relaxed text-muted-foreground">
-                  <span className="font-bold block mb-1 text-primary">
-                    Suggested Ideal Answer:
-                  </span>
-                  {ans.ideal_answer}
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </div>

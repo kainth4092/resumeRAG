@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { CAT_CFG, DIFF_CFG } from "../../../data/interviewConstants";
 import { useAuth } from "../../auth/context/AuthContext";
+import { getInterviewQuestionById } from "../services/interviewBankService";
+import { getQuestionDetails } from "../services/interviewService";
 
 function Prose({ content }) {
   if (!content) return null;
@@ -165,6 +167,50 @@ export const QuestionCard = memo(function QuestionCard({
   const isCreatedByCurrentUser = user && question.created_by === user.id;
 
   const [open, setOpen] = useState(isInitiallyExpanded);
+  const [localAnswer, setLocalAnswer] = useState(null);
+  const [isGeneratingLocal, setIsGeneratingLocal] = useState(false);
+
+  const sampleAnswerText = localAnswer || toText(question.sampleAnswer || question.answer);
+  const isGenerating = sampleAnswerText === "Generating answer..." || isGeneratingLocal;
+
+  useEffect(() => {
+    if (open && sampleAnswerText === "Generating answer...") {
+      let active = true;
+      const fetchUpdatedAnswer = async () => {
+        try {
+          let updatedAnswer = "";
+          if (question.source === "resume_generated" || !question.source) {
+            const res = await getQuestionDetails(question.id);
+            updatedAnswer = res?.answer || "";
+          } else {
+            const res = await getInterviewQuestionById(question.id);
+            updatedAnswer = res.data?.answer || "";
+          }
+          if (active && updatedAnswer && updatedAnswer !== "Generating answer...") {
+            setLocalAnswer(updatedAnswer);
+            return true;
+          }
+        } catch (err) {
+          console.error("Failed to fetch updated answer:", err);
+        }
+        return false;
+      };
+
+      fetchUpdatedAnswer();
+
+      const interval = setInterval(async () => {
+        const done = await fetchUpdatedAnswer();
+        if (done) {
+          clearInterval(interval);
+        }
+      }, 3000);
+
+      return () => {
+        active = false;
+        clearInterval(interval);
+      };
+    }
+  }, [open, sampleAnswerText, question.id, question.source]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -231,7 +277,6 @@ export const QuestionCard = memo(function QuestionCard({
   const commonMistakes =
     question.commonMistakes || answerObj?.common_mistakes || [];
   const followUps = question.followUps || answerObj?.follow_up_questions || [];
-  const sampleAnswerText = toText(question.sampleAnswer || question.answer);
 
   const getEstimatedMins = (q) => {
     let text = (q.question || "") + " " + sampleAnswerText;
@@ -387,12 +432,11 @@ export const QuestionCard = memo(function QuestionCard({
               </div>
             </div>
 
-            {isLoading ? (
+            {isLoading || isGenerating ? (
               <div className="flex items-center gap-2.5 py-4 px-5 bg-primary/4 border border-primary/12 rounded-2xl text-xs text-muted-foreground animate-pulse">
                 <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
                 <span>
-                  Generating a personalized sample answer tailored to your
-                  resume...
+                  Generating a sample answer in background...
                 </span>
               </div>
             ) : sampleAnswerText ? (

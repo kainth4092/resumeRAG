@@ -32,13 +32,31 @@ class SpeechToTextService:
                 )
         return cls._model_instance
 
-    def transcribe(self, audio_file_path: str) -> str:
+    def transcribe(
+        self,
+        audio_file_path: str,
+        prompt: str = None,
+        language: str = "en",
+    ) -> str:
         """
         Transcribe audio file path to string transcript.
         """
         try:
             model = self.get_model()
-            segments, info = model.transcribe(audio_file_path, beam_size=5)
+
+            lang_param = None if language in (None, "auto", "") else language
+
+            logger.info(
+                f"Transcribing audio file: {audio_file_path} with language={lang_param}, vad_filter=True"
+            )
+
+            segments, info = model.transcribe(
+                audio_file_path,
+                beam_size=5,
+                vad_filter=True,
+                initial_prompt=prompt,
+                language=lang_param,
+            )
             transcript_parts = []
             for segment in segments:
                 transcript_parts.append(segment.text)

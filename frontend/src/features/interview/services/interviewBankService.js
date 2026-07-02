@@ -12,6 +12,10 @@ export const createInterviewQuestion = (payload) => {
   return api.post("/interview-bank", payload);
 };
 
+export const getInterviewQuestionById = (id) => {
+  return api.get(`/interview-bank/${id}`);
+};
+
 export const updateInterviewQuestion = (id, payload) => {
   return api.patch(`/interview-bank/${id}`, payload);
 };

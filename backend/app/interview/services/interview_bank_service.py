@@ -8,21 +8,54 @@ from app.services.qdrant_service import upsert_question, delete_question_vector
 from app.interview.repository.question_bank_repository import QuestionBankRepository
 
 
+def generate_and_update_answer_task(
+    question_id: int,
+    question_text: str,
+    skill: str,
+    category: str,
+    experience_level: str,
+):
+    from app.core.database import SessionLocal
+    from app.services.llm_service import generate_general_answer
+    from app.services.qdrant_service import upsert_question
+    from app.models.interview_bank import InterviewQuestionBank
+
+    db = SessionLocal()
+    try:
+        answer_text = generate_general_answer(
+            question=question_text,
+            skill=skill,
+            category=category,
+            experience_level=experience_level,
+        )
+        
+        question = db.query(InterviewQuestionBank).filter(InterviewQuestionBank.id == question_id).first()
+        if question:
+            question.answer = answer_text
+            db.commit()
+            db.refresh(question)
+            try:
+                upsert_question(question)
+            except Exception as q_err:
+                print(f"Qdrant sync failed in background task: {q_err}")
+    except Exception as e:
+        print(f"Background answer generation failed for question {question_id}: {e}")
+    finally:
+        db.close()
+
+
 def create_question(
     db: Session,
     payload: InterviewQuestionCreate,
     created_by: int | None = None,
+    background_tasks = None,
 ):
     answer_text = payload.answer
-    if not answer_text or not answer_text.strip():
-        from app.services.llm_service import generate_general_answer
+    generate_in_background = False
 
-        answer_text = generate_general_answer(
-            question=payload.question,
-            skill=payload.skill,
-            category=payload.category,
-            experience_level=payload.experience_level,
-        )
+    if not answer_text or not answer_text.strip():
+        answer_text = "Generating answer..."
+        generate_in_background = True
 
     question = InterviewQuestionBank(
         question=payload.question,
@@ -38,6 +71,32 @@ def create_question(
     )
 
     saved_question = QuestionBankRepository.create_question(db, question)
+
+    if generate_in_background:
+        if background_tasks:
+            background_tasks.add_task(
+                generate_and_update_answer_task,
+                question_id=saved_question.id,
+                question_text=saved_question.question,
+                skill=saved_question.skill,
+                category=saved_question.category,
+                experience_level=saved_question.experience_level,
+            )
+        else:
+            # Fallback to synchronous if background_tasks is not provided (e.g. tests or admin script)
+            from app.services.llm_service import generate_general_answer
+            try:
+                ans = generate_general_answer(
+                    question=saved_question.question,
+                    skill=saved_question.skill,
+                    category=saved_question.category,
+                    experience_level=saved_question.experience_level,
+                )
+                saved_question.answer = ans
+                db.commit()
+                db.refresh(saved_question)
+            except Exception as e:
+                print(f"Fallback answer generation failed: {e}")
 
     try:
         upsert_question(saved_question)

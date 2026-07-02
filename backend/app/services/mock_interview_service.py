@@ -8,7 +8,6 @@ from app.models.mock_interview import MockInterviewAnswer, MockInterviewSession
 
 logger = logging.getLogger(__name__)
 
-# Predefined high-quality behavioral/HR questions to auto-seed in the database
 SYSTEM_BEHAVIORAL_QUESTIONS = [
     {
         "question": "Tell me about a time you had a conflict with a coworker. How did you resolve it?",
