@@ -1,13 +1,19 @@
-import os
-import uuid
+import base64
 import json
+import logging
+import tempfile
+import uuid
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from app.core.config import settings
 from app.models.resume import Resume
 from app.resume.repository.resume_repository import ResumeRepository
 from app.services.pdf_service import extract_text_from_pdf
+
+
+logger = logging.getLogger(__name__)
 
 class ResumeService:
     @staticmethod
@@ -31,36 +37,42 @@ class ResumeService:
             )
         unique_name = f"{uuid.uuid4()}_{file.filename}"
 
-        upload_dir = Path("uploads/resumes")
+        upload_dir = Path(settings.UPLOAD_DIR)
         upload_dir.mkdir(parents=True, exist_ok=True)
-        save_path = upload_dir / unique_name
+        suffix = Path(file.filename).suffix.lower() or file_ext or ".bin"
 
         content = await file.read()
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-        MAX_SIZE = 5 * 1024 * 1024
 
-        if len(content) > MAX_SIZE:
+        if len(content) > settings.MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail="File size must not exceed 5 MB.")
 
-        with open(save_path, "wb") as f:
-            f.write(content)
+        temp_path = None
         try:
+            with tempfile.NamedTemporaryFile(delete=False, dir=upload_dir, suffix=suffix) as temp_file:
+                temp_file.write(content)
+                temp_path = Path(temp_file.name)
+
             if file_ext == ".pdf":
-                parsed_text = extract_text_from_pdf(str(save_path))
+                parsed_text = extract_text_from_pdf(str(temp_path))
             else:
                 from app.services.docx_service import extract_text_from_docx
-                parsed_text = extract_text_from_docx(str(save_path))
+                parsed_text = extract_text_from_docx(str(temp_path))
         except Exception:
-            if save_path.exists():
-                save_path.unlink()
+            if temp_path and temp_path.exists():
+                temp_path.unlink()
             raise HTTPException(status_code=400, detail="Unable to read PDF or DOCX file.")
+        finally:
+            if temp_path and temp_path.exists():
+                temp_path.unlink()
 
         resume = Resume(
             user_id=user_id,
             title=file.filename,
             original_filename=file.filename,
-            file_path=str(save_path),
+            file_path=unique_name,
+            file_content_base64=base64.b64encode(content).decode("utf-8"),
             parsed_text=parsed_text,
             ats_score=75,
             skills="React,JavaScript,HTML,CSS,SQL",
@@ -91,8 +103,8 @@ class ResumeService:
             ResumeRepository.create_resume(db, resume)
         except SQLAlchemyError:
             db.rollback()
-            if save_path.exists():
-                save_path.unlink()
+            if temp_path and temp_path.exists():
+                temp_path.unlink()
             raise HTTPException(status_code=500, detail="Database error occurred.")
 
         return {"message": "Resume uploaded", "resume_id": resume.id}

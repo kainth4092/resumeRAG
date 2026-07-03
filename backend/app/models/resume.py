@@ -12,6 +12,7 @@ class Resume(Base):
     title: Mapped[str] = mapped_column(String(255))
     original_filename: Mapped[str] = mapped_column(String(255))
     file_path: Mapped[str] = mapped_column(String(500))
+    file_content_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsed_text: Mapped[str] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

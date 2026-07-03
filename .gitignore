@@ -54,3 +54,8 @@ Thumbs.db
 .codex
 
 uploads/
+coverage/
+.pytest_cache/
+logs/
+.vscode/
+.idea/

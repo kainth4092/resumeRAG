@@ -53,8 +53,8 @@ def get_mock_questions(
         )
         return {"questions": questions}
     except Exception as e:
-        logger.error(f"Error fetching mock questions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error fetching mock questions")
+        raise HTTPException(status_code=500, detail="Failed to fetch mock questions.")
 
 
 @router.post("/transcribe")
@@ -76,8 +76,8 @@ def transcribe_audio(
         )
         return {"transcript": transcript}
     except Exception as e:
-        logger.error(f"Failed to transcribe audio: {e}")
-        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+        logger.exception("Failed to transcribe audio")
+        raise HTTPException(status_code=500, detail="Transcription failed.")
     finally:
         if os.path.exists(temp_path):
             try:
@@ -95,8 +95,8 @@ def evaluate_interview(
         evaluation = evaluation_service.evaluate_interview(answers_data)
         return evaluation
     except Exception as e:
-        logger.error(f"Batch evaluation request failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+        logger.exception("Batch evaluation request failed")
+        raise HTTPException(status_code=500, detail="Evaluation failed.")
 
 
 @router.post("/session")
@@ -122,8 +122,8 @@ def save_session(
             "message": "Interview session saved successfully.",
         }
     except Exception as e:
-        logger.error(f"Failed to save mock interview session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to save mock interview session")
+        raise HTTPException(status_code=500, detail="Failed to save interview session.")
 
 
 @router.get("/history")
@@ -149,8 +149,8 @@ def get_interview_history(
             )
         return {"history": history_list}
     except Exception as e:
-        logger.error(f"Failed to load interview history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to load interview history")
+        raise HTTPException(status_code=500, detail="Failed to load interview history.")
 
 
 @router.get("/session/{session_id}")

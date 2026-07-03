@@ -4,22 +4,30 @@ import logging
 import requests
 from typing import Dict, Any, List
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 
 class EvaluationService:
     def __init__(self):
-        # Read from environment variables, check for existence
-        self.base_url = (
-            os.getenv("OLLAMA_BASE_URL") or "http://localhost:11434"
-        ).rstrip("/")
-        self.model = os.getenv("OLLAMA_MODEL") or "gemma2:2b"
+        self.base_url = settings.OLLAMA_BASE_URL.rstrip("/")
+        self.model = settings.OLLAMA_MODEL
 
     def evaluate_interview(self, answers_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Evaluate all candidate answers together using local Ollama.
         Each item in answers_data has: 'question_text', 'transcript'
         """
+        if not self.base_url:
+            logger.warning(
+                "OLLAMA_BASE_URL is not configured; using fallback interview evaluation."
+            )
+            return self._get_fallback_interview_evaluation(
+                answers_data,
+                "OLLAMA_BASE_URL is not configured.",
+            )
+
         url = f"{self.base_url}/api/chat"
 
         system_prompt = (
@@ -94,7 +102,9 @@ class EvaluationService:
                 return evaluation
 
             except Exception as e:
-                logger.error(f"Ollama evaluation attempt {attempt} failed: {e}")
+                logger.error(
+                    "Ollama evaluation attempt %s failed: %s", attempt, e, exc_info=True
+                )
                 if attempt == 2:
                     return self._get_fallback_interview_evaluation(answers_data, str(e))
 
@@ -114,9 +124,7 @@ class EvaluationService:
         try:
             return json.loads(content)
         except json.JSONDecodeError as jde:
-            logger.error(
-                f"Failed to decode JSON from Ollama output: {jde}. Raw output: {content}"
-            )
+            logger.error("Failed to decode JSON from Ollama output: %s", jde, exc_info=True)
             raise ValueError("Ollama did not return a valid JSON object.")
 
     def _get_fallback_interview_evaluation(

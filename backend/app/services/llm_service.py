@@ -3,12 +3,13 @@ from app.core.config import settings
 import json
 import re
 import time
-import random
-import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=settings.OPENROUTER_API_KEY,
-    base_url="https://openrouter.ai/api/v1",
+    base_url=settings.OPENROUTER_BASE_URL,
 )
 
 
@@ -38,6 +39,7 @@ def call_llm_with_retry(
             )
             return response.choices[0].message.content
         except Exception as e:
+            logger.warning("LLM request failed on attempt %s: %s", attempt + 1, e)
             if attempt == max_retries - 1:
                 raise
             time.sleep(delay)
@@ -309,7 +311,7 @@ def generate_general_answer(
                 response = "\n".join(lines[1:-1])
         return response.strip()
     except Exception as e:
-        print(f"Failed to generate AI answer: {e}")
+        logger.error("Failed to generate AI answer: %s", e, exc_info=True)
         return f"AI generated sample answer for: {question}"
 
 

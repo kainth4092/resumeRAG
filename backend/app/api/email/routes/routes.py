@@ -1,4 +1,7 @@
 import os
+import base64
+import tempfile
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -23,7 +26,19 @@ def send_email(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Resume document not found or you are not authorized to access it.",
         )
-    if not resume.file_path or not os.path.exists(resume.file_path):
+
+    attachment_path = None
+    attachment_created = False
+
+    if resume.file_content_base64:
+        suffix = Path(resume.original_filename or "resume.pdf").suffix or ".pdf"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(base64.b64decode(resume.file_content_base64))
+            attachment_path = temp_file.name
+            attachment_created = True
+    elif resume.file_path and os.path.exists(resume.file_path):
+        attachment_path = resume.file_path
+    else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The physical resume attachment could not be located on the server.",
@@ -36,7 +51,7 @@ def send_email(
             message=request.message,
             cc=request.cc,
             bcc=request.bcc,
-            attachment_path=resume.file_path,
+            attachment_path=attachment_path,
             attachment_name=resume.original_filename,
         )
         return EmailSendResponse(
@@ -48,5 +63,11 @@ def send_email(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Email dispatch failed: {str(e)}",
+            detail="Email dispatch failed.",
         )
+    finally:
+        if attachment_created and attachment_path and os.path.exists(attachment_path):
+            try:
+                os.remove(attachment_path)
+            except OSError:
+                pass

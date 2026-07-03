@@ -1,9 +1,41 @@
-from fastapi import FastAPI
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from jose import JWTError
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from app.core.database import Base, engine
+from app.core.config import settings
+from app.core.database import get_db
+from app.core.exceptions import AppException
 import app.models
 
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
+
+
+logging.basicConfig(
+    level=logging.DEBUG if settings.DEBUG else logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+for noisy_logger_name in ("sqlalchemy.engine", "httpcore", "httpx"):
+    logging.getLogger(noisy_logger_name).setLevel(logging.WARNING)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    try:
+        from app.services.qdrant_service import ensure_collection_exists
+
+        ensure_collection_exists()
+    except Exception as exc:
+        logger.warning("Qdrant initialization skipped: %s", exc)
+    yield
 from app.api.auth.routes import router as auth_router
 from app.api.profile.routes import router as profile_router
 from app.api.resume.routes import router as resume_router
@@ -22,11 +54,42 @@ from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
 from app.api.mock_interview.routes import router as mock_interview_router
 
-app = FastAPI(title="ResumeRAG API")
+app = FastAPI(title="ResumeRAG API", version="1.0.0", lifespan=lifespan)
+
+
+def _error(detail: str, status_code: int) -> JSONResponse:
+    return JSONResponse(status_code=status_code, content={"detail": detail})
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    return _error("Validation error occurred.", 422)
+
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error("Database error: %s", exc, exc_info=True)
+    return _error("Database error occurred.", 500)
+
+
+@app.exception_handler(JWTError)
+async def jwt_exception_handler(request: Request, exc: JWTError):
+    return _error("Invalid authentication token.", 401)
+
+
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    return _error(exc.message, getattr(exc, "status_code", 500))
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled server error: %s", exc, exc_info=True)
+    return _error("Internal server error.", 500)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,3 +117,13 @@ app.include_router(mock_interview_router)
 @app.get("/")
 def home():
     return {"message": "ResumeRAG API Running"}
+
+
+@app.get("/health", include_in_schema=False)
+def health(db=Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "version": "1.0.0",
+    }

@@ -17,7 +17,7 @@ export function QuestionScreen({
   onAnswerCompleted,
   onSkip,
 }) {
-  const [step, setStep] = useState("idle"); // idle, recording, transcribing, editing
+  const [step, setStep] = useState("idle");
   const [recordTime, setRecordTime] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [loadingText, setLoadingText] = useState("");
@@ -68,17 +68,11 @@ export function QuestionScreen({
           );
           if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
             const devices = await navigator.mediaDevices.enumerateDevices();
-            console.log("Found devices:", devices);
             const audioInputs = devices.filter((d) => d.kind === "audioinput");
             if (audioInputs.length > 0) {
-              // Find a device with a valid deviceId, preferably not the default if default failed
               const targetDevice =
                 audioInputs.find((d) => d.deviceId && d.deviceId !== "default") ||
                 audioInputs[0];
-              console.log(
-                "Attempting to connect to specific audio input:",
-                targetDevice,
-              );
               stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                   deviceId: { exact: targetDevice.deviceId },
@@ -96,7 +90,6 @@ export function QuestionScreen({
         }
       }
 
-      // Detect supported mimeType
       let mimeType = "audio/webm";
       if (typeof MediaRecorder !== "undefined") {
         if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -172,7 +165,6 @@ export function QuestionScreen({
 
   const uploadAndTranscribe = async (audioBlob) => {
     try {
-      // Build a contextual prompt based on the current interview question
       const questionPrompt = question?.question
         ? `The user is in a professional technical mock interview answering the question: "${question.question}". Common technical terms: React, Angular, Vue, Javascript, TypeScript, HTML, CSS, Python, Django, FastAPI, Flask, Java, Spring, C++, backend, frontend, API, database, SQL, NoSQL, Git, Docker, Kubernetes, AWS, Cloud, system design, software engineering.`
         : "";
@@ -201,7 +193,6 @@ export function QuestionScreen({
     }
     setError("");
 
-    // Pass the transcript and duration to the parent orchestrator
     onAnswerCompleted({
       question_id: question.id,
       question_text: question.question,
@@ -209,7 +200,6 @@ export function QuestionScreen({
       answer_duration: recordTime,
     });
 
-    // Reset component state for the next question
     setStep("idle");
     setTranscript("");
     setRecordTime(0);
@@ -226,7 +216,6 @@ export function QuestionScreen({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Header & Progress */}
       <div className="flex items-center justify-between">
         <div>
           <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -248,7 +237,6 @@ export function QuestionScreen({
         />
       </div>
 
-      {/* Main Question Card */}
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
         <div className="space-y-2">
           <span className="text-[10px] font-semibold text-muted-foreground uppercase">
@@ -260,7 +248,6 @@ export function QuestionScreen({
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-semibold flex items-center gap-2 animate-in fade-in-0 duration-200">
           <AlertCircle size={14} className="shrink-0" />
@@ -268,7 +255,6 @@ export function QuestionScreen({
         </div>
       )}
 
-      {/* Recording Steps */}
       {step === "idle" && (
         <div className="bg-muted/30 border border-dashed border-border rounded-2xl p-8 flex flex-col items-center justify-center space-y-4">
           <button
@@ -311,7 +297,6 @@ export function QuestionScreen({
       {step === "recording" && (
         <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-8 flex flex-col items-center justify-center space-y-4">
           <div className="relative">
-            {/* Pulsing ring animation */}
             <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
             <button
               onClick={handleStopRecording}
@@ -353,7 +338,7 @@ export function QuestionScreen({
             <textarea
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
-              className="w-full min-h-[120px] p-4 bg-card border border-border rounded-xl text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground outline-none resize-y"
+              className="w-full min-h-30 p-4 bg-card border border-border rounded-xl text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground outline-none resize-y"
               placeholder="Your answer will appear here..."
             />
           </div>

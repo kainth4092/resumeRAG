@@ -1,7 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, JSON
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB
 from app.core.database import Base
 
 
@@ -14,7 +13,7 @@ class SearchCache(Base):
         default=lambda: str(uuid.uuid4()),
     )
     query = Column(String, unique=True, index=True, nullable=False)
-    jobs_json = Column(JSONB, nullable=False)
+    jobs_json = Column(JSON, nullable=False)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -30,7 +29,7 @@ class JobCache(Base):
         default=lambda: str(uuid.uuid4()),
     )
     job_id = Column(String, unique=True, index=True, nullable=False)
-    data = Column(JSONB, nullable=False)
+    data = Column(JSON, nullable=False)
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),

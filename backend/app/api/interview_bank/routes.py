@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -29,6 +31,7 @@ router = APIRouter(
     prefix="/api/interview-bank",
     tags=["Interview Question Bank"],
 )
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=InterviewQuestionResponse)
@@ -50,10 +53,8 @@ def create_bank_question(
         raise
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create question: {str(e)}",
-        )
+        logger.exception("Failed to create interview bank question")
+        raise HTTPException(status_code=500, detail="Failed to create question.")
 
 
 @router.get("/meta")
@@ -65,10 +66,8 @@ def get_bank_meta(
     try:
         return get_filters_meta(db, current_user.id)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch metadata: {str(e)}",
-        )
+        logger.exception("Failed to fetch interview bank metadata")
+        raise HTTPException(status_code=500, detail="Failed to fetch metadata.")
 
 
 @router.post("/generate-answer")
@@ -94,7 +93,8 @@ def generate_bank_answer(
         )
         return {"answer": answer}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to generate bank answer")
+        raise HTTPException(status_code=500, detail="Failed to generate answer.")
 
 
 @router.get("/", response_model=InterviewQuestionListResponse)
@@ -134,10 +134,8 @@ def list_bank_questions(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch questions: {str(e)}",
-        )
+        logger.exception("Failed to fetch interview bank questions")
+        raise HTTPException(status_code=500, detail="Failed to fetch questions.")
 
 
 @router.get("/{question_id}", response_model=InterviewQuestionResponse)
@@ -161,10 +159,8 @@ def get_bank_question(
         raise
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch question: {str(e)}",
-        )
+        logger.exception("Failed to fetch interview bank question")
+        raise HTTPException(status_code=500, detail="Failed to fetch question.")
 
 
 @router.patch("/{question_id}", response_model=InterviewQuestionResponse)
@@ -199,10 +195,8 @@ def update_bank_question(
         raise
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to update question: {str(e)}",
-        )
+        logger.exception("Failed to update interview bank question")
+        raise HTTPException(status_code=500, detail="Failed to update question.")
 
 
 @router.delete("/{question_id}")
@@ -237,10 +231,8 @@ def delete_bank_question(
         raise
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete question: {str(e)}",
-        )
+        logger.exception("Failed to delete interview bank question")
+        raise HTTPException(status_code=500, detail="Failed to delete question.")
 
 
 @router.post(

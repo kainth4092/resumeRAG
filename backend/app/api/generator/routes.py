@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -23,6 +24,7 @@ from app.services.llm_service import (
 )
 
 router = APIRouter(prefix="/api/generator", tags=["Generator"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -53,12 +55,8 @@ def analyze(
 
         return result
     except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze resume: {str(e)}"
-        )
+        logger.exception("Failed to analyze resume")
+        raise HTTPException(status_code=500, detail="Failed to analyze resume.")
 
 
 @router.post("/generate", response_model=GenerateResponse)
@@ -135,12 +133,8 @@ def generate(
 
         return result
     except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate resume: {str(e)}"
-        )
+        logger.exception("Failed to generate resume")
+        raise HTTPException(status_code=500, detail="Failed to generate resume.")
 
 
 @router.post("/analyze-health")
@@ -194,12 +188,8 @@ def analyze_health(
 
         return result
     except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze resume health: {str(e)}"
-        )
+        logger.exception("Failed to analyze resume health")
+        raise HTTPException(status_code=500, detail="Failed to analyze resume health.")
 
 
 @router.post("/improve-section")
@@ -224,11 +214,10 @@ def improve_section(
         )
         return {"improved_text": improved_text}
     except Exception as e:
-        import traceback
-
-        traceback.print_exc()
+        logger.exception("Failed to improve section with AI")
         raise HTTPException(
-            status_code=500, detail=f"Failed to improve section with AI: {str(e)}"
+            status_code=500,
+            detail="Failed to improve section with AI.",
         )
 
 

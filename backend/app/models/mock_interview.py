@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -19,7 +18,7 @@ class MockInterviewSession(Base):
     overall_grade = Column(String(10), nullable=True)
     questions_attempted = Column(Integer, nullable=False, default=0)
     performance_summary = Column(Text, nullable=True)
-    evaluation_report = Column(JSONB, nullable=True)
+    evaluation_report = Column(JSON, nullable=True)
 
     user = relationship("User")
     answers = relationship(
@@ -55,10 +54,10 @@ class MockInterviewAnswer(Base):
     grammar_score = Column(Integer, nullable=True)
     clarity_score = Column(Integer, nullable=True)
 
-    strengths = Column(JSONB, nullable=True)
-    weaknesses = Column(JSONB, nullable=True)
-    improvements = Column(JSONB, nullable=True)
-    missing_points = Column(JSONB, nullable=True)
+    strengths = Column(JSON, nullable=True)
+    weaknesses = Column(JSON, nullable=True)
+    improvements = Column(JSON, nullable=True)
+    missing_points = Column(JSON, nullable=True)
     ideal_answer = Column(Text, nullable=True)
 
     session = relationship("MockInterviewSession", back_populates="answers")

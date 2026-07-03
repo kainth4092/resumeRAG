@@ -6,8 +6,8 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    JSON,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -28,7 +28,7 @@ class InterviewQuestionBank(Base):
     company = Column(String(100), nullable=True)
     role = Column(String(100), nullable=True)
 
-    tags = Column(JSONB, nullable=False, default=list)
+    tags = Column(JSON, nullable=False, default=list)
 
     # MCQ columns
     option_a = Column(Text, nullable=True)
@@ -37,7 +37,7 @@ class InterviewQuestionBank(Base):
     option_d = Column(Text, nullable=True)
     correct_option = Column(String(10), nullable=True)
     short_explanation = Column(Text, nullable=True)
-    distractor_explanations = Column(JSONB, nullable=True)
+    distractor_explanations = Column(JSON, nullable=True)
 
     source = Column(
         String(20),

@@ -114,7 +114,7 @@ export function useResumeAnalysis() {
         setAnalysisResult(response.data);
       }
     } catch (err) {
-      console.log("No existing health report found:", err);
+      // Intentionally ignore missing report; the user can run analysis manually.
     }
   };
 

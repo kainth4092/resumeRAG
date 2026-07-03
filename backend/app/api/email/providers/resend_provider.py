@@ -1,9 +1,14 @@
 import base64
 import os
+import logging
 import requests
 import time
 from typing import Optional
+from app.core.config import settings
 from .base import BaseEmailProvider
+
+
+logger = logging.getLogger(__name__)
 
 
 class ResendEmailProvider(BaseEmailProvider):
@@ -21,7 +26,7 @@ class ResendEmailProvider(BaseEmailProvider):
         attachment_path: Optional[str] = None,
         attachment_name: Optional[str] = None,
     ) -> dict:
-        print(f"[Resend Provider] Dispatching to {to_email} (mock={self.is_mock})...")
+        logger.info("Dispatching email to %s (mock=%s)", to_email, self.is_mock)
 
         cc_list = (
             [email.strip() for email in cc.split(",") if email.strip()] if cc else []
@@ -59,7 +64,7 @@ class ResendEmailProvider(BaseEmailProvider):
             "Content-Type": "application/json",
         }
 
-        from_address = os.getenv("EMAIL_FROM_ADDRESS", "onboarding@resend.dev")
+        from_address = settings.EMAIL_FROM_ADDRESS
 
         payload = {
             "from": from_address,
@@ -85,5 +90,5 @@ class ResendEmailProvider(BaseEmailProvider):
             data = response.json()
             return {"success": True, "id": data.get("id"), "provider": "Resend"}
         except Exception as e:
-            print(f"[Resend Provider] Delivery failure: {e}")
+            logger.error("Resend delivery failure: %s", e, exc_info=True)
             raise e

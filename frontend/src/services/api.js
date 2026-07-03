@@ -1,7 +1,15 @@
 import axios from "axios";
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const baseURL =
+  configuredApiUrl && !configuredApiUrl.includes("YOUR_RENDER_BACKEND_URL")
+    ? configuredApiUrl
+    : import.meta.env.DEV
+      ? "http://localhost:8000/api"
+      : "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },

@@ -1,11 +1,15 @@
-import os
+import logging
 from typing import Optional
 from ..providers.resend_provider import ResendEmailProvider
+from app.core.config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
     def __init__(self):
-        api_key = os.getenv("RESEND_API_KEY", "YOUR_API_KEY")
+        api_key = settings.RESEND_API_KEY
         self.provider = ResendEmailProvider(api_key)
 
     def send_resume_email(

@@ -7,10 +7,10 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Float,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB
 from app.core.database import Base
 
 
@@ -62,7 +62,7 @@ class InterviewQuestion(Base):
     difficulty = Column(String(20), nullable=False)
     estimated_duration = Column(String(30), nullable=True)
     tech_skill = Column(String(100), nullable=True)
-    answer = Column(JSONB, nullable=True)
+    answer = Column(JSON, nullable=True)
     details_generated = Column(Boolean, default=False)
     bookmarked = Column(Boolean, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -70,4 +70,3 @@ class InterviewQuestion(Base):
         "InterviewSession",
         back_populates="questions",
     )
-    ""

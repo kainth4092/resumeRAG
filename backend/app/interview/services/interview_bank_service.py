@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 from app.models.interview_bank import InterviewQuestionBank
 from app.schemas.interview_bank import (
@@ -6,6 +8,9 @@ from app.schemas.interview_bank import (
 )
 from app.services.qdrant_service import upsert_question, delete_question_vector
 from app.interview.repository.question_bank_repository import QuestionBankRepository
+
+
+logger = logging.getLogger(__name__)
 
 
 def generate_and_update_answer_task(
@@ -37,9 +42,9 @@ def generate_and_update_answer_task(
             try:
                 upsert_question(question)
             except Exception as q_err:
-                print(f"Qdrant sync failed in background task: {q_err}")
+                logger.warning("Qdrant sync failed in background task: %s", q_err)
     except Exception as e:
-        print(f"Background answer generation failed for question {question_id}: {e}")
+        logger.exception("Background answer generation failed for question %s", question_id)
     finally:
         db.close()
 
@@ -96,12 +101,12 @@ def create_question(
                 db.commit()
                 db.refresh(saved_question)
             except Exception as e:
-                print(f"Fallback answer generation failed: {e}")
+                logger.warning("Fallback answer generation failed: %s", e)
 
     try:
         upsert_question(saved_question)
     except Exception as e:
-        print(f"Qdrant sync failed: {e}")
+        logger.warning("Qdrant sync failed: %s", e)
 
     return saved_question
 
