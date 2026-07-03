@@ -32,7 +32,7 @@ class EmailService:
                     </div>
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;">
                     <p style="font-size: 11px; color: #64748b; text-align: center; margin: 0;">
-                        This document was delivered securely via CareerSprint AI application.
+                        This document was delivered securely via ResuPilot AI AI application.
                     </p>
                 </div>
             </body>

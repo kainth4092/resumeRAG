@@ -50,7 +50,7 @@ export default function Sidebar({ collapsed, setCollapsed, setMobileOpen }) {
             </div>
             <div className="min-w-0">
               <p className="text-md font-semibold text-sidebar-foreground leading-none truncate">
-                CareerSprint
+                ResuPilot AI
               </p>
             </div>
           </div>

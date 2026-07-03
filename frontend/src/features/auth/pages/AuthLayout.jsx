@@ -38,7 +38,7 @@ export function AuthLayout({
             </div>
             <div>
               <span className="text-white font-semibold text-md leading-none block">
-                CareerSprint
+                ResuPilot AI
               </span>
               <span className="text-violet-300 text-xs tracking-widest uppercase">
                 Powered by AI
@@ -101,7 +101,7 @@ export function AuthLayout({
           <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
             <Zap size={16} className="text-white" />
           </div>
-          <span className="font-semibold text-foreground">CareerSprint</span>
+          <span className="font-semibold text-foreground">ResuPilot AI</span>
         </div>
 
         <div className="w-full max-w-[400px]">{children}</div>

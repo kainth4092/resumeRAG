@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: career-sprint-backend
+    name: resu-pilot-ai-backend
     env: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -56,7 +56,7 @@ services:
         value: jsearch.p.rapidapi.com
 
   - type: static
-    name: career-sprint-frontend
+    name: resu-pilot-ai-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
@@ -64,6 +64,6 @@ services:
       - key: VITE_API_URL
         sync: false
       - key: VITE_APP_NAME
-        value: CareerSprint
+        value: ResuPilot AI
       - key: VITE_ENVIRONMENT
         value: production

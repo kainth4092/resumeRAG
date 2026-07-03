@@ -39,7 +39,7 @@ const DEFAULT_ACTIVITIES = [
   {
     icon: Zap,
     color: "text-primary bg-primary/10",
-    title: "Welcome to CareerSprint",
+    title: "Welcome to ResuPilot AI",
     body: "Upload or generate your first resume to get started!",
     time: "Just now",
   },

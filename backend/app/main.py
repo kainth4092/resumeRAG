@@ -56,7 +56,7 @@ from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
 from app.api.mock_interview.routes import router as mock_interview_router
 
-app = FastAPI(title="CareerSprint API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="ResuPilot AI API", version="1.0.0", lifespan=lifespan)
 
 
 def _error(detail: str, status_code: int) -> JSONResponse:
@@ -121,7 +121,7 @@ app.include_router(mock_interview_router)
 
 @app.get("/")
 def home():
-    return {"message": "CareerSprint API Running"}
+    return {"message": "ResuPilot AI API Running"}
 
 
 @app.get("/health", include_in_schema=False)

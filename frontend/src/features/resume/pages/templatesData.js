@@ -62,9 +62,9 @@ export const MOCK_RESUME = {
   ],
   projects: [
     {
-      name: "CareerSprint Platform",
+      name: "ResuPilot AI Platform",
       tech: "Python · React · FastAPI · pgvector",
-      url: "github.com/johndoe/CareerSprint",
+      url: "github.com/johndoe/ResuPilot AI",
       desc: "Open-source RAG platform for resume optimizations with automatic ATS scoring and vector retrieval pipelines.",
     },
   ],

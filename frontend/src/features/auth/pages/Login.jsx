@@ -60,7 +60,7 @@ export default function Login() {
     <AuthLayout
       illustration={<LoginIllustration />}
       leftTitle="Land interviews 3× faster with AI-optimized resumes"
-      leftSubtitle="CareerSprint analyzes job descriptions and tailors your resume to maximize ATS scores and recruiter attention."
+      leftSubtitle="ResuPilot AI analyzes job descriptions and tailors your resume to maximize ATS scores and recruiter attention."
       // testimonial={{
       //     quote: "My ATS score went from 61 to 94 in one session. Got a call from Stripe the next week.",
       //     author: "Alex Chen",
@@ -73,7 +73,7 @@ export default function Login() {
             Welcome back
           </h1>
           <p className="text-muted-foreground text-sm mt-1.5">
-            Sign in to your CareerSprint account
+            Sign in to your ResuPilot AI account
           </p>
         </div>
 

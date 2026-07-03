@@ -170,7 +170,7 @@ export const getProjectName = (qText) => {
       }
     }
   }
-  return "CareerSprint";
+  return "ResuPilot AI";
 };
 
 export const getCompanyName = (qText) => {

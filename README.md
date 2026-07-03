@@ -1,6 +1,6 @@
-# CareerSprint
+# ResuPilot AI
 
-CareerSprint is a full-stack resume analysis, job discovery, interview prep, and email workflow application built with FastAPI, PostgreSQL, Qdrant, and React + Vite.
+ResuPilot AI is a full-stack resume analysis, job discovery, interview prep, and email workflow application built with FastAPI, PostgreSQL, Qdrant, and React + Vite.
 
 ## Tech Stack
 
