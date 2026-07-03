@@ -55,15 +55,19 @@ services:
       - key: RAPIDAPI_HOST
         value: jsearch.p.rapidapi.com
 
-  - type: static
-    name: resu-pilot-ai-frontend
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    publishPath: dist
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-      - key: VITE_APP_NAME
-        value: ResuPilot AI
-      - key: VITE_ENVIRONMENT
-        value: production
+  - - type: static
+      name: resu-pilot-ai-frontend
+      rootDir: frontend
+      buildCommand: npm install && npm run build
+      publishPath: dist
+      routes:
+        - type: rewrite
+          source: /*
+          destination: /index.html
+      envVars:
+        - key: VITE_API_URL
+          sync: false
+        - key: VITE_APP_NAME
+          value: ResuPilot AI
+        - key: VITE_ENVIRONMENT
+          value: production
