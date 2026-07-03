@@ -19,6 +19,7 @@ export default function AppRoutes() {
       <Toaster richColors position="top-right" />
       <BrowserRouter>
         <Routes>
+          <Route path="/index.html" element={<Navigate to="/" replace />} />
           <Route element={<PublicOnlyRoute />}>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
