@@ -36,6 +36,8 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning("Qdrant initialization skipped: %s", exc)
     yield
+
+
 from app.api.auth.routes import router as auth_router
 from app.api.profile.routes import router as profile_router
 from app.api.resume.routes import router as resume_router
@@ -54,7 +56,7 @@ from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
 from app.api.mock_interview.routes import router as mock_interview_router
 
-app = FastAPI(title="ResumeRAG API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="CareerSprint API", version="1.0.0", lifespan=lifespan)
 
 
 def _error(detail: str, status_code: int) -> JSONResponse:
@@ -62,7 +64,9 @@ def _error(detail: str, status_code: int) -> JSONResponse:
 
 
 @app.exception_handler(RequestValidationError)
-async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+async def request_validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     return _error("Validation error occurred.", 422)
 
 
@@ -86,6 +90,7 @@ async def app_exception_handler(request: Request, exc: AppException):
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled server error: %s", exc, exc_info=True)
     return _error("Internal server error.", 500)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -116,7 +121,7 @@ app.include_router(mock_interview_router)
 
 @app.get("/")
 def home():
-    return {"message": "ResumeRAG API Running"}
+    return {"message": "CareerSprint API Running"}
 
 
 @app.get("/health", include_in_schema=False)

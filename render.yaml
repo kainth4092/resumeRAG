@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: resume-rag-backend
+    name: career-sprint-backend
     env: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -56,7 +56,7 @@ services:
         value: jsearch.p.rapidapi.com
 
   - type: static
-    name: resume-rag-frontend
+    name: career-sprint-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
@@ -64,6 +64,6 @@ services:
       - key: VITE_API_URL
         sync: false
       - key: VITE_APP_NAME
-        value: ResumeRAG
+        value: CareerSprint
       - key: VITE_ENVIRONMENT
         value: production
