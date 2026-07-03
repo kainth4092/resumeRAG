@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_SECTIONS } from "../../data/navigation";
 import { getTrackedJobs } from "../../features/jobs/services/jobs.service";
 

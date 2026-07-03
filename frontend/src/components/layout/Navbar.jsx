@@ -1,121 +1,150 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, LogOut, Mail, Menu, Moon, Sun, User } from "lucide-react";
 import { useAuth } from "../../features/auth/context/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
-export default function Navbar({ profileRef, setNotifOpen, setProfileOpen, setMobileOpen, profileOpen, onEmailClick }) {
-    const navigate = useNavigate();
-    const { user, logout: authLogout } = useAuth();
+export default function Navbar({
+  profileRef,
+  setNotifOpen,
+  setProfileOpen,
+  setMobileOpen,
+  profileOpen,
+  onEmailClick,
+}) {
+  const navigate = useNavigate();
+  const { user, logout: authLogout } = useAuth();
 
-    const [theme, setTheme] = useState(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("theme");
-            if (saved) return saved;
-            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        }
-        return "light";
-    });
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme");
+      if (saved) return saved;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return "light";
+  });
 
-    useEffect(() => {
-        const root = document.documentElement;
-        if (theme === "dark") {
-            root.classList.add("dark");
-        } else {
-            root.classList.remove("dark");
-        }
-        localStorage.setItem("theme", theme);
-    }, [theme]);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-    const logout = () => {
-        if (authLogout) {
-            authLogout();
-        } else {
-            localStorage.removeItem("access_token");
-        }
-        navigate("/");
-    };
+  const logout = () => {
+    if (authLogout) {
+      authLogout();
+    } else {
+      localStorage.removeItem("access_token");
+    }
+    navigate("/");
+  };
 
-    return (
-        <header className="shrink-0 h-16 flex items-center gap-3 px-4 md:px-6 border-b border-border bg-card/80 backdrop-blur-xl z-30 shadow-(--shadow-sm)">
+  return (
+    <header className="shrink-0 h-16 flex items-center gap-3 px-4 md:px-6 border-b border-border bg-card/80 backdrop-blur-xl z-30 shadow-(--shadow-sm)">
+      <button
+        onClick={() => setMobileOpen?.(true)}
+        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
+      >
+        <Menu size={18} />
+      </button>
 
-            <button
-                onClick={() => setMobileOpen?.(true)}
-                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
-            >
-                <Menu size={18} />
-            </button>
+      <div className="flex items-center gap-1.5 ml-auto">
+        <button
+          onClick={onEmailClick}
+          className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+          title="Send resume"
+        >
+          <Mail size={17} />
+        </button>
 
-            <div className="flex items-center gap-1.5 ml-auto">
+        <div ref={profileRef} className="relative">
+          <button
+            onClick={() => {
+              setProfileOpen((o) => !o);
+              setNotifOpen(false);
+            }}
+            className="flex items-center gap-2.5 h-9 pl-1.5 pr-3 rounded-xl hover:bg-muted transition-all cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold">
+              {user?.avatar}
+            </div>
+            <span className="text-md font-semibold text-foreground hidden md:block">
+              {user?.name.split(" ")[0]}
+            </span>
+            <ChevronDown
+              size={12}
+              className={`text-muted-foreground transition-transform ${profileOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {profileOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-2xl shadow-(--shadow-lg) z-50 overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-200">
+              <div className="px-4 py-3.5 border-b border-border">
+                <p className="text-md font-semibold text-foreground">
+                  {user?.name}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {user?.email}
+                </p>
+              </div>
+              <div className="py-1">
+                {[{ icon: User, label: "Profile", page: "/profile" }].map(
+                  (item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        if (item.page) {
+                          navigate(item.page);
+                        }
+                        setProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-foreground hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <item.icon size={14} className="text-muted-foreground" />
+                      {item.label}
+                    </button>
+                  ),
+                )}
 
                 <button
-                    onClick={onEmailClick}
-                    className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-                    title="Send resume"
+                  onClick={() =>
+                    setTheme((t) => (t === "dark" ? "light" : "dark"))
+                  }
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
-                    <Mail size={17} />
+                  {theme === "dark" ? (
+                    <>
+                      <Sun size={14} className="text-muted-foreground" />
+                      Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <Moon size={14} className="text-muted-foreground" />
+                      Dark Mode
+                    </>
+                  )}
                 </button>
-
-                <div ref={profileRef} className="relative">
-                    <button
-                        onClick={() => { setProfileOpen(o => !o); setNotifOpen(false); }}
-                        className="flex items-center gap-2.5 h-9 pl-1.5 pr-3 rounded-xl hover:bg-muted transition-all cursor-pointer"
-                    >
-                        <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold">
-                            {user?.avatar}
-                        </div>
-                        <span className="text-md font-semibold text-foreground hidden md:block">{user?.name.split(" ")[0]}</span>
-                        <ChevronDown size={12} className={`text-muted-foreground transition-transform ${profileOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {profileOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-2xl shadow-(--shadow-lg) z-50 overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                            <div className="px-4 py-3.5 border-b border-border">
-                                <p className="text-md font-semibold text-foreground">{user?.name}</p>
-                                <p className="text-sm text-muted-foreground mt-0.5">{user?.email}</p>
-                            </div>
-                            <div className="py-1">
-                                {[
-                                    { icon: User, label: "Profile", page: "/profile" },
-                                ].map(item => (
-                                    <button
-                                        key={item.label}
-                                        onClick={() => { if (item.page) { navigate(item.page); } setProfileOpen(false); }}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-foreground hover:bg-muted transition-colors cursor-pointer"
-                                    >
-                                        <item.icon size={14} className="text-muted-foreground" />
-                                        {item.label}
-                                    </button>
-                                ))}
-
-                                <button
-                                    onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-foreground hover:bg-muted transition-colors cursor-pointer"
-                                >
-                                    {theme === "dark" ? (
-                                        <>
-                                            <Sun size={14} className="text-muted-foreground" />
-                                            Light Mode
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Moon size={14} className="text-muted-foreground" />
-                                            Dark Mode
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                            <div className="border-t border-border py-1">
-                                <button
-                                    onClick={() => { logout(); setProfileOpen(false); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
-                                >
-                                    <LogOut size={14} />
-                                    Sign Out
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+              </div>
+              <div className="border-t border-border py-1">
+                <button
+                  onClick={() => {
+                    logout();
+                    setProfileOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
             </div>
-        </header >
-    )
+          )}
+        </div>
+      </div>
+    </header>
+  );
 }

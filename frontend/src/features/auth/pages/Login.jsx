@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { AuthLayout } from "./AuthLayout";
 import { LoginIllustration } from "./AuthIllustrations";
 import { loginUser } from "../services/authService";
