@@ -5,6 +5,7 @@ import { getCurrentUser } from "../services/authService";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  console.log("AUTH LOADED");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 

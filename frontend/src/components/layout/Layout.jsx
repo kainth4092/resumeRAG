@@ -6,6 +6,7 @@ import { useAuth } from "../../features/auth/context/AuthContext";
 import { EmailModal } from "../../features/email";
 
 export default function Layout() {
+  console.log("LAYOUT LOADED");
   const { loading } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
