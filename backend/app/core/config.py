@@ -33,8 +33,17 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        origins = _parse_csv(self.FRONTEND_URL)
-        if self.ENVIRONMENT.lower() != "production" or self.DEBUG:
+        origins = []
+
+        if self.FRONTEND_URL:
+            origins.extend(
+                [
+                    origin.strip().rstrip("/")
+                    for origin in self.FRONTEND_URL.split(",")
+                    if origin.strip()
+                ]
+            )
+        if self.ENVIRONMENT.lower() != "production":
             origins.extend(
                 [
                     "http://localhost:3000",
@@ -45,11 +54,7 @@ class Settings(BaseSettings):
                     "http://127.0.0.1:5173",
                 ]
             )
-        deduped: list[str] = []
-        for origin in origins:
-            if origin and origin not in deduped:
-                deduped.append(origin)
-        return deduped
+        return list(dict.fromkeys(origins))
 
 
 settings = Settings()
