@@ -43,18 +43,25 @@ class Settings(BaseSettings):
                     if origin.strip()
                 ]
             )
-        if self.ENVIRONMENT.lower() != "production":
-            origins.extend(
-                [
-                    "http://localhost:3000",
-                    "http://localhost:4173",
-                    "http://localhost:5173",
-                    "http://127.0.0.1:3000",
-                    "http://127.0.0.1:4173",
-                    "http://127.0.0.1:5173",
-                ]
-            )
+
+        origins.extend(
+            [
+                "http://localhost:5173",
+                "http://localhost:4173",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:4173",
+                "https://resupilot-ai-frontend.onrender.com",
+            ]
+        )
         return list(dict.fromkeys(origins))
+
+    @property
+    def db_url(self) -> str:
+        if self.ENVIRONMENT.lower() == "production":
+            return self.DATABASE_URL
+        if "localhost" in self.DATABASE_URL or "127.0.0.1" in self.DATABASE_URL:
+            return self.DATABASE_URL
+        return "postgresql://postgres:YourStrongPassword@localhost:5432/resume_rag"
 
 
 settings = Settings()
