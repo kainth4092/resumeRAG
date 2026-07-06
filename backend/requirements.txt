@@ -17,6 +17,7 @@ psycopg2-binary==2.9.12
 # Security & Authentication
 bcrypt==5.0.0
 python-jose[cryptography]==3.5.0
+google-auth==2.30.0
 
 # HTTP Clients & External Services
 httpx==0.28.1
