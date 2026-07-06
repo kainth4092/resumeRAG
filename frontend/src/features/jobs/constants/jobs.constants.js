@@ -1,9 +1,9 @@
 export const STATUS_CFG = {
   Applied:    { color: "#3b82f6", bg: "#eff6ff",  label: "Applied",    dot: "#3b82f6" },
-  Interview:  { color: "#7C3AED", bg: "#f5f3ff",  label: "Interview",  dot: "#7C3AED" },
+  Interview:  { color: "#4F46E5", bg: "#EEF2FF",  label: "Interview",  dot: "#4F46E5" },
   Assessment: { color: "#f59e0b", bg: "#fffbeb",  label: "Assessment", dot: "#f59e0b" },
   "HR Round": { color: "#ec4899", bg: "#fdf2f8",  label: "HR Round",   dot: "#ec4899" },
-  Technical:  { color: "#8b5cf6", bg: "#f5f3ff",  label: "Technical",  dot: "#8b5cf6" },
+  Technical:  { color: "#14B8A6", bg: "#F0FDFA",  label: "Technical",  dot: "#14B8A6" },
   Offer:      { color: "#10b981", bg: "#ecfdf5",  label: "Offer",      dot: "#10b981" },
   Rejected:   { color: "#ef4444", bg: "#fef2f2",  label: "Rejected",   dot: "#ef4444" },
   Wishlist:   { color: "#6b7280", bg: "#f9fafb",  label: "Wishlist",   dot: "#6b7280" },

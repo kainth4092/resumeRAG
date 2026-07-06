@@ -95,8 +95,17 @@ export default function Navbar({
             }}
             className="flex items-center gap-2.5 h-9 pl-1.5 pr-3 rounded-xl hover:bg-muted transition-all cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold">
-              {user?.avatar}
+            <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center text-primary text-xs font-bold overflow-hidden">
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                user?.avatar
+              )}
             </div>
             <span className="text-md font-semibold text-foreground hidden md:block">
               {user?.name.split(" ")[0]}

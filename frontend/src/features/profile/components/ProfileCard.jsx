@@ -6,8 +6,10 @@ import {
   updateProfile,
   createProfile,
 } from "../services/profileService";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function ProfileCard({ setProfileSaved }) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [profileDraft, setProfileDraft] = useState(null);
 
@@ -124,10 +126,19 @@ export default function ProfileCard({ setProfileSaved }) {
       <div className="h-24 bg-linear-to-r from-primary/20 via-primary/10 to-transparent relative">
         <div className="absolute bottom-0 left-6 translate-y-1/2 flex items-end gap-3">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-primary/20 border-4 border-card flex items-center justify-center text-primary text-2xl font-bold shadow-md">
-              {profile?.full_name
-                ? profile.full_name.charAt(0).toUpperCase()
-                : "U"}
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 border-4 border-card flex items-center justify-center text-primary text-2xl font-bold shadow-md overflow-hidden">
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : profile?.full_name ? (
+                profile.full_name.charAt(0).toUpperCase()
+              ) : (
+                "U"
+              )}
             </div>
 
             <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-sm">

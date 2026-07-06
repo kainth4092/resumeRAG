@@ -76,8 +76,8 @@ export const TEMPLATE_METADATA = [
     subtitle: "Clean Corporate",
     description:
       "Sleek, classic corporate layout optimized to maximize readability and pass ATS parser checks. Perfect for software engineers targeting top-tier companies.",
-    accent: "#7C3AED",
-    accentBg: "#f5f0ff",
+    accent: "#4F46E5",
+    accentBg: "#EEF2FF",
     favorited: false,
     selected: true,
     tags: ["ATS Optimized", "1-Page", "Corporate"],

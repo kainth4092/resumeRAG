@@ -96,7 +96,7 @@ export default function MyResumes() {
         version: item.version || "v1",
         starred: item.starred || false,
         template: item.template || "Professional",
-        color: item.color || "#7C3AED",
+        color: item.color || "#4F46E5",
         resume: item.resume,
         jobDescription: item.jobDescription,
       };
@@ -217,7 +217,7 @@ export default function MyResumes() {
         year: "numeric",
       }),
       template: resumeToDup.template || "Professional",
-      color: resumeToDup.color || "#7C3AED",
+      color: resumeToDup.color || "#4F46E5",
       starred: false,
       version: resumeToDup.version || "v1",
       pages: resumeToDup.pages || 1,
@@ -329,7 +329,7 @@ export default function MyResumes() {
             </p>
             <button
               onClick={() => setSearchParams({ view: "new" })}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary rounded-xl text-white text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer shadow-sm shadow-primary/20"
             >
               <Sparkles size={16} /> Go to Generator
             </button>

@@ -131,7 +131,7 @@ export function useInterviewQuestions(locationState) {
           company: "Interview Bank",
           role: "Software Engineer",
           companyLogo: "B",
-          logoColor: "#7C3AED",
+          logoColor: "#4F46E5",
           resumeUsed: "None",
           generatedAt: new Date().toLocaleDateString(),
           questionCount: transformed.length,

@@ -22,9 +22,32 @@ export function AuthProvider({ children }) {
   const fetchUser = async (force = false) => {
     const token = localStorage.getItem("access_token");
     if (token) {
+      const rememberMe = localStorage.getItem("remember_me") === "true";
+      const tokenExpiry = localStorage.getItem("token_expiry");
+      const sessionActive = sessionStorage.getItem("session_active") === "true";
+
+      if (rememberMe && tokenExpiry) {
+        const expiry = parseInt(tokenExpiry, 10);
+        if (Date.now() > expiry) {
+          logout();
+          setLoading(false);
+          return;
+        }
+      } else if (!rememberMe) {
+        if (!sessionActive && !force) {
+          logout();
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!rememberMe) {
+        sessionStorage.setItem("session_active", "true");
+      }
+
       if (user && !force) {
         setLoading(false);
-        return;
+        return user;
       }
       try {
         const res = await getCurrentUser();
@@ -45,17 +68,20 @@ export function AuthProvider({ children }) {
         };
         setUser(completeUserData);
         localStorage.setItem("user_info", JSON.stringify(completeUserData));
+        setLoading(false);
+        return completeUserData;
       } catch (err) {
         console.error("Failed to fetch user", err);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("user_info");
-        setUser(null);
+        logout();
+        setLoading(false);
+        return null;
       }
     } else {
       setUser(null);
       localStorage.removeItem("user_info");
+      setLoading(false);
+      return null;
     }
-    setLoading(false);
   };
 
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -67,22 +93,24 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("user_info");
+    localStorage.removeItem("remember_me");
+    localStorage.removeItem("token_expiry");
+    sessionStorage.removeItem("session_active");
     setUser(null);
   };
 
-  const value = useMemo(() => ({
-    user,
-    setUser,
-    logout,
-    fetchUser,
-    loading
-  }), [user, loading]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      logout,
+      fetchUser,
+      loading,
+    }),
+    [user, loading],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

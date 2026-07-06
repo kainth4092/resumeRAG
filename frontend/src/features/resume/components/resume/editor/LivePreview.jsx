@@ -7,7 +7,7 @@ export default function LivePreview({
   experience = [],
   education = [],
   projects = [],
-  color = "#7C3AED",
+  color = "#4F46E5",
   templateName = "Professional",
 }) {
   const resume = {

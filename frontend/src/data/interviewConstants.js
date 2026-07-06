@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 export const CAT_CFG = {
-  Technical: { icon: Code2, color: "#7C3AED", bg: "#f5f3ff" },
+  Technical: { icon: Code2, color: "#4F46E5", bg: "#EEF2FF" },
   Behavioral: { icon: Users, color: "#3b82f6", bg: "#eff6ff" },
   Project: { icon: FolderOpen, color: "#ec4899", bg: "#fdf2f8" },
 };
@@ -47,8 +47,8 @@ export const STATS_ROW = (questions) => [
     label: "Questions",
     value: questions.length,
     icon: BrainCircuit,
-    color: "#7C3AED",
-    bg: "#f5f3ff",
+    color: "#4F46E5",
+    bg: "#EEF2FF",
   },
   {
     label: "Easy Questions",
@@ -78,9 +78,9 @@ export const STATS_ROW = (questions) => [
 export const CATEGORY_THEMES = {
   Technical: {
     icon: Code2,
-    color: "#7C3AED",
-    bg: "rgba(124, 58, 237, 0.08)",
-    border: "rgba(124, 58, 237, 0.15)",
+    color: "#4F46E5",
+    bg: "rgba(79, 70, 229, 0.08)",
+    border: "rgba(79, 70, 229, 0.15)",
   },
   Behavioral: {
     icon: Users,

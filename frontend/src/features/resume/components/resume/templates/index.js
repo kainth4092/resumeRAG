@@ -10,7 +10,7 @@ export const TEMPLATE_REGISTRY = {
     description: "Classic elegant layout with subtle top border accents. Perfect for general purposes.",
     recommended: "Software Engineers, Analysts, General Roles",
     atsBadge: true,
-    thumbnailColor: "from-purple-500 to-indigo-500",
+    thumbnailColor: "from-indigo-500 to-teal-500",
   },
   ATS: {
     name: "ATS",

@@ -232,8 +232,8 @@ export const QuestionCard = memo(function QuestionCard({
   };
   const cat = CAT_CFG[question.category] || {
     icon: Sparkles,
-    color: "#7C3AED",
-    bg: "#f5f3ff",
+    color: "#4F46E5",
+    bg: "#EEF2FF",
   };
   const CatIcon = cat.icon;
 

@@ -43,7 +43,7 @@ export function InterviewTypeSelector({ onSelect, history, onReopenHistory }) {
       step: "02",
       title: "Project Breakdown",
       desc: "Discuss architecture, challenges faced, and trade-offs of your built projects.",
-      color: "text-purple-500 bg-purple-500/10 border-purple-500/20",
+      color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
     },
     {
       step: "03",

@@ -22,8 +22,8 @@ export default function StatsCards({ apps = [] }) {
         ["Interview", "Technical", "HR Round", "Assessment"].includes(a.status)
       ).length,
       icon: MessageSquare,
-      color: "#7C3AED",
-      bg: "#f5f3ff",
+      color: "#4F46E5",
+      bg: "#EEF2FF",
       trend: "Scheduled",
       up: true,
     },

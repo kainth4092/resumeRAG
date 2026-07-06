@@ -1,5 +1,5 @@
 export const getLogoColor = (name) => {
-  if (!name) return "#7C3AED";
+  if (!name) return "#4F46E5";
   const colors = [
     "#635BFF",
     "#5E6AD2",

@@ -9,8 +9,12 @@ import { useAuth } from "../../auth/context/AuthContext";
 export function useResumeGenerator() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
-  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
+  const lastResumeIdKey = user?.email
+    ? `last_resume_id_${user.email}`
+    : "last_resume_id";
+  const lastJobDescKey = user?.email
+    ? `last_job_description_${user.email}`
+    : "last_job_description";
 
   const [resume, setResume] = useState(null);
   const [uploaded, setUploaded] = useState(false);
@@ -27,7 +31,8 @@ export function useResumeGenerator() {
   const [generatedResume, setGeneratedResume] = useState(null);
   const [generatorError, setGeneratorError] = useState(null);
 
-  const [selectedTemplateName, setSelectedTemplateName] = useState("Professional");
+  const [selectedTemplateName, setSelectedTemplateName] =
+    useState("Professional");
   const [activeTemplate, setActiveTemplate] = useState("Professional");
 
   const [hoveredTemplate, setHoveredTemplate] = useState(null);
@@ -60,7 +65,10 @@ export function useResumeGenerator() {
       setFileSize((file.size / (1024 * 1024)).toFixed(2));
     } catch (err) {
       console.error("Upload failed", err);
-      setGeneratorError(err.response?.data?.detail || "Upload failed. Please ensure the file is a valid PDF or DOCX.");
+      setGeneratorError(
+        err.response?.data?.detail ||
+          "Upload failed. Please ensure the file is a valid PDF or DOCX.",
+      );
     } finally {
       setUploading(false);
     }
@@ -91,7 +99,10 @@ export function useResumeGenerator() {
       setAnalysis(response.data);
     } catch (err) {
       console.error("Analysis failed", err);
-      setGeneratorError(err.response?.data?.detail || "Analysis failed. Please check your job description and try again.");
+      setGeneratorError(
+        err.response?.data?.detail ||
+          "Analysis failed. Please check your job description and try again.",
+      );
     } finally {
       setAnalyzing(false);
     }
@@ -103,7 +114,7 @@ export function useResumeGenerator() {
       "Preparing Interview Questions...",
       "Matching Resume Skills...",
       "Generating Questions...",
-      "Organizing Categories..."
+      "Organizing Categories...",
     ];
     let currentStepIdx = 0;
     setCurrentInterviewStep(steps[currentStepIdx]);
@@ -170,12 +181,15 @@ export function useResumeGenerator() {
       setResumeState("completed");
       setActiveTemplate(templateName);
 
-      // Auto-save generated resume
-      const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
+      const resumesKey = user?.email
+        ? `saved_resumes_${user.email}`
+        : "saved_resumes";
       const resumeId = resume?.resume_id || Date.now().toString();
       const resumeEntry = {
         id: parseInt(resumeId, 10) || resumeId,
-        title: r.personal_info?.name ? `${r.personal_info.name}'s Resume` : "Optimized Resume",
+        title: r.personal_info?.name
+          ? `${r.personal_info.name}'s Resume`
+          : "Optimized Resume",
         score: currentAnalysis?.ats_score || 85,
         status: "Active",
         updatedAt: new Date().toLocaleDateString("en-US", {
@@ -184,7 +198,7 @@ export function useResumeGenerator() {
           year: "numeric",
         }),
         template: templateName,
-        color: "#7C3AED",
+        color: "#4F46E5",
         starred: false,
         version: "v1",
         pages: estimatePageCount(r),
@@ -196,7 +210,10 @@ export function useResumeGenerator() {
       savedList.forEach((item) => {
         item.status = "Inactive";
       });
-      const existingIdx = savedList.findIndex((item) => String(item.id) === String(resumeId));
+
+      const existingIdx = savedList.findIndex(
+        (item) => String(item.id) === String(resumeId),
+      );
       if (existingIdx >= 0) {
         savedList[existingIdx] = resumeEntry;
       } else {
@@ -205,12 +222,13 @@ export function useResumeGenerator() {
       localStorage.setItem(resumesKey, JSON.stringify(savedList));
       setSaveMessage("Resume saved automatically!");
       runBackgroundInterviewGeneration(resume.resume_id, jd);
-
     } catch (err) {
       console.error("Generation failed", err);
       setResumeState("failed");
       setAnalyzing(false);
-      setGeneratorError(err.response?.data?.detail || "Generation failed. Please try again.");
+      setGeneratorError(
+        err.response?.data?.detail || "Generation failed. Please try again.",
+      );
     } finally {
       setGenerating(false);
     }
@@ -218,7 +236,9 @@ export function useResumeGenerator() {
 
   const handleSwitchTemplate = (newTemplate) => {
     setActiveTemplate(newTemplate);
-    const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
+    const resumesKey = user?.email
+      ? `saved_resumes_${user.email}`
+      : "saved_resumes";
     const resumeId = resume?.resume_id || localStorage.getItem(lastResumeIdKey);
     if (!resumeId) return;
 

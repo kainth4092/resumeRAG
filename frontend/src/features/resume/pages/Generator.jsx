@@ -476,7 +476,7 @@ export function ResumeGenerator({ onBack }) {
                       projects={
                         normalizeResumeForPreview(generatedResume).projects
                       }
-                      color="#7C3AED"
+                      color="#4F46E5"
                       templateName={activeTemplate}
                     />
                   </div>
