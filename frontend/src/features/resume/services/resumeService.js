@@ -2,6 +2,7 @@ import api from "../../../services/api"
 
 export const uploadResume = (formData) => {
     return api.post("/resume/upload", formData, {
+        timeout: 60000,
         headers: {
             "Content-Type": "multipart/form-data"
         }

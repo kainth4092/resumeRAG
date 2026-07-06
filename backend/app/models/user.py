@@ -32,16 +32,16 @@ class User(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     profile: Mapped["Profile"] = relationship(
-        "Profile", back_populates="user", uselist=False
+        "Profile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    skills: Mapped[list["UserSkill"]] = relationship("UserSkill", back_populates="user")
+    skills: Mapped[list["UserSkill"]] = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
     projects: Mapped[list["UserProject"]] = relationship(
-        "UserProject", back_populates="user"
+        "UserProject", back_populates="user", cascade="all, delete-orphan"
     )
     education: Mapped[list["UserEducation"]] = relationship(
-        "UserEducation", back_populates="user"
+        "UserEducation", back_populates="user", cascade="all, delete-orphan"
     )
     experiences: Mapped[list["UserExperience"]] = relationship(
-        "UserExperience", back_populates="user"
+        "UserExperience", back_populates="user", cascade="all, delete-orphan"
     )
-    resumes: Mapped[list["Resume"]] = relationship("Resume", back_populates="user")
+    resumes: Mapped[list["Resume"]] = relationship("Resume", back_populates="user", cascade="all, delete-orphan")

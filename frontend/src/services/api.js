@@ -11,14 +11,13 @@ const getBaseURL = () => {
   return import.meta.env.VITE_API_URL || "/api";
 };
 
-// In-memory cache and in-flight request deduplication
 const getCache = new Map();
 const inFlightRequests = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
   baseURL: getBaseURL(),
-  timeout: 15000, // 15 seconds default timeout
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -36,7 +35,8 @@ api.interceptors.request.use((config) => {
     const cacheKey = `${config.url}?${JSON.stringify(config.params || {})}`;
     config.cacheKey = cacheKey;
 
-    const bypassCache = config.bypassCache || config.headers?.["x-bypass-cache"] === "true";
+    const bypassCache =
+      config.bypassCache || config.headers?.["x-bypass-cache"] === "true";
 
     if (!bypassCache) {
       const cached = getCache.get(cacheKey);
@@ -100,14 +100,15 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Add custom request wrappers to support deduplication
 const originalGet = api.get;
 api.get = function (url, config = {}) {
   const cacheKey = `${url}?${JSON.stringify(config.params || {})}`;
-  const bypassCache = config.bypassCache || config.headers?.["x-bypass-cache"] === "true";
+  const bypassCache =
+    config.bypassCache || config.headers?.["x-bypass-cache"] === "true";
 
   if (bypassCache) {
     getCache.delete(cacheKey);
@@ -119,7 +120,8 @@ api.get = function (url, config = {}) {
     }
   }
 
-  const promise = originalGet.call(api, url, config)
+  const promise = originalGet
+    .call(api, url, config)
     .then((res) => {
       inFlightRequests.delete(cacheKey);
       return res;
