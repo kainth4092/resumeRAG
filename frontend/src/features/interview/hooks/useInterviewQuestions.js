@@ -111,7 +111,7 @@ export function useInterviewQuestions(locationState) {
         localStorage.getItem(bookmarkedQuestionsKey) || "[]",
       );
       const res = await getAllInterviewQuestions();
-      const data = res.data || [];
+      const data = Array.isArray(res.data) ? res.data : (res.data?.questions || []);
 
       const transformed = data.map((q) => ({
         ...q,

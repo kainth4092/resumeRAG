@@ -14,7 +14,6 @@ import InterviewPrep from "../features/interview/pages/InterviewPrep";
 import JobsPage from "../features/jobs/pages/JobsPage";
 
 export default function AppRoutes() {
-  console.log("ROUTES LOADED");
   return (
     <>
       <Toaster richColors position="top-right" />

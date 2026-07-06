@@ -11,7 +11,6 @@ import { dashboardService } from "../services/dashboardService";
 import { mapApiActivities } from "../data/dashboardData";
 
 export default function Dashboard() {
-  console.log("DASHBOARD LOADED");
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

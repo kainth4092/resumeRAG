@@ -48,7 +48,7 @@ export function useQuestionFilters({
         if (diffFilter) params.experience = diffFilter;
 
         const res = await getAllInterviewQuestions(params);
-        const data = res.data || [];
+        const data = Array.isArray(res.data) ? res.data : (res.data?.questions || []);
         const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
 
         const transformed = data.map((q) => ({

@@ -5,7 +5,6 @@ import { getCurrentUser } from "../services/authService";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  console.log("AUTH LOADED");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -17,11 +16,11 @@ export function AuthProvider({ children }) {
         const userData = res.data;
         const initials = userData.name
           ? userData.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2)
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
           : userData.email
             ? userData.email.slice(0, 2).toUpperCase()
             : "U";

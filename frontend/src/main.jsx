@@ -13,8 +13,6 @@ document.title = appName;
 document.documentElement.dataset.environment =
   import.meta.env.VITE_ENVIRONMENT || "development";
 
-console.log("MAIN LOADED");
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
