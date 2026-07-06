@@ -50,9 +50,22 @@ def create_collection():
     ensure_collection_exists()
 
 
-def upsert_question(question):
+def upsert_question(question, force_update: bool = False) -> bool:
     try:
         ensure_collection_exists()
+
+        if not force_update:
+            try:
+                existing = get_client().retrieve(
+                    collection_name=COLLECTION_NAME,
+                    ids=[question.id],
+                )
+                if existing:
+                    logger.info("Question ID %d already exists in Qdrant, skipping duplicate insertion.", question.id)
+                    return False
+            except Exception as check_err:
+                logger.warning("Failed to check if question ID %d exists in Qdrant: %s", question.id, check_err)
+
         text = build_text(question)
         vector = get_embedding(text)
 
@@ -71,6 +84,7 @@ def upsert_question(question):
                 )
             ],
         )
+        return True
     except Exception as exc:
         logger.error("Failed to upsert question %s: %s", question.id, exc, exc_info=True)
         raise QdrantAppException() from exc

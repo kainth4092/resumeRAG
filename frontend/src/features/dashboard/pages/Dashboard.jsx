@@ -30,7 +30,7 @@ export default function Dashboard() {
     setError(null);
     try {
       const localHour = new Date().getHours();
-      const data = await dashboardService.getDashboardData(localHour);
+      const data = await dashboardService.getDashboardData(localHour, isRefresh);
 
       setGreeting(data.greeting || "");
       setTrend(data.score_trend || []);

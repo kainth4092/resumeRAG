@@ -29,6 +29,11 @@ for noisy_logger_name in ("sqlalchemy.engine", "httpcore", "httpx"):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    from app.services.qdrant_service import COLLECTION_NAME
+    print(f"[STARTUP] Active QDRANT_URL: {settings.QDRANT_URL}")
+    print(f"[STARTUP] Active Qdrant collection: {COLLECTION_NAME}")
+    logger.info("Active QDRANT_URL: %s", settings.QDRANT_URL)
+    logger.info("Active Qdrant collection: %s", COLLECTION_NAME)
     try:
         from app.services.qdrant_service import ensure_collection_exists
 

@@ -4,7 +4,6 @@ from app.models.interview_bank import InterviewQuestionBank
 
 
 def seed_questions():
-
     db = SessionLocal()
 
     with open(
@@ -13,7 +12,11 @@ def seed_questions():
         encoding="utf-8",
     ) as file:
         questions = json.load(file)
-    count = 0
+    
+    json_count = len(questions)
+    inserted_count = 0
+    skipped_count = 0
+
     for item in questions:
         exists = (
             db.query(InterviewQuestionBank)
@@ -24,6 +27,7 @@ def seed_questions():
             .first()
         )
         if exists:
+            skipped_count += 1
             continue
 
         question = InterviewQuestionBank(
@@ -39,12 +43,14 @@ def seed_questions():
         )
 
         db.add(question)
-        count += 1
+        inserted_count += 1
 
     db.commit()
     db.close()
 
-    print(f"Inserted {count} questions.")
+    print(f"Number of JSON questions loaded: {json_count}")
+    print(f"Number of questions skipped (already in SQL DB): {skipped_count}")
+    print(f"Number of questions inserted into SQL DB: {inserted_count}")
 
 
 if __name__ == "__main__":

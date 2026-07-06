@@ -39,7 +39,7 @@ export default function Login() {
       setLoading(true);
       const res = await loginUser({ email, password });
       localStorage.setItem("access_token", res.data.access_token);
-      await fetchUser();
+      fetchUser(true);
       navigate("/dashboard");
     } catch (err) {
       const detail = err.response?.data?.detail;

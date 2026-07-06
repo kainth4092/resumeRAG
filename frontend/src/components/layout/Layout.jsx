@@ -1,9 +1,24 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { EmailModal } from "../../features/email";
+
+const LayoutSkeleton = () => (
+  <div className="p-6 space-y-6 animate-pulse">
+    <div className="space-y-2">
+      <div className="h-8 w-48 bg-muted rounded-xl animate-pulse" />
+      <div className="h-4 w-96 bg-muted rounded-xl animate-pulse" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
+      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
+      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
+    </div>
+    <div className="h-64 bg-muted rounded-2xl animate-pulse" />
+  </div>
+);
 
 export default function Layout() {
   const { loading } = useAuth();
@@ -33,14 +48,6 @@ export default function Layout() {
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex w-full h-full overflow-hidden">
@@ -81,7 +88,9 @@ export default function Layout() {
         />
 
         <main className="flex-1 overflow-y-auto bg-background">
-          <Outlet />
+          <Suspense fallback={<LayoutSkeleton />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
       <EmailModal

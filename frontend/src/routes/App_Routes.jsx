@@ -3,15 +3,17 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import PublicOnlyRoute from "../components/layout/PublicOnlyRoute";
 import Layout from "../components/layout/Layout";
+import { lazy } from "react";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
-import Dashboard from "../features/dashboard/pages/Dashboard";
-import { Profile } from "../features/profile/pages/Profile";
-import ResumeEditor from "../features/resume/pages/ResumeEditor";
-import MyResumes from "../features/resume/pages/MyResumes";
-import ResumeAnalysis from "../features/resume/pages/ResumeAnalysis";
-import InterviewPrep from "../features/interview/pages/InterviewPrep";
-import JobsPage from "../features/jobs/pages/JobsPage";
+
+const Dashboard = lazy(() => import("../features/dashboard/pages/Dashboard"));
+const Profile = lazy(() => import("../features/profile/pages/Profile").then(m => ({ default: m.Profile })));
+const ResumeEditor = lazy(() => import("../features/resume/pages/ResumeEditor"));
+const MyResumes = lazy(() => import("../features/resume/pages/MyResumes"));
+const ResumeAnalysis = lazy(() => import("../features/resume/pages/ResumeAnalysis"));
+const InterviewPrep = lazy(() => import("../features/interview/pages/InterviewPrep"));
+const JobsPage = lazy(() => import("../features/jobs/pages/JobsPage"));
 
 export default function AppRoutes() {
   return (

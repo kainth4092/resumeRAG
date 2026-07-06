@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, LogOut, Mail, Menu, Moon, Sun, User } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Moon, Send, Sun, User } from "lucide-react";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -18,9 +18,7 @@ export default function Navbar({
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme");
       if (saved) return saved;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+      return "light";
     }
     return "light";
   });
@@ -59,7 +57,34 @@ export default function Navbar({
           className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
           title="Send resume"
         >
-          <Mail size={17} />
+          <Send size={17} />
+        </button>
+
+        <button
+          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          className="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer overflow-hidden group"
+          title={
+            theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+          }
+        >
+          <div className="relative w-5 h-5 flex items-center justify-center">
+            <Sun
+              size={17}
+              className={`absolute transition-all duration-300 transform ${
+                theme === "dark"
+                  ? "rotate-90 scale-0 opacity-0"
+                  : "rotate-0 scale-100 opacity-100"
+              }`}
+            />
+            <Moon
+              size={17}
+              className={`absolute transition-all duration-300 transform ${
+                theme === "dark"
+                  ? "rotate-0 scale-100 opacity-100"
+                  : "-rotate-90 scale-0 opacity-0"
+              }`}
+            />
+          </div>
         </button>
 
         <div ref={profileRef} className="relative">
@@ -109,25 +134,6 @@ export default function Navbar({
                     </button>
                   ),
                 )}
-
-                <button
-                  onClick={() =>
-                    setTheme((t) => (t === "dark" ? "light" : "dark"))
-                  }
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-md text-foreground hover:bg-muted transition-colors cursor-pointer"
-                >
-                  {theme === "dark" ? (
-                    <>
-                      <Sun size={14} className="text-muted-foreground" />
-                      Light Mode
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={14} className="text-muted-foreground" />
-                      Dark Mode
-                    </>
-                  )}
-                </button>
               </div>
               <div className="border-t border-border py-1">
                 <button

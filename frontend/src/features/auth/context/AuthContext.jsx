@@ -1,16 +1,31 @@
-/* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { getCurrentUser } from "../services/authService";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("user_info");
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const fetchUser = async (force = false) => {
     const token = localStorage.getItem("access_token");
     if (token) {
+      if (user && !force) {
+        setLoading(false);
+        return;
+      }
       try {
         const res = await getCurrentUser();
         const userData = res.data;
@@ -24,17 +39,21 @@ export function AuthProvider({ children }) {
           : userData.email
             ? userData.email.slice(0, 2).toUpperCase()
             : "U";
-        setUser({
+        const completeUserData = {
           ...userData,
           avatar: initials,
-        });
+        };
+        setUser(completeUserData);
+        localStorage.setItem("user_info", JSON.stringify(completeUserData));
       } catch (err) {
         console.error("Failed to fetch user", err);
         localStorage.removeItem("access_token");
+        localStorage.removeItem("user_info");
         setUser(null);
       }
     } else {
       setUser(null);
+      localStorage.removeItem("user_info");
     }
     setLoading(false);
   };
@@ -47,11 +66,20 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_info");
     setUser(null);
   };
 
+  const value = useMemo(() => ({
+    user,
+    setUser,
+    logout,
+    fetchUser,
+    loading
+  }), [user, loading]);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, fetchUser, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

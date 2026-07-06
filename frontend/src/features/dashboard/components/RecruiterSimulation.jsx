@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { Sparkles, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const RecruiterSimulation = ({ noResumes }) => {
+const RecruiterSimulation = memo(({ noResumes }) => {
   const navigate = useNavigate();
   return (
     <div className="bg-linear-to-br from-primary/8 via-primary/5 to-transparent border border-primary/15 rounded-2xl p-5">
@@ -32,6 +33,6 @@ const RecruiterSimulation = ({ noResumes }) => {
       </div>
     </div>
   );
-};
+});
 
 export default RecruiterSimulation;
