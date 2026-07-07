@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { X, Sparkles, Zap, CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
+import { X, Sparkles, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function AuthPromptModal({ isOpen, onClose, title, actionText }) {

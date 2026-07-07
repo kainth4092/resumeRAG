@@ -14,6 +14,23 @@ from app.core.database import get_db
 from app.core.exceptions import AppException
 import app.models
 
+from app.api.auth.routes import router as auth_router
+from app.api.profile.routes import router as profile_router
+from app.api.resume.routes import router as resume_router
+from app.api.generator.routes import router as generator
+from app.api.skills.routes import router as skills_router
+from app.api.projects.routes import router as projects_router
+from app.api.education.routes import router as education_router
+from app.api.experience.routes import router as experience_router
+from app.api.interview.routes import router as interview_router
+from app.api.interview_bank.routes import router as interview_bank_router
+from app.api.bookmark.routes import router as bookmark_router
+from app.api.jobs.routes import router as jobs_router
+from app.api.tracker.routes import router as tracker_router
+from app.api.email.routes import router as email_router
+from app.api.dashboard.routes import router as dashboard_router
+from app.api.mock_interview.routes import router as mock_interview_router
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,26 +57,15 @@ async def lifespan(app: FastAPI):
         ensure_collection_exists()
     except Exception as exc:
         logger.warning("Qdrant initialization skipped: %s", exc)
+
+    try:
+        from app.services.ai import get_ai_provider
+        provider = get_ai_provider()
+        provider.validate_startup()
+    except Exception as exc:
+        logger.warning("AI Provider startup validation skipped/failed: %s", exc)
     yield
 
-
-from app.api.auth.routes import router as auth_router
-from app.api.profile.routes import router as profile_router
-from app.api.resume.routes import router as resume_router
-from app.api.generator.routes import router as generator
-
-from app.api.skills.routes import router as skills_router
-from app.api.projects.routes import router as projects_router
-from app.api.education.routes import router as education_router
-from app.api.experience.routes import router as experience_router
-from app.api.interview.routes import router as interview_router
-from app.api.interview_bank.routes import router as interview_bank_router
-from app.api.bookmark.routes import router as bookmark_router
-from app.api.jobs.routes import router as jobs_router
-from app.api.tracker.routes import router as tracker_router
-from app.api.email.routes import router as email_router
-from app.api.dashboard.routes import router as dashboard_router
-from app.api.mock_interview.routes import router as mock_interview_router
 
 app = FastAPI(title="ResuPilot AI API", version="1.0.0", lifespan=lifespan)
 

@@ -80,6 +80,7 @@ export default function RegisterScreen({
       setAlert(null);
       await onSignup(form);
     } catch (err) {
+      void err;
     } finally {
       setLoading(false);
     }
@@ -190,7 +191,7 @@ export default function RegisterScreen({
             className="flex items-start gap-2.5 cursor-pointer group focus:outline-none text-left"
           >
             <div
-              className={`mt-0.5 w-4 h-4 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+              className={`mt-0.5 w-4 h-4 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
                 agreed
                   ? "bg-indigo-600 border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500"
                   : "border-slate-300 dark:border-slate-700 group-hover:border-indigo-400 dark:group-hover:border-indigo-500"

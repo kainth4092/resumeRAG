@@ -14,6 +14,7 @@ import PersonalEditor from "../components/resume/editor/PersonalEditor";
 import SummaryEditor from "../components/resume/editor/SummaryEditor";
 import EducationEditor from "../components/resume/editor/EducationEditor";
 import SkillsEditor from "../components/resume/editor/SkillsEditor";
+import ExperienceEditor from "../components/resume/editor/ExperienceEditor";
 import ProjectsEditor from "../components/resume/editor/ProjectsEditor";
 import LivePreview from "../components/resume/editor/LivePreview";
 import { downloadPDF, downloadDOCX, printResume } from "../exporters";
@@ -37,6 +38,7 @@ export default function ResumeEditor() {
     skills,
     setSkills,
     experience,
+    setExperience,
     education,
     setEducation,
     projects,
@@ -168,6 +170,7 @@ export default function ResumeEditor() {
             <PersonalEditor personal={personal} onChange={setPersonal} />
             <SummaryEditor summary={summary} onChange={setSummary} />
             <SkillsEditor skills={skills} onChange={setSkills} />
+            <ExperienceEditor experience={experience} onChange={setExperience} />
             <ProjectsEditor projects={projects} onChange={setProjects} />
             <EducationEditor education={education} onChange={setEducation} />
           </div>

@@ -1,6 +1,5 @@
 import random
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, String
 from app.models.interview_bank import InterviewQuestionBank
 
 
@@ -36,52 +35,9 @@ class ChallengeService:
 
         try:
             from app.services.llm_service import client, extract_json
+            from app.services.ai import prompts
 
-            prompt = f"""
-            You are a Senior Software Engineering Interviewer designing a moderate-difficulty Multiple Choice Question (MCQ) for a FAANG/MAANG-style online assessment.
-            
-            Convert the following technical interview question and descriptive answer into a highly professional, balanced MCQ.
-            
-            Technical Question: {q.question}
-            Descriptive Answer: {q.answer}
-            Skill: {q.skill}
-            
-            Design Guidelines:
-            1. **Moderate Difficulty**: The question should assess practical/conceptual understanding suitable for 0-3 years of experience. Focus on trade-offs, behaviors, or realistic scenarios.
-            2. **Plausible Distractors (Believable, Same Domain)**:
-               - The incorrect options must be technically valid concepts within the {q.skill} domain.
-               - They should look highly believable and represent common misconceptions or alternative approaches.
-               - Never mix unrelated technologies or skills (e.g., if the skill is {q.skill}, do not reference other domains like SQL, Docker, or React unless comparing).
-            3. **Balanced Length and Formatting**:
-               - All four options must have a similar level of detail, tone, and sentence structure.
-               - Keep all options comparable in length (around 10-18 words, within 3-4 words of each other).
-               - The correct option must NOT stand out as significantly longer or more detailed.
-            4. **Correctness Rules**:
-               - Exactly 4 options.
-               - Only one option must be unambiguously correct.
-               - No "All of the above" or "None of the above".
-               - No repeated wording across options (e.g. starting every option with "It is used to...").
-            5. **Distractor Explanations**:
-               - For each incorrect option, provide a concise explanation (1-2 sentences) of why it is incorrect or what it actually does/refers to in reality.
-            
-            Return ONLY a valid JSON object matching the schema below. Do not wrap in markdown code blocks, and do not include extra text.
-            
-            JSON Schema:
-            {{
-              "option_a": "Statement for option A",
-              "option_b": "Statement for option B",
-              "option_c": "Statement for option C",
-              "option_d": "Statement for option D",
-              "correct_option": "A | B | C | D",
-              "short_explanation": "Short explanation of the correct answer.",
-              "distractor_explanations": {{
-                "A": "Explanation of why option A is incorrect (empty string if A is correct).",
-                "B": "Explanation of why option B is incorrect (empty string if B is correct).",
-                "C": "Explanation of why option C is incorrect (empty string if C is correct).",
-                "D": "Explanation of why option D is incorrect (empty string if D is correct)."
-              }}
-            }}
-            """
+            prompt = prompts.get_mcq_prompt(question=q.question, answer=q.answer, skill=q.skill)
 
             # Call client with a timeout / try exactly once to avoid blocking the user
             response = client.chat.completions.create(
@@ -109,7 +65,7 @@ class ChallengeService:
             q.short_explanation = parsed.get("short_explanation").strip()
             q.distractor_explanations = parsed.get("distractor_explanations")
             db.commit()
-        except Exception as e:
+        except Exception:
             # Rollback transaction on failure
             db.rollback()
             # Generate high-quality local fallback options derived from the original descriptive answer

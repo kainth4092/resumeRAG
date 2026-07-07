@@ -18,7 +18,6 @@ from app.schemas.auth import (
 )
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.dependencies import get_current_user
-from app.utils.password_validator import validate_password
 from app.core.config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])

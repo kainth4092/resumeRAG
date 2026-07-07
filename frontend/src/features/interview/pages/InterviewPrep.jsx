@@ -3,7 +3,7 @@ import { useInterviewPrep } from "../hooks/useInterviewPrep";
 import { PersonalizedPrep } from "../components/PersonalizedPrep";
 import QuestionForm from "../components/QuestionForm";
 import EmptyState from "../components/EmptyState";
-import LoadingState from "../components/LoadingState";
+import InterviewSkeleton from "../../../components/loading/InterviewSkeleton";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import ChallengeContainer from "../Challenge/ChallengeContainer";
 import StudyLibrary from "../components/StudyLibrary";
@@ -142,7 +142,7 @@ export default function InterviewPrep() {
 
         {activeTab === "personalized" && (
           <>
-            {viewState === "loading" && <LoadingState />}
+            {viewState === "loading" && <InterviewSkeleton mode="list" />}
 
             {viewState !== "loading" && showPersonalizedEmpty && (
               <EmptyState onGoGenerate={() => navigate("/resumes?view=new")} />

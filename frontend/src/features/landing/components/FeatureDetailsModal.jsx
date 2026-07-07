@@ -1,12 +1,5 @@
-import React, { useEffect, useState } from "react";
-import {
-  X,
-  CheckCircle2,
-  Sparkles,
-  AlertCircle,
-  Plus,
-  Terminal,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, CheckCircle2, Sparkles, AlertCircle, Terminal } from "lucide-react";
 import ScoreRing from "./ScoreRing";
 
 export default function FeatureDetailsModal({
@@ -47,7 +40,7 @@ export default function FeatureDetailsModal({
         "Refine your bullet points with the AI optimizer tool.",
       ],
       ctaText: "Start Building Resume",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const [template, setTemplate] = useState("Modern");
         return (
           <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
@@ -124,7 +117,7 @@ export default function FeatureDetailsModal({
         "Review the suggestion report to reach a 90%+ pass rate.",
       ],
       ctaText: "Analyze Resume Now",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const [showReport, setShowReport] = useState(false);
         return (
           <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
@@ -201,7 +194,7 @@ export default function FeatureDetailsModal({
         "Provide your answer and click 'Evaluate' to receive structured recommendations.",
       ],
       ctaText: "Start Prep Session",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const [feedback, setFeedback] = useState(false);
         return (
           <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
@@ -276,7 +269,7 @@ export default function FeatureDetailsModal({
         "Save and monitor applications dynamically in your personal pipeline.",
       ],
       ctaText: "Discover Live Jobs",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const [saved, setSaved] = useState({});
         const jobs = [
           {
@@ -366,7 +359,7 @@ export default function FeatureDetailsModal({
         "Add follow-up notes, salary offers, and task checklists.",
       ],
       ctaText: "Open My Tracker",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const [positions, setPositions] = useState([
           { company: "Stripe", role: "Frontend Eng", stage: "Interview" },
           { company: "Vercel", role: "UX Architect", stage: "Applied" },
@@ -461,7 +454,7 @@ export default function FeatureDetailsModal({
         "Export final suggestions directly to your live builders.",
       ],
       ctaText: "Start AI Chat",
-      previewComponent: () => {
+      PreviewComponent: () => {
         const prompts = [
           "Suggest dynamic action verbs",
           "Draft compensation email",
@@ -602,7 +595,7 @@ export default function FeatureDetailsModal({
                   <p className="text-[10px] font-extrabold text-slate-455 uppercase tracking-widest">
                     Quick Sample Output
                   </p>
-                  <current.previewComponent />
+                  <current.PreviewComponent />
                 </div>
               </div>
             )}
@@ -651,7 +644,7 @@ export default function FeatureDetailsModal({
                     {JSON.stringify(current.benefits, null, 2)}
                   </p>
                 </div>
-                <current.previewComponent />
+                <current.PreviewComponent />
               </div>
             )}
           </div>

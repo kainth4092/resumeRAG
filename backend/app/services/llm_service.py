@@ -1,16 +1,51 @@
-from openai import OpenAI
-from app.core.config import settings
 import json
 import re
-import time
 import logging
+from app.services.ai import get_ai_provider, prompts
 
 logger = logging.getLogger(__name__)
 
-client = OpenAI(
-    api_key=settings.OPENROUTER_API_KEY,
-    base_url=settings.OPENROUTER_BASE_URL,
-)
+# Adapts the OpenAI client.chat.completions.create signature to the active AIProvider
+class ChatCompletionsAdapter:
+    def create(self, model: str = None, messages: list = [], temperature: float = 0.1, timeout: float = None):
+        system_content = "You are an expert assistant."
+        user_content = ""
+        for msg in messages:
+            if msg.get("role") == "system":
+                system_content = msg.get("content", "")
+            elif msg.get("role") == "user":
+                user_content = msg.get("content", "")
+
+        provider = get_ai_provider()
+        content = provider.chat(
+            system_prompt=system_content,
+            user_prompt=user_content,
+            temperature=temperature,
+            timeout=timeout
+        )
+
+        class MessageObj:
+            def __init__(self, content_str):
+                self.content = content_str
+
+        class ChoiceObj:
+            def __init__(self, content_str):
+                self.message = MessageObj(content_str)
+
+        class ResponseObj:
+            def __init__(self, content_str):
+                self.choices = [ChoiceObj(content_str)]
+
+        return ResponseObj(content)
+
+class ChatAdapter:
+    completions = ChatCompletionsAdapter()
+
+class OpenAIClientAdapter:
+    chat = ChatAdapter()
+
+# Expose 'client' as an instance of the adapter to maintain backward compatibility
+client = OpenAIClientAdapter()
 
 
 def call_llm_with_retry(
@@ -19,62 +54,24 @@ def call_llm_with_retry(
     initial_delay: float = 1.5,
     json_response: bool = False,
 ):
-    delay = initial_delay
-    # Primary model from settings, with standard free fallbacks
-    models = [
-        settings.OPENROUTER_MODEL or "google/gemma-4-31b-it:free",
-        "google/gemma-2-9b-it:free",
-        "meta-llama/llama-3-8b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "qwen/qwen-2-7b-instruct:free",
-    ]
-
-    # Remove duplicates but preserve order
-    seen = set()
-    models = [x for x in models if not (x in seen or seen.add(x))]
-
-    last_err = None
-    for model in models:
-        for attempt in range(max_retries):
-            try:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are an expert ATS Resume Writer. Always return valid JSON only.",
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        },
-                    ],
-                    temperature=0.1,
-                )
-                content = response.choices[0].message.content
-                if json_response:
-                    # Validate that it is parseable JSON
-                    parsed = extract_json(content)
-                    return parsed
-                return content
-            except Exception as e:
-                last_err = e
-                logger.warning(
-                    "LLM request failed for model %s on attempt %d: %s",
-                    model,
-                    attempt + 1,
-                    str(e),
-                )
-                if attempt == max_retries - 1:
-                    break
-                time.sleep(delay)
-                delay *= 2
-        # Reset delay for next model attempt
-        delay = initial_delay
-
-    if last_err:
-        raise last_err
-    raise Exception("All fallback LLM models failed.")
+    """
+    Call active AI LLM provider.
+    """
+    system_prompt = "You are an expert ATS Resume Writer. Always return valid JSON only."
+    provider = get_ai_provider()
+    
+    try:
+        content = provider.chat(
+            system_prompt=system_prompt,
+            user_prompt=prompt,
+            temperature=0.1
+        )
+        if json_response:
+            return extract_json(content)
+        return content
+    except Exception as e:
+        logger.error("LLM call failed in call_llm_with_retry: %s", str(e))
+        raise e
 
 
 def extract_json(text: str):
@@ -87,7 +84,7 @@ def extract_json(text: str):
     end = text.rfind("}")
 
     if start == -1 or end == -1:
-        raise ValueError("LLM did not return valid json")
+        raise ValueError("LLM did not return valid JSON")
     text = text[start : end + 1]
     return json.loads(text)
 
@@ -168,11 +165,11 @@ def normalize_generate_response(result: dict) -> dict:
         val = resume_data["personal_info"].get(field)
         resume_data["personal_info"][field] = str(val) if val is not None else ""
 
-    # 2. Normalize headline and summary
+    # Normalize headline and summary
     resume_data["headline"] = str(resume_data.get("headline") or "")
     resume_data["summary"] = str(resume_data.get("summary") or "")
 
-    # 3. Normalize skills
+    # Normalize skills
     if "skills" not in resume_data or not isinstance(resume_data["skills"], list):
         resume_data["skills"] = []
     else:
@@ -199,7 +196,7 @@ def normalize_generate_response(result: dict) -> dict:
         ):
             resume_data[list_field] = []
 
-    # 4. Normalize experience
+    # Normalize experience
     cleaned_experience = []
     for exp in resume_data["experience"]:
         if not isinstance(exp, dict):
@@ -210,13 +207,11 @@ def normalize_generate_response(result: dict) -> dict:
             cleaned_exp[field] = str(val) if val is not None else ""
 
         if not cleaned_exp["duration"]:
-            # Construct a duration from start_year/end_year if present
             s_year = exp.get("start_year") or ""
             e_year = exp.get("end_year") or ""
             if s_year or e_year:
                 cleaned_exp["duration"] = f"{s_year} - {e_year}"
 
-        # Handle description list
         desc_list = exp.get("description")
         if not isinstance(desc_list, list):
             desc_list = [str(desc_list)] if desc_list is not None else []
@@ -226,7 +221,7 @@ def normalize_generate_response(result: dict) -> dict:
         cleaned_experience.append(cleaned_exp)
     resume_data["experience"] = cleaned_experience
 
-    # 5. Normalize projects
+    # Normalize projects
     cleaned_projects = []
     for proj in resume_data["projects"]:
         if not isinstance(proj, dict):
@@ -236,7 +231,6 @@ def normalize_generate_response(result: dict) -> dict:
             val = proj.get(field)
             cleaned_proj[field] = str(val) if val is not None else ""
 
-        # Handle description and technologies
         desc_list = proj.get("description")
         if not isinstance(desc_list, list):
             desc_list = [str(desc_list)] if desc_list is not None else []
@@ -253,7 +247,7 @@ def normalize_generate_response(result: dict) -> dict:
         cleaned_projects.append(cleaned_proj)
     resume_data["projects"] = cleaned_projects
 
-    # 6. Normalize education
+    # Normalize education
     cleaned_education = []
     for edu in resume_data["education"]:
         if not isinstance(edu, dict):
@@ -268,103 +262,55 @@ def normalize_generate_response(result: dict) -> dict:
     return result
 
 
+def normalize_health_response(result: dict) -> dict:
+    if not isinstance(result, dict):
+        result = {}
+
+    score_fields = [
+        "ats_score",
+        "resume_health_score",
+        "formatting_score",
+        "readability_score",
+        "skills_coverage",
+        "experience_quality",
+        "projects_quality",
+        "education_quality",
+        "keyword_optimization",
+        "grammar_writing",
+        "section_completeness",
+        "recruiter_readiness",
+    ]
+    for field in score_fields:
+        if field not in result:
+            result[field] = 70
+        else:
+            try:
+                result[field] = int(result[field])
+            except (ValueError, TypeError):
+                result[field] = 70
+
+    if "suggestions" not in result or not isinstance(result["suggestions"], dict):
+        result["suggestions"] = {}
+
+    sug = result["suggestions"]
+    for list_field in ["quick_fixes", "medium_improvements", "high_impact_improvements"]:
+        if list_field not in sug or not isinstance(sug[list_field], list):
+            sug[list_field] = []
+        else:
+            sug[list_field] = [str(x) for x in sug[list_field] if x is not None]
+
+    for list_field in ["missing_sections", "strengths", "weaknesses"]:
+        if list_field not in result or not isinstance(result[list_field], list):
+            result[list_field] = []
+        else:
+            result[list_field] = [str(x) for x in result[list_field] if x is not None]
+
+    return result
+
+
 def analyze_resume(resume_text, job_description):
-    prompt = f"""
-    You are an expert ATS Resume Analyzer, Technical Recruiter, and Resume Reviewer.
-    Your task is to compare the candidate's uploaded resume with the Job Description and evaluate how well the resume matches the role.
-
-    #########################
-    INPUT
-    #########################
-    Resume:
-    {resume_text}
-    ----------------------------------------
-
-    Job Description:
-    {job_description}
-
-    #########################
-    INSTRUCTIONS
-    #########################
-    Analyze only the information present in the uploaded resume.
-    Never invent:
-    - Skills
-    - Experience
-    - Companies
-    - Projects
-    - Certifications
-    - Education
-    Use the Job Description to identify:
-    1. Skills already present
-    2. Skills missing
-    3. ATS weaknesses
-    4. Resume strengths
-    5. Improvement opportunities
-
-    #########################
-    SCORING
-    #########################
-    ATS Score should consider:
-    - Skills Match
-    - Experience Relevance
-    - Projects
-    - Keywords
-    - Resume Structure
-    - Technical Stack Alignment
-    Return a score between 0 and 100.
-
-    #########################
-    KEYWORDS
-    #########################
-    matched_keywords
-    - Maximum 10
-    - Only keywords actually found in the resume.
-    missing_keywords
-    - Maximum 10
-    - Important keywords from the Job Description that are missing.
-
-    #########################
-    SUGGESTIONS
-    #########################
-    Return EXACTLY 5 suggestions.
-    Suggestions must be actionable.
-    Examples:
-    - Add measurable achievements.
-    - Include FastAPI experience.
-    - Improve project descriptions.
-    - Add missing cloud technologies.
-    - Strengthen summary using JD keywords.
-
-    #########################
-    HEATMAP
-    #########################
-    Score every section between 0 and 100.
-
-    #########################
-    OUTPUT
-    #########################
-    Return ONLY valid JSON.
-    No markdown.
-    No explanation.
-    No code block.
-    JSON Schema:
-    {{
-      "ats_score": 0,
-      "matched_keywords": [],
-      "missing_keywords": [],
-      "suggestions": [],
-      "heatmap": {{
-        "contact_info": 0,
-        "summary": 0,
-        "skills": 0,
-        "experience": 0,
-        "projects": 0,
-        "education": 0
-      }}
-    }}
-    """
-
-    result = call_llm_with_retry(prompt, json_response=True)
+    prompt_str = prompts.get_ats_prompt(resume_text, job_description)
+    result = call_llm_with_retry(prompt_str, json_response=True)
     return normalize_analyze_response(result)
 
 
@@ -415,102 +361,18 @@ OUTPUT_SCHEMA = {
 
 
 def generate_resume(resume_text, job_description):
-    prompt = f"""
-    You are an expert ATS Resume Writer and Senior Technical Recruiter.
-    Your task is to optimize the uploaded resume according to the Job Description.
-    IMPORTANT RULES
-    - Never invent companies.
-    - Never invent work experience.
-    - Never invent degrees.
-    - Never invent certifications.
-    - Never invent skills.
-    - Never invent GitHub or portfolio links.
-    - Preserve all factual information.
-    - Improve wording only.
-    - Improve ATS score.
-    - Improve grammar.
-    - Improve formatting.
-    - Rewrite experience using strong action verbs.
-    - Reorder skills according to the Job Description.
-    - Improve project descriptions.
-    - Improve the professional summary.
-    - Keep education truthful.
-    - If projects already exist, improve them.
-    - If projects do NOT exist, generate at most TWO realistic projects ONLY if enough skills are available.
-    - Return ONLY valid JSON.
-    - Do NOT return markdown.
-    - Do NOT explain anything.
-    
-    Uploaded Resume
-    {resume_text}
-    
-    ------------------------------------------------
-    Job Description
-    
-    {job_description}
-    
-    ------------------------------------------------
-    ##############################
-    STRICT OUTPUT ORDER (MANDATORY)
-    ##############################
-    The response MUST follow this exact order.
-    Do NOT change the order.
-    Do NOT skip any section.
-    Do NOT rename any key.
-    Do NOT move sections.
-    The order MUST ALWAYS be:
-    1. personal_info
-    2. headline
-    3. summary
-    4. skills
-    5. experience
-    6. projects
-    7. education
-    8. certifications
-    9. awards
-    10. languages
-    11. hobbies
-    Return ONLY valid JSON.
-    Return EXACTLY this schema:
-
-    {json.dumps(OUTPUT_SCHEMA, indent=2)}
-
-    If any section has no information, return an empty array [] or an empty string "".
-    Do NOT place Education before Experience.
-    Do NOT place Projects before Experience.
-    Do NOT move Skills below Projects.
-    Do NOT create additional sections.
-
-    Fill EVERY section using the uploaded resume.   
-    If a section has no data, return an empty array [] or an empty string "".
-    The headline must contain ONLY the professional job title (example: "Frontend Developer", "Backend Developer", "Full Stack Software Engineer").
-    Do NOT include technologies in the headline.
-    """
-
-    result = call_llm_with_retry(prompt, json_response=True)
+    schema_str = json.dumps(OUTPUT_SCHEMA)
+    prompt_str = prompts.get_resume_prompt(resume_text, job_description, schema_str)
+    result = call_llm_with_retry(prompt_str, json_response=True)
     return normalize_generate_response(result)
 
 
 def generate_general_answer(
     question: str, skill: str, category: str, experience_level: str
 ) -> str:
-    prompt = f"""
-    You are a Senior Technical Interviewer.
-    Your task is to generate a comprehensive, interview-ready answer for the following question:
-
-    Question: {question}
-    Skill/Technology: {skill}
-    Category: {category}
-    Target Experience Level: {experience_level}
-
-    INSTRUCTIONS:
-    - Provide a clear, professional, and technical explanation.
-    - Keep the answer concise yet complete (typically 150-250 words).
-    - Fully explain any concepts, terms, or technologies involved.
-    - Return ONLY the text of the sample answer. Do not wrap in JSON, markdown code blocks, or include any extra commentary.
-    """
+    prompt_str = prompts.get_general_answer_prompt(question, skill, category, experience_level)
     try:
-        response = call_llm_with_retry(prompt)
+        response = call_llm_with_retry(prompt_str)
         response = response.strip()
         if response.startswith("```"):
             lines = response.splitlines()
@@ -523,91 +385,14 @@ def generate_general_answer(
 
 
 def analyze_resume_health(resume_text: str):
-    prompt = f"""
-    You are an expert ATS Resume Analyzer, Technical Recruiter, and Resume Reviewer.
-    Your task is to perform a comprehensive health audit of the candidate's resume and generate an ATS health report.
-    This analysis does NOT compare against any specific job description, but evaluates overall professional resume quality, ATS-friendliness, structure, and readability.
-
-    #########################
-    INPUT
-    #########################
-    Resume:
-    {resume_text}
-
-    #########################
-    INSTRUCTIONS
-    #########################
-    Evaluate the resume structure, wording, formatting, grammar, and completeness.
-    Ensure to detect missing sections specifically checking for the presence of:
-    - Projects
-    - Certifications
-    - Achievements
-    - Portfolio
-    - GitHub
-    - LinkedIn
-    - Languages
-    - Volunteer Experience
-    - Publications
-
-    #########################
-    OUTPUT SCHEMA
-    #########################
-    Return ONLY valid JSON with the following structure:
-    {{
-      "ats_score": 0,               
-      "resume_health_score": 0,    
-      "formatting_score": 0,    
-      "readability_score": 0,    
-      "skills_coverage": 0,    
-      "experience_quality": 0,    
-      "projects_quality": 0,    
-      "education_quality": 0,    
-      "keyword_optimization": 0,   
-      "grammar_writing": 0,        
-      "section_completeness": 0,   
-      "recruiter_readiness": 0,     
-      
-      "suggestions": {{
-        "quick_fixes": [],          
-        "medium_improvements": [],   
-        "high_impact_improvements": [] 
-      }},
-      "missing_sections": [],       
-      "strengths": [],              
-      "weaknesses": []             
-    }}
-    """
-    return call_llm_with_retry(prompt, json_response=True)
+    prompt_str = prompts.get_resume_health_prompt(resume_text)
+    result = call_llm_with_retry(prompt_str, json_response=True)
+    return normalize_health_response(result)
 
 
 def improve_resume_section(
     resume_text: str, section_name: str, section_content: str = None
 ) -> str:
-    prompt = f"""
-    You are an expert ATS Resume Writer and Senior Technical Recruiter.
-    Your task is to write a highly optimized, professional, and ATS-friendly version of a specific section in the candidate's resume.
-    
-    #########################
-    INPUT
-    #########################
-    Full Resume Context:
-    {resume_text}
-    
-    Target Section to Improve:
-    {section_name}
-    
-    Current Section Content (if any):
-    {section_content or "Not provided. Please extract/generate from the resume context."}
-    
-    #########################
-    INSTRUCTIONS
-    #########################
-    - Improve vocabulary, impact, and ATS keywords.
-    - Use strong action verbs and professional phrasing.
-    - Keep it factual and truthful to the original context. Do not invent new jobs or degrees.
-    - If improving summary, write a compelling 3-4 sentence professional summary.
-    - If improving experience/projects, write bullet points with measurable impact where possible.
-    - Return ONLY the improved plain text of the section. Do not wrap in JSON, markdown code blocks, or include any extra commentary.
-    """
-    response = call_llm_with_retry(prompt)
+    prompt_str = prompts.get_improve_section_prompt(resume_text, section_name, section_content)
+    response = call_llm_with_retry(prompt_str)
     return response.strip()

@@ -168,10 +168,9 @@ export const QuestionCard = memo(function QuestionCard({
 
   const [open, setOpen] = useState(isInitiallyExpanded);
   const [localAnswer, setLocalAnswer] = useState(null);
-  const [isGeneratingLocal, setIsGeneratingLocal] = useState(false);
 
   const sampleAnswerText = localAnswer || toText(question.sampleAnswer || question.answer);
-  const isGenerating = sampleAnswerText === "Generating answer..." || isGeneratingLocal;
+  const isGenerating = sampleAnswerText === "Generating answer...";
 
   useEffect(() => {
     if (open && sampleAnswerText === "Generating answer...") {

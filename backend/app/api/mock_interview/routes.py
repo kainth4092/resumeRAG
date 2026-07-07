@@ -52,7 +52,7 @@ def get_mock_questions(
             db, interview_type=type, user_id=current_user.id
         )
         return {"questions": questions}
-    except Exception as e:
+    except Exception:
         logger.exception("Error fetching mock questions")
         raise HTTPException(status_code=500, detail="Failed to fetch mock questions.")
 
@@ -75,7 +75,7 @@ def transcribe_audio(
             temp_path, prompt=prompt, language=language
         )
         return {"transcript": transcript}
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to transcribe audio")
         raise HTTPException(status_code=500, detail="Transcription failed.")
     finally:
@@ -94,7 +94,7 @@ def evaluate_interview(
         answers_data = [item.dict() for item in payload.answers]
         evaluation = evaluation_service.evaluate_interview(answers_data)
         return evaluation
-    except Exception as e:
+    except Exception:
         logger.exception("Batch evaluation request failed")
         raise HTTPException(status_code=500, detail="Evaluation failed.")
 
@@ -121,7 +121,7 @@ def save_session(
             "session_id": session.id,
             "message": "Interview session saved successfully.",
         }
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to save mock interview session")
         raise HTTPException(status_code=500, detail="Failed to save interview session.")
 
@@ -148,7 +148,7 @@ def get_interview_history(
                 }
             )
         return {"history": history_list}
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to load interview history")
         raise HTTPException(status_code=500, detail="Failed to load interview history.")
 

@@ -1,8 +1,6 @@
 import { Plus } from "lucide-react";
 
-export default function Header({ resumes = [], onNewResume }) {
-  const activeCount = resumes.filter((r) => r.status === "Active").length;
-
+export default function Header({ onNewResume }) {
   return (
     <div className="flex items-start justify-between gap-4 font-sans">
       <div>

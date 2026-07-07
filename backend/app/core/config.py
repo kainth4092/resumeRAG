@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "google/gemma-4-31b-it:free"
+    AI_PROVIDER: str = "openrouter"
     QDRANT_URL: str = ""
     QDRANT_API_KEY: str = ""
     RESEND_API_KEY: str = ""

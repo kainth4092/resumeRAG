@@ -1,8 +1,7 @@
 import logging
-import random
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func, or_
+from sqlalchemy.sql import func
 from app.models.interview_bank import InterviewQuestionBank
 from app.models.mock_interview import MockInterviewAnswer, MockInterviewSession
 
@@ -271,7 +270,7 @@ class MockInterviewService:
 
         if len(selected_techs) < 4:
             needed = 4 - len(selected_techs)
-            exclude_ids = answered_q_ids + [q.id for q in selected_techs]
+            answered_q_ids + [q.id for q in selected_techs]
             extra_techs = (
                 tech_q_candidates.filter(
                     InterviewQuestionBank.id.notin_([q.id for q in selected_techs])

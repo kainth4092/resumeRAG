@@ -48,7 +48,7 @@ export default function LandingPage({ onLogin, onSignup }) {
 
   return (
     <div
-      className="h-screen w-screen bg-white dark:bg-slate-950 overflow-x-hidden overflow-y-auto relative transition-colors duration-300"
+      className="h-screen w-full bg-white dark:bg-slate-950 overflow-x-hidden overflow-y-auto relative transition-colors duration-300"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
       <ScrollProgress />
@@ -68,10 +68,7 @@ export default function LandingPage({ onLogin, onSignup }) {
         open={mobileMenuOpen}
       />
 
-      <Hero
-        onSignup={handleSignup}
-        onTriggerAuth={handleTriggerAuthModal}
-      />
+      <Hero onSignup={handleSignup} onTriggerAuth={handleTriggerAuthModal} />
 
       <section
         id="preview"

@@ -1,0 +1,116 @@
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/CardSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/ChartSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/DashboardSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/InterviewSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/JobSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/PageLoader.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/ProfileSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/loading/ResumeSkeleton.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/auth/components/AuthFlow/ForgotScreen.jsx
+  27:14  error  'err' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/auth/components/AuthFlow/LoginScreen.jsx
+  51:14  error  'err' is defined but never used  no-unused-vars
+  51:19  error  Empty block statement            no-empty
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/auth/components/AuthFlow/RegisterScreen.jsx
+  82:14  error  'err' is defined but never used  no-unused-vars
+  82:19  error  Empty block statement            no-empty
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/auth/context/AuthContext.jsx
+   14:18  error    'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+   33:11  error    Error: Cannot access variable before it is declared
+
+`logout` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  31 |         const expiry = parseInt(tokenExpiry, 10);
+  32 |         if (Date.now() > expiry) {
+> 33 |           logout();
+     |           ^^^^^^ `logout` accessed before it is declared
+  34 |           setLoading(false);
+  35 |           return;
+  36 |         }
+
+   92 |   /* eslint-enable react-hooks/set-state-in-effect */
+   93 |
+>  94 |   const logout = () => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^
+>  95 |     localStorage.removeItem("access_token");
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  96 |     localStorage.removeItem("user_info");
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  97 |     localStorage.removeItem("remember_me");
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  98 |     localStorage.removeItem("token_expiry");
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  99 |     sessionStorage.removeItem("session_active");
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 100 |     api.clearCache();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 101 |     setUser(null);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 102 |   };
+      | ^^^^^ `logout` is declared here
+  103 |
+  104 |   const value = useMemo(
+  105 |     () => ({  react-hooks/immutability
+   91:6   warning  React Hook useEffect has a missing dependency: 'fetchUser'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  112:5   warning  React Hook useMemo has a missing dependency: 'fetchUser'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/exhaustive-deps
+  118:17  error    Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-refresh/only-export-components
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/interview/components/QuestionCard.jsx
+  171:29  error  'setIsGeneratingLocal' is assigned a value but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/interview/components/mock/FinalReport.jsx
+   2:3  error  'Trophy' is defined but never used                       no-unused-vars
+   4:3  error  'Sparkles' is defined but never used                     no-unused-vars
+   5:3  error  'AlertCircle' is defined but never used                  no-unused-vars
+  34:9  error  'strongestTopic' is assigned a value but never used      no-unused-vars
+  35:9  error  'weakestTopic' is assigned a value but never used        no-unused-vars
+  47:9  error  'uniqueStrengths' is assigned a value but never used     no-unused-vars
+  48:9  error  'uniqueWeaknesses' is assigned a value but never used    no-unused-vars
+  49:9  error  'uniqueImprovements' is assigned a value but never used  no-unused-vars
+  62:9  error  'overallScoreColor' is assigned a value but never used   no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/interview/hooks/useInterviewPrep.js
+  207:5  warning  React Hook useCallback has unnecessary dependencies: 'handleSuggestAnswer' and 'isAISuggested'. Either exclude them or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/landing/components/AuthPromptModal.jsx
+  1:8   error  'React' is defined but never used  no-unused-vars
+  2:23  error  'Zap' is defined but never used    no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/landing/components/FeatureDetailsModal.jsx
+    1:8   error  'React' is defined but never used                                                                                                                                                                                                                       no-unused-vars
+    7:3   error  'Plus' is defined but never used                                                                                                                                                                                                                        no-unused-vars
+   51:41  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  128:45  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  205:41  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  280:35  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  370:43  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  470:41  error  React Hook "useState" is called in function "previewComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/components/resume/dashboard/Header.jsx
+  4:9  error  'activeCount' is assigned a value but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/hooks/useResumeAnalysis.js
+  116:14  error  'err' is defined but never used  no-unused-vars
+
+✖ 41 problems (38 errors, 3 warnings)
+

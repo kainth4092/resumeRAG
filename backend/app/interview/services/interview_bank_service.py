@@ -43,7 +43,7 @@ def generate_and_update_answer_task(
                 upsert_question(question)
             except Exception as q_err:
                 logger.warning("Qdrant sync failed in background task: %s", q_err)
-    except Exception as e:
+    except Exception:
         logger.exception("Background answer generation failed for question %s", question_id)
     finally:
         db.close()

@@ -13,6 +13,7 @@ import {
   registerUser,
   googleLoginUser,
 } from "../../services/authService";
+import api from "../../../../services/api";
 
 export function AuthFlow({ initialScreen = "welcome" }) {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export function AuthFlow({ initialScreen = "welcome" }) {
 
   const handleLogin = async ({ email, password, remember }) => {
     try {
+      api.clearCache();
       const res = await loginUser({ email, password, remember_me: remember });
       localStorage.setItem("access_token", res.data.access_token);
       if (remember) {
@@ -36,16 +38,8 @@ export function AuthFlow({ initialScreen = "welcome" }) {
         sessionStorage.setItem("session_active", "true");
       }
 
-      const userData = await fetchUser(true);
-      if (userData && userData.onboarded) {
-        localStorage.setItem(`onboarded_${userData.email}`, "true");
-        navigate("/dashboard");
-      } else {
-        if (userData?.email) {
-          localStorage.setItem(`onboarded_${userData.email}`, "false");
-        }
-        navigate("/onboarding");
-      }
+      await fetchUser(true);
+      navigate("/dashboard");
     } catch (err) {
       const detail = err.response?.data?.detail;
       const errorMessage = Array.isArray(detail)
@@ -86,6 +80,7 @@ export function AuthFlow({ initialScreen = "welcome" }) {
       try {
         setGoogleLoading(true);
         setAlert(null);
+        api.clearCache();
 
         const res = await googleLoginUser({
           credential: tokenResponse.access_token,
@@ -96,16 +91,8 @@ export function AuthFlow({ initialScreen = "welcome" }) {
         localStorage.removeItem("token_expiry");
         sessionStorage.setItem("session_active", "true");
 
-        const userData = await fetchUser(true);
-        if (userData && userData.onboarded) {
-          localStorage.setItem(`onboarded_${userData.email}`, "true");
-          navigate("/dashboard");
-        } else {
-          if (userData?.email) {
-            localStorage.setItem(`onboarded_${userData.email}`, "false");
-          }
-          navigate("/onboarding");
-        }
+        await fetchUser(true);
+        navigate("/dashboard");
       } catch (err) {
         console.error("Google authentication failed", err);
         const detail = err.response?.data?.detail;
@@ -125,6 +112,20 @@ export function AuthFlow({ initialScreen = "welcome" }) {
       setAlert({
         type: "error",
         message: "Google login was cancelled or failed to initialize.",
+      });
+      setGoogleLoading(false);
+    },
+    onNonOAuthError: (error) => {
+      console.error("Google authentication non-oauth error", error);
+      let errorMessage = "Google authentication failed. Please try again.";
+      if (error && error.type === "popup_closed") {
+        errorMessage = "Google login popup was closed.";
+      } else if (error && error.type === "popup_blocked") {
+        errorMessage = "Google login popup was blocked by your browser. Please allow popups.";
+      }
+      setAlert({
+        type: "error",
+        message: errorMessage,
       });
       setGoogleLoading(false);
     },

@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Set
 
 COMMON_SKILLS = [
     "React",

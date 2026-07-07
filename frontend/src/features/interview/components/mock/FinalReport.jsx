@@ -1,8 +1,5 @@
 import {
-  Trophy,
   Clock,
-  Sparkles,
-  AlertCircle,
   RefreshCw,
   ClipboardList,
 } from "lucide-react";
@@ -31,23 +28,6 @@ export function FinalReport({ report, onRetake }) {
   const avgClarity = getAverage("clarity_score") || overall_score;
   const avgGrammar = getAverage("grammar_score") || overall_score;
 
-  const strongestTopic = interview_type || "General";
-  const weakestTopic = avgTech < 75 ? "Technical Deep-dive" : "STAR Structure";
-
-  const allStrengths = [];
-  const allWeaknesses = [];
-  const allImprovements = [];
-
-  answers.forEach((ans) => {
-    if (ans.strengths) allStrengths.push(...ans.strengths);
-    if (ans.weaknesses) allWeaknesses.push(...ans.weaknesses);
-    if (ans.improvements) allImprovements.push(...ans.improvements);
-  });
-
-  const uniqueStrengths = [...new Set(allStrengths)].slice(0, 4);
-  const uniqueWeaknesses = [...new Set(allWeaknesses)].slice(0, 4);
-  const uniqueImprovements = [...new Set(allImprovements)].slice(0, 4);
-
   const dateStr = created_at
     ? new Date(created_at).toLocaleDateString()
     : new Date().toLocaleDateString();
@@ -57,14 +37,6 @@ export function FinalReport({ report, onRetake }) {
     const mins = Math.floor(secs / 60);
     const remainingSecs = secs % 60;
     return mins > 0 ? `${mins}m ${remainingSecs}s` : `${remainingSecs}s`;
-  };
-
-  const overallScoreColor = (score) => {
-    if (score >= 80)
-      return "text-emerald-600 bg-emerald-500/10 border-emerald-500/20";
-    if (score >= 60)
-      return "text-amber-600 bg-amber-500/10 border-amber-500/20";
-    return "text-red-600 bg-red-500/10 border-red-500/20";
   };
 
   return (

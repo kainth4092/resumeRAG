@@ -21,6 +21,6 @@ def get_dashboard_data(
 ):
     try:
         return DashboardService.get_dashboard_data(db, current_user, local_hour)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to load dashboard data")
         raise HTTPException(status_code=500, detail="Failed to load dashboard data.")

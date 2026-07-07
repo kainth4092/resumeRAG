@@ -49,6 +49,7 @@ export default function LoginScreen({
       setAlert(null);
       await onLogin({ email, password, remember });
     } catch (err) {
+      void err;
     } finally {
       setLoading(false);
     }

@@ -59,3 +59,5 @@ coverage/
 logs/
 .vscode/
 .idea/
+
+.ruff_cache

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.exceptions import AppException
 from app.models.resume import Resume
 from app.models.resume_health import ResumeHealthAnalysis
 from app.models.user import User
@@ -54,7 +55,9 @@ def analyze(
         db.refresh(resume)
 
         return result
-    except Exception as e:
+    except AppException as e:
+        raise e
+    except Exception:
         logger.exception("Failed to analyze resume")
         raise HTTPException(status_code=500, detail="Failed to analyze resume.")
 
@@ -132,7 +135,9 @@ def generate(
         db.refresh(new_resume)
 
         return result
-    except Exception as e:
+    except AppException as e:
+        raise e
+    except Exception:
         logger.exception("Failed to generate resume")
         raise HTTPException(status_code=500, detail="Failed to generate resume.")
 
@@ -187,7 +192,9 @@ def analyze_health(
         db.refresh(health_report)
 
         return result
-    except Exception as e:
+    except AppException as e:
+        raise e
+    except Exception:
         logger.exception("Failed to analyze resume health")
         raise HTTPException(status_code=500, detail="Failed to analyze resume health.")
 
@@ -213,7 +220,9 @@ def improve_section(
             section_content=payload.content,
         )
         return {"improved_text": improved_text}
-    except Exception as e:
+    except AppException as e:
+        raise e
+    except Exception:
         logger.exception("Failed to improve section with AI")
         raise HTTPException(
             status_code=500,

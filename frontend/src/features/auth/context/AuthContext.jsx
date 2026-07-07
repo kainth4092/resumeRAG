@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { getCurrentUser } from "../services/authService";
+import api from "../../../services/api";
 
 const AuthContext = createContext();
 
@@ -10,7 +12,7 @@ export function AuthProvider({ children }) {
       if (cached) {
         try {
           return JSON.parse(cached);
-        } catch (e) {
+        } catch {
           return null;
         }
       }
@@ -19,7 +21,17 @@ export function AuthProvider({ children }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async (force = false) => {
+  const logout = useCallback(() => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_info");
+    localStorage.removeItem("remember_me");
+    localStorage.removeItem("token_expiry");
+    sessionStorage.removeItem("session_active");
+    api.clearCache();
+    setUser(null);
+  }, []);
+
+  const fetchUser = useCallback(async (force = false) => {
     const token = localStorage.getItem("access_token");
     if (token) {
       const rememberMe = localStorage.getItem("remember_me") === "true";
@@ -82,22 +94,13 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return null;
     }
-  };
+  }, [user, logout]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user_info");
-    localStorage.removeItem("remember_me");
-    localStorage.removeItem("token_expiry");
-    sessionStorage.removeItem("session_active");
-    setUser(null);
-  };
 
   const value = useMemo(
     () => ({
@@ -107,7 +110,7 @@ export function AuthProvider({ children }) {
       fetchUser,
       loading,
     }),
-    [user, loading],
+    [user, loading, fetchUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

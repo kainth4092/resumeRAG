@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from app.models.interview import InterviewSession, InterviewQuestion
 
 

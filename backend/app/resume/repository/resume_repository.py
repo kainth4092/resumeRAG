@@ -36,6 +36,6 @@ class ResumeRepository:
     def get_active_resume(db: Session, user_id: int) -> Resume | None:
         return (
             db.query(Resume)
-            .filter(Resume.user_id == user_id, Resume.is_active == True)
+            .filter(Resume.user_id == user_id, Resume.is_active)
             .first()
         )

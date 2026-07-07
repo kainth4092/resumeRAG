@@ -208,8 +208,6 @@ export function useInterviewPrep() {
       formData,
       editingQuestion,
       handleSaveQuestion,
-      isAISuggested,
-      handleSuggestAnswer,
     ],
   );
 

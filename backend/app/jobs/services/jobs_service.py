@@ -56,7 +56,7 @@ class JobsService:
                 elif latest_resume.parsed_text:
                     text_lines = [line.strip() for line in latest_resume.parsed_text.split("\n") if line.strip()][:30]
                     for line in text_lines:
-                        line_lower = line.lower()
+                        line.lower()
                         if len(line) < 80:
                             parts = [p.strip() for p in re.split(r'[|,\-/•]', line) if p.strip()]
                             for part in parts:

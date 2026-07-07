@@ -116,7 +116,7 @@ export const Field = forwardRef(
           }`}
         >
           {icon && (
-            <div className="pl-4 text-slate-400 dark:text-slate-500 flex-shrink-0">
+            <div className="pl-4 text-slate-400 dark:text-slate-500 shrink-0">
               {icon}
             </div>
           )}
@@ -133,11 +133,11 @@ export const Field = forwardRef(
               icon ? "pl-3" : "pl-4"
             } ${suffix ? "pr-2" : "pr-4"}`}
           />
-          {suffix && <div className="pr-3 flex-shrink-0">{suffix}</div>}
+          {suffix && <div className="pr-3 shrink-0">{suffix}</div>}
           {error && !suffix && (
             <AlertCircle
               size={15}
-              className="text-red-400 dark:text-red-500 mr-3 flex-shrink-0"
+              className="text-red-400 dark:text-red-500 mr-3 shrink-0"
             />
           )}
         </div>

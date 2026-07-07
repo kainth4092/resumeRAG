@@ -15,7 +15,7 @@ class JobsRepository:
 
     @staticmethod
     def get_active_resume(db: Session, user_id: int):
-        return db.query(Resume).filter(Resume.user_id == user_id, Resume.is_active == True).first()
+        return db.query(Resume).filter(Resume.user_id == user_id, Resume.is_active).first()
 
     @staticmethod
     def get_latest_resume(db: Session, user_id: int):

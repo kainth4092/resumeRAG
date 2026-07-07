@@ -52,7 +52,7 @@ def create_bank_question(
     except HTTPException:
         raise
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to create interview bank question")
         raise HTTPException(status_code=500, detail="Failed to create question.")
 
@@ -65,7 +65,7 @@ def get_bank_meta(
     from app.interview.services.interview_bank_service import get_filters_meta
     try:
         return get_filters_meta(db, current_user.id)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch interview bank metadata")
         raise HTTPException(status_code=500, detail="Failed to fetch metadata.")
 
@@ -92,7 +92,7 @@ def generate_bank_answer(
             experience_level=experience_level
         )
         return {"answer": answer}
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to generate bank answer")
         raise HTTPException(status_code=500, detail="Failed to generate answer.")
 
@@ -133,7 +133,7 @@ def list_bank_questions(
             "questions": items
         }
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch interview bank questions")
         raise HTTPException(status_code=500, detail="Failed to fetch questions.")
 
@@ -158,7 +158,7 @@ def get_bank_question(
     except HTTPException:
         raise
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch interview bank question")
         raise HTTPException(status_code=500, detail="Failed to fetch question.")
 
@@ -194,7 +194,7 @@ def update_bank_question(
     except HTTPException:
         raise
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to update interview bank question")
         raise HTTPException(status_code=500, detail="Failed to update question.")
 
@@ -230,7 +230,7 @@ def delete_bank_question(
     except HTTPException:
         raise
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to delete interview bank question")
         raise HTTPException(status_code=500, detail="Failed to delete question.")
 

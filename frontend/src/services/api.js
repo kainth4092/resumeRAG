@@ -31,7 +31,10 @@ api.interceptors.request.use((config) => {
   }
 
   // Cache GET requests
-  if (config.method?.toLowerCase() === "get") {
+  if (
+    config.method?.toLowerCase() === "get" &&
+    !config.url?.includes("/auth/me")
+  ) {
     const cacheKey = `${config.url}?${JSON.stringify(config.params || {})}`;
     config.cacheKey = cacheKey;
 
@@ -60,7 +63,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     const config = response.config;
-    if (config.method?.toLowerCase() === "get" && config.cacheKey) {
+    if (
+      config.method?.toLowerCase() === "get" &&
+      config.cacheKey &&
+      !config.url?.includes("/auth/me")
+    ) {
       getCache.set(config.cacheKey, {
         data: response.data,
         headers: response.headers,
@@ -75,9 +82,24 @@ api.interceptors.response.use(
     const config = error.config;
 
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user_info");
-      window.location.href = "/";
+      const isAuthRequest =
+        config?.url &&
+        (config.url.includes("/auth/login") ||
+          config.url.includes("/auth/google"));
+      if (!isAuthRequest) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user_info");
+        localStorage.removeItem("remember_me");
+        localStorage.removeItem("token_expiry");
+        sessionStorage.removeItem("session_active");
+        api.clearCache();
+
+        const publicPages = ["/", "/login", "/register", "/terms", "/privacy"];
+        const currentPath = window.location.pathname;
+        if (!publicPages.includes(currentPath)) {
+          window.location.href = "/";
+        }
+      }
       return Promise.reject(error);
     }
 
@@ -114,7 +136,7 @@ api.get = function (url, config = {}) {
     getCache.delete(cacheKey);
   }
 
-  if (!bypassCache) {
+  if (!bypassCache && !url?.includes("/auth/me")) {
     if (inFlightRequests.has(cacheKey)) {
       return inFlightRequests.get(cacheKey);
     }
@@ -131,11 +153,19 @@ api.get = function (url, config = {}) {
       throw err;
     });
 
-  if (!bypassCache) {
+  if (!bypassCache && !url?.includes("/auth/me")) {
     inFlightRequests.set(cacheKey, promise);
   }
 
   return promise;
+};
+
+api.clearCache = () => {
+  getCache.clear();
+  inFlightRequests.clear();
+  if (api.defaults.headers.common) {
+    delete api.defaults.headers.common["Authorization"];
+  }
 };
 
 export default api;

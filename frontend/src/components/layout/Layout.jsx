@@ -1,27 +1,47 @@
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { EmailModal } from "../../features/email";
+import DashboardSkeleton from "../loading/DashboardSkeleton";
+import ProfileSkeleton from "../loading/ProfileSkeleton";
+import ResumeSkeleton from "../loading/ResumeSkeleton";
+import JobSkeleton from "../loading/JobSkeleton";
+import InterviewSkeleton from "../loading/InterviewSkeleton";
+import PageLoader from "../loading/PageLoader";
 
-const LayoutSkeleton = () => (
-  <div className="p-6 space-y-6 animate-pulse">
-    <div className="space-y-2">
-      <div className="h-8 w-48 bg-muted rounded-xl animate-pulse" />
-      <div className="h-4 w-96 bg-muted rounded-xl animate-pulse" />
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
-      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
-      <div className="h-32 bg-muted rounded-2xl animate-pulse" />
-    </div>
-    <div className="h-64 bg-muted rounded-2xl animate-pulse" />
-  </div>
-);
+const ActivePageSkeleton = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
+  if (path === "/dashboard") {
+    return <DashboardSkeleton />;
+  }
+  if (path === "/profile") {
+    return <ProfileSkeleton />;
+  }
+  if (path === "/resume/editor") {
+    return <ResumeSkeleton mode="builder" />;
+  }
+  if (path === "/resumes") {
+    return <ResumeSkeleton mode="list" />;
+  }
+  if (path === "/analysis") {
+    return <ResumeSkeleton mode="list" />;
+  }
+  if (path === "/interview") {
+    return <InterviewSkeleton mode="list" />;
+  }
+  if (path === "/tracker") {
+    return <JobSkeleton mode="discovery" />;
+  }
+  return <DashboardSkeleton />;
+};
 
 export default function Layout() {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -29,6 +49,12 @@ export default function Layout() {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const profileRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (!loading && user && !user.onboarded) {
+      navigate("/onboarding", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -48,6 +74,10 @@ export default function Layout() {
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
+
+  if (loading) {
+    return <PageLoader />;
+  }
 
   return (
     <div className="flex w-full h-full overflow-hidden">
@@ -88,7 +118,7 @@ export default function Layout() {
         />
 
         <main className="flex-1 overflow-y-auto bg-background">
-          <Suspense fallback={<LayoutSkeleton />}>
+          <Suspense fallback={<ActivePageSkeleton />}>
             <Outlet />
           </Suspense>
         </main>

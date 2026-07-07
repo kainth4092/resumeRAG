@@ -22,6 +22,7 @@ import Select from "../../resume/components/resume/dashboard/Select";
 import { useJobTracker } from "../hooks/useJobTracker";
 import ApplicationDrawer from "../components/ApplicationDrawer";
 import AddJobModal from "../components/AddJobModal";
+import JobSkeleton from "../../../components/loading/JobSkeleton";
 
 export default function JobsPage() {
   const navigate = useNavigate();
@@ -205,7 +206,7 @@ export default function JobsPage() {
               />
 
               {loading && jobs.length === 0 ? (
-                <JobGrid loading={true} />
+                <JobSkeleton mode="discovery" />
               ) : filteredJobs.length === 0 ? (
                 <EmptyState
                   title="No jobs found"

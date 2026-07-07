@@ -5,7 +5,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 
 from sqlalchemy import text
 from app.core.database import engine, Base
-import app.models
 
 
 def main():

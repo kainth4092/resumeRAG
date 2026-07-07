@@ -24,7 +24,7 @@ export default function ForgotScreen({ onBack }) {
       // Simulate API call for forgot password
       await new Promise((r) => setTimeout(r, 1600));
       setSent(true);
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);

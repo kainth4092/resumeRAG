@@ -1,5 +1,4 @@
 import re
-from fastapi import HTTPException, status
 
 PASSWORD_REGEX = re.compile(
     r"^(?=.*[a-z])"

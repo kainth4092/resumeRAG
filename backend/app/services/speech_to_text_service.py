@@ -1,6 +1,5 @@
 import os
 import logging
-from typing import BinaryIO
 from faster_whisper import WhisperModel
 from dotenv import load_dotenv
 

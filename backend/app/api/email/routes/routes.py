@@ -60,7 +60,7 @@ def send_email(
             provider=result.get("provider", "Unknown"),
             messageId=result.get("id"),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Email dispatch failed.",

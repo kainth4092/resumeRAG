@@ -113,7 +113,7 @@ export function useResumeAnalysis() {
       if (response.data) {
         setAnalysisResult(response.data);
       }
-    } catch (err) {
+    } catch {
       // Intentionally ignore missing report; the user can run analysis manually.
     }
   };

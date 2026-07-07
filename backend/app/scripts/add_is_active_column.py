@@ -1,4 +1,3 @@
-import sys
 from sqlalchemy import create_engine, text
 from app.core.config import settings
 

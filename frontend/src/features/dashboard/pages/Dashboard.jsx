@@ -7,6 +7,7 @@ import ResumeRadarChart from "../components/charts/ResumeRadarChart";
 import WeeklyActivityChart from "../components/charts/WeeklyActivityChart";
 import RecruiterSimulation from "../components/RecruiterSimulation";
 import Skeleton from "../components/Skeleton";
+import DashboardSkeleton from "../../../components/loading/DashboardSkeleton";
 import { dashboardService } from "../services/dashboardService";
 import { mapApiActivities } from "../data/dashboardData";
 
@@ -30,7 +31,10 @@ export default function Dashboard() {
     setError(null);
     try {
       const localHour = new Date().getHours();
-      const data = await dashboardService.getDashboardData(localHour, isRefresh);
+      const data = await dashboardService.getDashboardData(
+        localHour,
+        isRefresh,
+      );
 
       setGreeting(data.greeting || "");
       setTrend(data.score_trend || []);
@@ -79,6 +83,10 @@ export default function Dashboard() {
   };
 
   const deltaText = getImprovementDelta();
+
+  if (loading && !refreshing) {
+    return <DashboardSkeleton />;
+  }
 
   if (error) {
     return (
