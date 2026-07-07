@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import FloatingAI from "./FloatingAI";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { EmailModal } from "../../features/email";
 import DashboardSkeleton from "../loading/DashboardSkeleton";
@@ -42,7 +43,8 @@ const ActivePageSkeleton = () => {
 export default function Layout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+  const [hoverExpanded, setHoverExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -89,17 +91,24 @@ export default function Layout() {
       )}
 
       <aside
+        onMouseEnter={() => {
+          if (collapsed) setHoverExpanded(true);
+        }}
+        onMouseLeave={() => {
+          setHoverExpanded(false);
+        }}
         className={`
         fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
         flex flex-col h-full bg-sidebar border-r border-sidebar-border
         transition-all duration-300 ease-in-out shrink-0 overflow-hidden
-        ${collapsed ? "lg:w-[68px]" : "lg:w-[240px]"}
+        ${collapsed && !hoverExpanded ? "lg:w-[68px]" : "lg:w-[240px]"}
         ${mobileOpen ? "translate-x-0 w-[240px]" : "-translate-x-full lg:translate-x-0"}
         shadow-lg lg:shadow-none
       `}
       >
         <Sidebar
-          collapsed={collapsed}
+          collapsed={collapsed && !hoverExpanded}
+          isBaseCollapsed={collapsed}
           setCollapsed={setCollapsed}
           setMobileOpen={setMobileOpen}
         />
@@ -127,6 +136,8 @@ export default function Layout() {
         open={emailModalOpen}
         onClose={() => setEmailModalOpen(false)}
       />
+      <FloatingAI />
     </div>
   );
 }
+

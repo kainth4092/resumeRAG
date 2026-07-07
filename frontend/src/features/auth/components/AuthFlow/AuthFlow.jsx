@@ -109,25 +109,26 @@ export function AuthFlow({ initialScreen = "welcome" }) {
     },
     onError: (error) => {
       console.error("Google authentication error", error);
-      setAlert({
-        type: "error",
-        message: "Google login was cancelled or failed to initialize.",
-      });
       setGoogleLoading(false);
     },
     onNonOAuthError: (error) => {
       console.error("Google authentication non-oauth error", error);
-      let errorMessage = "Google authentication failed. Please try again.";
+      setGoogleLoading(false);
+
       if (error && error.type === "popup_closed") {
-        errorMessage = "Google login popup was closed.";
-      } else if (error && error.type === "popup_blocked") {
-        errorMessage = "Google login popup was blocked by your browser. Please allow popups.";
+        return;
       }
+
+      let errorMessage = "Google authentication failed. Please try again.";
+      if (error && error.type === "popup_blocked") {
+        errorMessage =
+          "Google login popup was blocked by your browser. Please allow popups.";
+      }
+
       setAlert({
         type: "error",
         message: errorMessage,
       });
-      setGoogleLoading(false);
     },
   });
 
@@ -164,6 +165,7 @@ export function AuthFlow({ initialScreen = "welcome" }) {
                 setAlert(null);
                 setScreen("login");
               }}
+              alert={alert}
             />
           )}
           {screen === "login" && (

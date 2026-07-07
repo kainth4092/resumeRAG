@@ -9,12 +9,15 @@ from google.auth.transport import requests
 
 from app.core.database import get_db
 from app.models.user import User
+from app.models.profile import Profile
 from app.schemas.auth import (
     RegisterRequest,
     LoginRequest,
     TokenResponse,
     MessageResponse,
     GoogleLoginRequest,
+    AccountUpdateRequest,
+    PasswordChangeRequest,
 )
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.dependencies import get_current_user
@@ -157,11 +160,98 @@ def google_auth(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
     return {
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
         "avatar_url": current_user.avatar_url,
-        "onboarded": current_user.profile is not None,
+        "onboarded": profile is not None,
+        "profile": {
+            "phone": profile.phone if profile else "",
+            "location": profile.location if profile else "",
+            "headline": profile.headline if profile else "",
+        } if profile else None
     }
+
+
+@router.put("/settings/account")
+def update_settings_account(
+    payload: AccountUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if payload.email != current_user.email:
+        conflict = db.query(User).filter(User.email == payload.email).first()
+        if conflict:
+            raise HTTPException(status_code=409, detail="Email already in use")
+        current_user.email = payload.email
+        
+    current_user.name = payload.name
+    
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    if not profile:
+        profile = Profile(user_id=current_user.id)
+        db.add(profile)
+        
+    profile.full_name = payload.name
+    profile.phone = payload.phone
+    profile.location = payload.location
+    profile.headline = payload.headline
+    
+    try:
+        db.commit()
+        db.refresh(current_user)
+        db.refresh(profile)
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save settings")
+        
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "avatar_url": current_user.avatar_url,
+        "profile": {
+            "phone": profile.phone,
+            "location": profile.location,
+            "headline": profile.headline,
+        }
+    }
+
+
+@router.put("/settings/password")
+def update_settings_password(
+    payload: PasswordChangeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.password_hash:
+        raise HTTPException(status_code=400, detail="Social login users cannot change passwords.")
+        
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid current password.")
+        
+    current_user.password_hash = hash_password(payload.new_password)
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database update failed.")
+    return {"message": "Password updated successfully"}
+
+
+@router.delete("/settings/account")
+def delete_settings_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        db.delete(current_user)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to delete account.")
+    return {"message": "Account deleted successfully"}
+

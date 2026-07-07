@@ -54,24 +54,23 @@ class DashboardService:
         # If no active resume or no analysis results, provide a baseline
         if not analysis:
             analysis = {
-                "ats_score": 75 if active_resume else 0,
-                "matched_keywords": (
-                    ["React", "JavaScript", "SQL"] if active_resume else []
-                ),
-                "missing_keywords": (
-                    ["TypeScript", "AWS", "Docker"] if active_resume else []
-                ),
+                "ats_score": active_resume.ats_score or 0 if active_resume else 0,
+                "matched_keywords": [],
+                "missing_keywords": [],
                 "suggestions": [
                     "Upload or generate your resume to get started!",
                     "Analyze your resume against a job description to see suggestions.",
+                ] if not active_resume else [
+                    "Review suggestions on the Resume Analysis page.",
+                    "Optimize formatting and keywords to boost your ATS score."
                 ],
                 "heatmap": {
-                    "contact_info": 80 if active_resume else 0,
-                    "summary": 60 if active_resume else 0,
-                    "skills": 70 if active_resume else 0,
-                    "experience": 65 if active_resume else 0,
-                    "projects": 50 if active_resume else 0,
-                    "education": 90 if active_resume else 0,
+                    "contact_info": 0,
+                    "summary": 0,
+                    "skills": 0,
+                    "experience": 0,
+                    "projects": 0,
+                    "education": 0,
                 },
             }
 
@@ -80,7 +79,7 @@ class DashboardService:
         for r in resumes:
             month_label = r.created_at.strftime("%b %d") if r.created_at else "Jun 01"
             score_trend.append(
-                {"month": month_label, "score": r.ats_score or 75, "title": r.title}
+                {"month": month_label, "score": r.ats_score or 0, "title": r.title}
             )
 
         # 4. Resume DNA (Radar Chart)
@@ -258,13 +257,42 @@ class DashboardService:
                 {
                     "id": r.id,
                     "title": r.title,
-                    "ats_score": r.ats_score or 75,
+                    "ats_score": r.ats_score or 0,
                     "version": r.version or "v1",
                     "template": r.template or "Professional",
                     "created_at": r.created_at.isoformat() if r.created_at else None,
                     "is_active": r.is_active,
                 }
             )
+
+        # 10. Stats Summary
+        thirty_days_ago = now_utc - timedelta(days=30)
+        resumes_this_month = sum(1 for r in resumes if make_naive(r.created_at) and make_naive(r.created_at) >= thirty_days_ago)
+        jobs_this_week = sum(1 for j in tracked_jobs if make_naive(j.created_at) and make_naive(j.created_at) >= seven_days_ago)
+        interviews_this_week = sum(1 for i in interviews if make_naive(i.created_at) and make_naive(i.created_at) >= seven_days_ago)
+
+        ats_trend = None
+        if len(resumes) >= 2:
+            latest_score = resumes[-1].ats_score or 0
+            prev_score = resumes[-2].ats_score or 0
+            diff = latest_score - prev_score
+            if diff > 0:
+                ats_trend = f"+{diff} pts"
+            elif diff < 0:
+                ats_trend = f"{diff} pts"
+            else:
+                ats_trend = "Steady"
+
+        stats_summary = {
+            "ats_score": score_val,
+            "ats_trend": ats_trend or "First version",
+            "resumes_count": len(resumes),
+            "resumes_trend": f"+{resumes_this_month} this month" if resumes_this_month > 0 else "0 this month",
+            "jobs_count": len(tracked_jobs),
+            "jobs_trend": f"+{jobs_this_week} this week" if jobs_this_week > 0 else "0 this week",
+            "interviews_count": len(interviews),
+            "interviews_trend": f"+{interviews_this_week} this week" if interviews_this_week > 0 else "0 this week",
+        }
 
         return {
             "greeting": greeting,
@@ -276,4 +304,8 @@ class DashboardService:
             "recruiter_eye": recruiter_eye,
             "resume_insights": resume_insights,
             "resume_history": resume_history,
+            "total_tracked_jobs": len(tracked_jobs),
+            "total_interviews": len(interviews),
+            "stats_summary": stats_summary,
         }
+

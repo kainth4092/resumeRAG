@@ -1,11 +1,13 @@
 import { ArrowRight } from "lucide-react";
 import { Slide, Logo, PrimaryButton, GoogleButton } from "./AuthFlowShared";
+import { AuthAlert } from "../../pages/AuthComponents";
 
 export default function WelcomeScreen({
   onContinueEmail,
   onGoogleClick,
   googleLoading,
   onSignIn,
+  alert,
 }) {
   return (
     <Slide animKey="welcome">
@@ -42,6 +44,12 @@ export default function WelcomeScreen({
           </span>
         ))}
       </div>
+
+      {alert && (
+        <div className="mb-5">
+          <AuthAlert type={alert.type} message={alert.message} />
+        </div>
+      )}
 
       <div className="space-y-3">
         <PrimaryButton onClick={onContinueEmail}>
