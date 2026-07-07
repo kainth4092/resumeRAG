@@ -153,12 +153,12 @@ export default function DashboardPreview({ onTriggerAuth }) {
             {/* Chart + rings row */}
             <div className="grid grid-cols-3 gap-1.5 mb-3">
               {/* Area chart */}
-              <div className="col-span-2 bg-white dark:bg-slate-950/80 rounded-xl p-2 border border-slate-100 dark:border-slate-850">
+              <div className="col-span-2 min-w-0 bg-white dark:bg-slate-950/80 rounded-xl p-2 border border-slate-100 dark:border-slate-850">
                 <p className="text-[8px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   ATS Progress
                 </p>
-                <div style={{ width: "100%", height: 60 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div style={{ width: "100%", height: 60 }} className="min-w-0">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <AreaChart
                       data={trendData}
                       margin={{ top: 0, right: 0, left: 0, bottom: 0 }}

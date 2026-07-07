@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../auth/context/AuthContext";
-import { createProfile } from "../../profile/services/profileService";
+import { createProfile, updateProfile } from "../../profile/services/profileService";
 import { uploadResume } from "../../resume/services/resumeService";
 import ProgressBar from "../components/ProgressBar";
 import SelectCard from "../components/SelectCard";
@@ -99,11 +99,24 @@ export default function Onboarding() {
     try {
       // 1. Save onboarding profile data
       setLoadingText("Configuring your career profile...");
-      await createProfile({
-        full_name: user?.name || "Career Professional",
-        headline: `${experience} ${role || "Professional"}`,
-        summary: `Career Goal: ${goal}. Specialized in: ${skills.join(", ")}.`,
-      });
+      try {
+        await createProfile({
+          full_name: user?.name || "Career Professional",
+          headline: `${experience} ${role || "Professional"}`,
+          summary: `Career Goal: ${goal}. Specialized in: ${skills.join(", ")}.`,
+        });
+      } catch (profileErr) {
+        if (profileErr.response?.status === 409) {
+          console.warn("Profile already exists, updating existing profile.");
+          await updateProfile({
+            full_name: user?.name || "Career Professional",
+            headline: `${experience} ${role || "Professional"}`,
+            summary: `Career Goal: ${goal}. Specialized in: ${skills.join(", ")}.`,
+          });
+        } else {
+          throw profileErr;
+        }
+      }
 
       // 2. Upload file if uploaded
       if (resumePref === "upload" && file) {
@@ -121,7 +134,12 @@ export default function Onboarding() {
       setStep(7);
     } catch (err) {
       console.error("Onboarding failed", err);
-      // Fallback: still let user complete
+      // Fallback: still fetch user status to break any redirect loops
+      try {
+        await fetchUser(true);
+      } catch (fetchErr) {
+        console.error("Failed to fetch user in fallback", fetchErr);
+      }
       setStep(7);
     } finally {
       setLoading(false);
