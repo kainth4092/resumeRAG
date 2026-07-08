@@ -13,9 +13,29 @@ import {
 } from "../../resume/services/experienceService";
 import { MONTHS } from "../../../data/experienceData";
 
+import { useAuth } from "../../auth/context/AuthContext";
+
 export default function ExperienceSection() {
-  const [experiences, setExperiences] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const experiencesKey = user?.email ? `profile_experience_${user.email}` : null;
+
+  const [experiences, setExperiences] = useState(() => {
+    if (typeof window !== "undefined" && experiencesKey) {
+      const cached = localStorage.getItem(experiencesKey);
+      try {
+        return cached ? JSON.parse(cached) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && experiencesKey) {
+      return !localStorage.getItem(experiencesKey);
+    }
+    return true;
+  });
   const [expModal, setExpModal] = useState(null);
   const [expDraft, setExpDraft] = useState({
     id: null,
@@ -32,10 +52,16 @@ export default function ExperienceSection() {
   const [expError, setExpError] = useState(null);
 
   const loadExperiences = async () => {
+    const key = user?.email ? `profile_experience_${user.email}` : null;
     try {
-      setLoading(true);
+      if (!key || !localStorage.getItem(key)) {
+        setLoading(true);
+      }
       const response = await getExperiences();
       setExperiences(response.data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(response.data));
+      }
     } catch (err) {
       console.error("Failed to load experiences", err);
     } finally {
@@ -43,11 +69,26 @@ export default function ExperienceSection() {
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadExperiences();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `profile_experience_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            setExperiences(JSON.parse(cached));
+            setLoading(false);
+          } catch (err) {
+            console.error("Failed to parse cached experience:", err);
+          }
+        }
+        loadExperiences();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const openExpModal = () => {
     setExpDraft({
@@ -102,12 +143,22 @@ export default function ExperienceSection() {
       setExpError(null);
       if (expDraft.id) {
         const response = await updateExperience(expDraft.id, payload);
-        setExperiences((prev) =>
-          prev.map((item) => (item.id === expDraft.id ? response.data : item)),
-        );
+        setExperiences((prev) => {
+          const next = prev.map((item) => (item.id === expDraft.id ? response.data : item));
+          if (experiencesKey) {
+            localStorage.setItem(experiencesKey, JSON.stringify(next));
+          }
+          return next;
+        });
       } else {
         const response = await createExperience(payload);
-        setExperiences((prev) => [...prev, response.data]);
+        setExperiences((prev) => {
+          const next = [...prev, response.data];
+          if (experiencesKey) {
+            localStorage.setItem(experiencesKey, JSON.stringify(next));
+          }
+          return next;
+        });
       }
       setExpModal(false);
     } catch (err) {
@@ -126,7 +177,13 @@ export default function ExperienceSection() {
   const removeExperience = async (id) => {
     try {
       await deleteExperience(id);
-      setExperiences((prev) => prev.filter((item) => item.id !== id));
+      setExperiences((prev) => {
+        const next = prev.filter((item) => item.id !== id);
+        if (experiencesKey) {
+          localStorage.setItem(experiencesKey, JSON.stringify(next));
+        }
+        return next;
+      });
     } catch (err) {
       console.error("Failed to delete experience", err);
     }

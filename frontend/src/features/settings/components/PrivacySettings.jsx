@@ -6,7 +6,7 @@ function Toggle({ value, onChange }) {
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative flex-shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+      className={`relative shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
         value ? "bg-primary" : "bg-muted border border-border"
       }`}
     >
@@ -36,11 +36,15 @@ export default function PrivacySettings() {
   };
 
   const handleExport = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
-      privacy,
-      settings_v: 1,
-      exported_at: new Date().toISOString()
-    }));
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(
+        JSON.stringify({
+          privacy,
+          settings_v: 1,
+          exported_at: new Date().toISOString(),
+        }),
+      );
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", "resupilot_settings_export.json");
@@ -53,7 +57,9 @@ export default function PrivacySettings() {
     <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-foreground font-bold text-sm">Privacy & Preference</h3>
+          <h3 className="text-foreground font-bold text-sm">
+            Privacy & Preference
+          </h3>
           {saved && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-fade-in">
               <Check size={13} /> Saved!
@@ -63,30 +69,45 @@ export default function PrivacySettings() {
 
         <div className="flex items-start justify-between py-3 border-b border-border">
           <div className="mr-4">
-            <p className="text-sm font-semibold text-foreground">Usage Analytics</p>
+            <p className="text-sm font-semibold text-foreground">
+              Usage Analytics
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Share anonymous click and hover analytics data to help us improve the AI models.
+              Share anonymous click and hover analytics data to help us improve
+              the AI models.
             </p>
           </div>
-          <Toggle value={privacy.shareAnalytics} onChange={(v) => handleChange("shareAnalytics", v)} />
+          <Toggle
+            value={privacy.shareAnalytics}
+            onChange={(v) => handleChange("shareAnalytics", v)}
+          />
         </div>
 
         <div className="flex items-start justify-between py-3">
           <div className="mr-4">
-            <p className="text-sm font-semibold text-foreground">AI Personalization</p>
+            <p className="text-sm font-semibold text-foreground">
+              AI Personalization
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Use job matching metadata history to customize recommended questions and resume insights.
+              Use job matching metadata history to customize recommended
+              questions and resume insights.
             </p>
           </div>
-          <Toggle value={privacy.personalizeJobs} onChange={(v) => handleChange("personalizeJobs", v)} />
+          <Toggle
+            value={privacy.personalizeJobs}
+            onChange={(v) => handleChange("personalizeJobs", v)}
+          />
         </div>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <div>
-          <h3 className="text-foreground font-bold text-sm">Data Portability</h3>
+          <h3 className="text-foreground font-bold text-sm">
+            Data Portability
+          </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Download a copy of your personal settings, resume metadata, and logs.
+            Download a copy of your personal settings, resume metadata, and
+            logs.
           </p>
         </div>
         <button
@@ -101,7 +122,8 @@ export default function PrivacySettings() {
         <div>
           <h3 className="text-destructive font-bold text-sm">Danger Zone</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Permanently remove your ResuPilot dashboard profile and settings. This cannot be undone.
+            Permanently remove your ResuPilot dashboard profile and settings.
+            This cannot be undone.
           </p>
         </div>
         <button
@@ -112,7 +134,10 @@ export default function PrivacySettings() {
         </button>
       </div>
 
-      <DeleteAccountModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <DeleteAccountModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }

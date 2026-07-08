@@ -107,7 +107,7 @@ export default function Layout() {
       `}
       >
         <Sidebar
-          collapsed={collapsed && !hoverExpanded}
+          collapsed={mobileOpen ? false : collapsed && !hoverExpanded}
           isBaseCollapsed={collapsed}
           setCollapsed={setCollapsed}
           setMobileOpen={setMobileOpen}
@@ -140,4 +140,3 @@ export default function Layout() {
     </div>
   );
 }
-

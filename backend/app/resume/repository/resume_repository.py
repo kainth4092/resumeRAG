@@ -27,7 +27,7 @@ class ResumeRepository:
     def list_resumes_desc(db: Session, user_id: int) -> list[Resume]:
         return (
             db.query(Resume)
-            .filter(Resume.user_id == user_id)
+            .filter(Resume.user_id == user_id, Resume.is_generated == True)
             .order_by(Resume.created_at.desc())
             .all()
         )

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { CheckCircle2, FileText, Loader2, Upload, X } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Upload, X, Sparkles } from "lucide-react";
 
 export default function ResumeUpload({
     uploaded,
@@ -15,7 +15,9 @@ export default function ResumeUpload({
     handleDrop,
     generated,
     setGenerated,
-    generating }) {
+    generating,
+    onImportProfile,
+    importingProfile }) {
 
     const fileRef = useRef(null);
     const [openingFileManager, setOpeningFileManager] = useState(false);
@@ -52,28 +54,49 @@ export default function ResumeUpload({
         <div className="bg-card border border-border rounded-2xl p-4 font-sans">
             <h3 className="text-sm font-bold text-foreground mb-3">Upload Resume</h3>
             {!uploaded && !uploading && !openingFileManager ? (
-                <div
-                    onDragOver={e => { e.preventDefault(); setDragging(true); }}
-                    onDragLeave={() => setDragging(false)}
-                    onDrop={handleDroppedFile}
-                    onClick={handleChooseFile}
-                    className={`border border-dashed rounded-xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/20"}`}
-                >
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${dragging ? "bg-primary/15" : "bg-muted"}`}>
-                            <Upload size={16} className={dragging ? "text-primary" : "text-muted-foreground"} />
+                <div className="space-y-3">
+                    <div
+                        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+                        onDragLeave={() => setDragging(false)}
+                        onDrop={handleDroppedFile}
+                        onClick={handleChooseFile}
+                        className={`border border-dashed rounded-xl p-4 flex items-center justify-between gap-3 cursor-pointer transition-all ${dragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/50 hover:bg-muted/20"}`}
+                    >
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${dragging ? "bg-primary/15" : "bg-muted"}`}>
+                                <Upload size={16} className={dragging ? "text-primary" : "text-muted-foreground"} />
+                            </div>
+                            <div className="min-w-0 text-left">
+                                <p className="text-xs font-semibold text-foreground">Drop or select your resume</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">PDF or DOCX format · Max 5MB</p>
+                            </div>
                         </div>
-                        <div className="min-w-0 text-left">
-                            <p className="text-xs font-semibold text-foreground">Drop or select your resume</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">PDF or DOCX format · Max 5MB</p>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handleChooseFile}
+                            className="px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-foreground bg-card hover:bg-muted hover:border-primary/30 transition-all shrink-0 cursor-pointer"
+                        >
+                            Choose File
+                        </button>
                     </div>
+
                     <button
                         type="button"
-                        onClick={handleChooseFile}
-                        className="px-3 py-1.5 rounded-lg border border-border text-xs font-bold text-foreground bg-card hover:bg-muted hover:border-primary/30 transition-all shrink-0 cursor-pointer"
+                        onClick={onImportProfile}
+                        disabled={importingProfile}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-primary/20 text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Choose File
+                        {importingProfile ? (
+                            <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Importing from profile...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles size={13} />
+                                <span>Use My Saved Profile instead</span>
+                            </>
+                        )}
                     </button>
                 </div>
             ) : openingFileManager ? (

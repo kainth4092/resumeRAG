@@ -20,6 +20,9 @@ class Resume(Base):
     skills: Mapped[str] = mapped_column(Text, nullable=True)
     analysis_results: Mapped[str] = mapped_column(Text, nullable=True)
     version: Mapped[str] = mapped_column(String(50), nullable=True, default="v1")
-    template: Mapped[str] = mapped_column(String(100), nullable=True, default="Professional")
+    template: Mapped[str] = mapped_column(
+        String(100), nullable=True, default="Professional"
+    )
+    is_generated: Mapped[bool] = mapped_column(Boolean, default=False)
+    resume_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     user = relationship("User", back_populates="resumes")
-

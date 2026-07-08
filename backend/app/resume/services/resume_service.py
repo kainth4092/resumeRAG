@@ -107,7 +107,19 @@ class ResumeService:
                 temp_path.unlink()
             raise HTTPException(status_code=500, detail="Database error occurred.")
 
-        return {"message": "Resume uploaded", "resume_id": resume.id}
+        # Check if the user has any experience entries in the database to detect first-time/empty profile.
+        from app.models.user_experience import UserExperience
+        profile_extracted = False
+        try:
+            exp_count = db.query(UserExperience).filter(UserExperience.user_id == user_id).count()
+            if exp_count == 0:
+                from app.services.profile_population_service import extract_and_populate_profile
+                extract_and_populate_profile(db, user_id, parsed_text)
+                profile_extracted = True
+        except Exception as e:
+            logger.error(f"Failed to auto-populate profile on resume upload: {e}")
+
+        return {"message": "Resume uploaded", "resume_id": resume.id, "profile_extracted": profile_extracted}
 
     @staticmethod
     def set_active_resume(
@@ -148,6 +160,7 @@ class ResumeService:
                 "analysis_results": json.loads(r.analysis_results) if r.analysis_results else None,
                 "version": r.version or "v1",
                 "template": r.template or "Professional",
+                "resume_json": json.loads(r.resume_json) if r.resume_json else None,
             }
             for r in resumes
         ]
@@ -165,3 +178,138 @@ class ResumeService:
             "title": resume.title,
             "original_filename": resume.original_filename,
         }
+
+    @staticmethod
+    def import_profile_to_resume(db: Session, user_id: int) -> dict:
+        from app.models.profile import Profile
+        from app.models.user_skill import UserSkill
+        from app.models.user_project import UserProject
+        from app.models.user_experience import UserExperience
+        from app.models.user_education import UserEducation
+
+        profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+        skills = db.query(UserSkill).filter(UserSkill.user_id == user_id).all()
+        projects = db.query(UserProject).filter(UserProject.user_id == user_id).all()
+        experiences = db.query(UserExperience).filter(UserExperience.user_id == user_id).all()
+        education = db.query(UserEducation).filter(UserEducation.user_id == user_id).all()
+
+        if not profile and not skills and not projects and not experiences and not education:
+            raise HTTPException(
+                status_code=400,
+                detail="Profile is completely empty. Please enter your profile information first."
+            )
+
+        lines = []
+        if profile:
+            lines.append(f"Name: {profile.full_name or ''}")
+            lines.append(f"Headline: {profile.headline or ''}")
+            lines.append(f"Phone: {profile.phone or ''}")
+            lines.append(f"Location: {profile.location or ''}")
+            lines.append(f"LinkedIn: {profile.linkedin_url or ''}")
+            lines.append(f"GitHub: {profile.github_url or ''}")
+            lines.append(f"Portfolio: {profile.portfolio_url or ''}")
+            lines.append(f"Summary: {profile.summary or ''}")
+            lines.append("")
+
+        if skills:
+            lines.append("Skills:")
+            lines.append(", ".join([s.skill_name for s in skills]))
+            lines.append("")
+
+        if experiences:
+            lines.append("Experience:")
+            for exp in experiences:
+                lines.append(f"Company: {exp.company}")
+                lines.append(f"Role: {exp.role}")
+                lines.append(f"Duration: {exp.start_month or ''} {exp.start_year or ''} - {exp.end_month or 'Present' if exp.currently_working else exp.end_year or ''}")
+                lines.append(f"Description: {exp.description or ''}")
+                lines.append("")
+
+        if projects:
+            lines.append("Projects:")
+            for proj in projects:
+                lines.append(f"Title: {proj.title}")
+                lines.append(f"Technologies: {proj.tech_stack or ''}")
+                lines.append(f"Description: {proj.description}")
+                if proj.github_url:
+                    lines.append(f"GitHub: {proj.github_url}")
+                if proj.live_url:
+                    lines.append(f"Live: {proj.live_url}")
+                lines.append("")
+
+        if education:
+            lines.append("Education:")
+            for edu in education:
+                lines.append(f"Institution: {edu.institution}")
+                lines.append(f"Degree: {edu.degree}")
+                lines.append(f"Duration: {edu.start_year or ''} - {edu.end_year or ''}")
+                lines.append("")
+
+        parsed_text = "\n".join(lines)
+
+        resume = Resume(
+            user_id=user_id,
+            title="Imported Profile",
+            original_filename="profile_import.txt",
+            file_path=f"profile_import_{uuid.uuid4()}.txt",
+            parsed_text=parsed_text,
+            skills=",".join([s.skill_name for s in skills]) if skills else "",
+            ats_score=75,
+            analysis_results=json.dumps({
+                "ats_score": 75,
+                "matched_keywords": [s.skill_name for s in skills][:5] if skills else [],
+                "missing_keywords": [],
+                "suggestions": ["Add more details from your experiences"],
+                "heatmap": {
+                    "contact_info": 90,
+                    "summary": 80,
+                    "skills": 80,
+                    "experience": 70,
+                    "projects": 70,
+                    "education": 80
+                }
+            })
+        )
+
+        try:
+            ResumeRepository.create_resume(db, resume)
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Database error occurred while importing profile.")
+
+        return {"message": "Profile imported successfully", "resume_id": resume.id}
+
+    @staticmethod
+    def update_resume(
+        resume_id: int,
+        payload: dict,
+        db: Session,
+        user_id: int,
+    ) -> dict:
+        resume = ResumeRepository.get_resume_by_id(db, resume_id, user_id)
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+
+        if "title" in payload:
+            resume.title = payload["title"]
+        if "template" in payload:
+            resume.template = payload["template"]
+        if "version" in payload:
+            resume.version = payload["version"]
+        if "ats_score" in payload:
+            resume.ats_score = payload["ats_score"]
+        if "resume_json" in payload:
+            resume.resume_json = json.dumps(payload["resume_json"])
+            # Update skills list based on resume_json's skills
+            skills_list = payload["resume_json"].get("skills", [])
+            if skills_list:
+                resume.skills = ",".join(skills_list)
+
+        try:
+            db.commit()
+            db.refresh(resume)
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Failed to update resume.")
+
+        return {"message": "Resume updated successfully", "resume_id": resume.id}

@@ -64,6 +64,8 @@ export function ResumeGenerator({ onBack }) {
     handleAnalyze,
     handleGenerate,
     handleSwitchTemplate,
+    importingProfile,
+    handleImportProfile,
   } = useResumeGenerator();
 
   const normalizeResumeForPreview = (r) => {
@@ -288,6 +290,8 @@ export function ResumeGenerator({ onBack }) {
                 generated={generated}
                 setGenerated={setGenerated}
                 generating={generating}
+                onImportProfile={handleImportProfile}
+                importingProfile={importingProfile}
               />
               <JobDescription
                 jd={jd}
@@ -444,7 +448,7 @@ export function ResumeGenerator({ onBack }) {
                           state: {
                             resume: {
                               ...generatedResume,
-                              id: resume?.resume_id,
+                              id: generatedResume.id || resume?.resume_id,
                               score: analysis?.ats_score,
                             },
                           },

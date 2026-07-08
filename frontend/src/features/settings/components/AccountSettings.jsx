@@ -38,13 +38,15 @@ export default function AccountSettings() {
 
   useEffect(() => {
     if (user) {
-      setAccount({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.profile?.phone || "",
-        location: user.profile?.location || "",
-        headline: user.profile?.headline || "",
-        timezone: localStorage.getItem("resupilot_timezone") || "America/Los_Angeles",
+      Promise.resolve().then(() => {
+        setAccount({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.profile?.phone || "",
+          location: user.profile?.location || "",
+          headline: user.profile?.headline || "",
+          timezone: localStorage.getItem("resupilot_timezone") || "America/Los_Angeles",
+        });
       });
     }
   }, [user]);

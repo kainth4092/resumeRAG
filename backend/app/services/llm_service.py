@@ -289,6 +289,21 @@ def normalize_health_response(result: dict) -> dict:
             except (ValueError, TypeError):
                 result[field] = 70
 
+    if "summary" not in result:
+        result["summary"] = ""
+    else:
+        result["summary"] = str(result["summary"])
+
+    if "formatting_status" not in result:
+        result["formatting_status"] = "Standard Passed"
+    else:
+        result["formatting_status"] = str(result["formatting_status"])
+
+    if "grammar_status" not in result:
+        result["grammar_status"] = "Clean"
+    else:
+        result["grammar_status"] = str(result["grammar_status"])
+
     if "suggestions" not in result or not isinstance(result["suggestions"], dict):
         result["suggestions"] = {}
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { estimatePageCount } from "../../../utils/resumeUtils";
+import { updateResume } from "../services/resumeService";
 
 export function useResumeEditor() {
   const navigate = useNavigate();
@@ -282,6 +283,22 @@ export function useResumeEditor() {
         savedList.push(resumeEntry);
       }
       localStorage.setItem(resumesKey, JSON.stringify(savedList));
+
+      const numericId = parseInt(resumeId, 10);
+      if (!isNaN(numericId)) {
+        try {
+          await updateResume(numericId, {
+            title: resumeEntry.title,
+            template: resumeEntry.template,
+            version: resumeEntry.version,
+            ats_score: resumeEntry.score,
+            resume_json: newResumeObj,
+          });
+        } catch (err) {
+          console.error("Failed to sync resume save to backend:", err);
+        }
+      }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {

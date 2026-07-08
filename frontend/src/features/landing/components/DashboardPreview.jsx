@@ -25,7 +25,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
   return (
     <div className="relative">
       {/* Glow effects */}
-      <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-teal-500/15 to-indigo-500/20 rounded-3xl blur-2xl dark:from-indigo-550/10 dark:via-teal-550/5 dark:to-indigo-550/10 pointer-events-none" />
+      <div className="absolute -inset-4 bg-linear-to-r from-indigo-500/20 via-teal-500/15 to-indigo-500/20 rounded-3xl blur-2xl dark:from-indigo-550/10 dark:via-teal-550/5 dark:to-indigo-550/10 pointer-events-none" />
 
       {/* Main preview window */}
       <div
@@ -47,9 +47,9 @@ export default function DashboardPreview({ onTriggerAuth }) {
         {/* Dashboard content */}
         <div className="flex" style={{ height: 380 }}>
           {/* Mini sidebar */}
-          <div className="w-[120px] bg-white dark:bg-slate-950/60 border-r border-slate-100 dark:border-slate-850 flex flex-col py-3 px-2 flex-shrink-0">
+          <div className="w-[120px] bg-white dark:bg-slate-950/60 border-r border-slate-100 dark:border-slate-850 flex flex-col py-3 px-2 shrink-0">
             <div className="flex items-center gap-1.5 px-1 mb-4">
-              <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center shrink-0">
                 <Zap size={10} className="text-white" />
               </div>
               <span className="text-[9px] font-bold text-slate-800 dark:text-white">
@@ -73,7 +73,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
                 }`}
               >
                 <div
-                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                     item.active
                       ? "bg-indigo-600 dark:bg-indigo-400"
                       : "bg-slate-300 dark:bg-slate-700"
@@ -224,7 +224,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
                     className="w-full flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-900/50 p-1 rounded transition-colors text-left cursor-pointer"
                   >
                     <div
-                      className="w-4 h-4 rounded-md flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0"
+                      className="w-4 h-4 rounded-md flex items-center justify-center text-white text-[7px] font-bold shrink-0"
                       style={{ backgroundColor: j.color }}
                     >
                       {j.co[0]}
@@ -249,7 +249,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
         className="absolute -left-8 top-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg px-3 py-2.5 flex items-center gap-2.5 animate-bounce text-left cursor-pointer hover:scale-105 transition-transform"
         style={{ animationDuration: "3s" }}
       >
-        <div className="w-7 h-7 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
           <CheckCircle2 size={14} className="text-white" />
         </div>
         <div>
@@ -267,7 +267,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
         className="absolute -right-6 bottom-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg px-3 py-2.5 flex items-center gap-2.5 animate-bounce text-left cursor-pointer hover:scale-105 transition-transform"
         style={{ animationDuration: "3.5s", animationDelay: "0.5s" }}
       >
-        <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
           <Sparkles size={14} className="text-white" />
         </div>
         <div>
@@ -285,7 +285,7 @@ export default function DashboardPreview({ onTriggerAuth }) {
         className="absolute -right-4 top-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg px-3 py-2.5 flex items-center gap-2.5 animate-bounce text-left cursor-pointer hover:scale-105 transition-transform"
         style={{ animationDuration: "4s", animationDelay: "1s" }}
       >
-        <div className="w-7 h-7 rounded-xl bg-teal-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-xl bg-teal-500 flex items-center justify-center shrink-0">
           <TrendingUp size={14} className="text-white" />
         </div>
         <div>

@@ -30,7 +30,6 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Cache GET requests
   if (
     config.method?.toLowerCase() === "get" &&
     !config.url?.includes("/auth/me")
@@ -63,6 +62,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     const config = response.config;
+    const method = config.method?.toLowerCase();
+
+    // Clear GET cache when a mutating request (POST, PUT, DELETE, PATCH) is successful
+    if (method && ["post", "put", "delete", "patch"].includes(method)) {
+      getCache.clear();
+      inFlightRequests.clear();
+    }
+
     if (
       config.method?.toLowerCase() === "get" &&
       config.cacheKey &&

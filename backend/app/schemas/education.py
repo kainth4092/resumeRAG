@@ -25,7 +25,11 @@ class EducationCreate(BaseModel):
         return value
 
 
-class EducationResponse(EducationCreate):
+class EducationResponse(BaseModel):
     id: int
+    institution: str
+    degree: str
+    start_year: int | None = None
+    end_year: int | None = None
 
     model_config = ConfigDict(from_attributes=True)

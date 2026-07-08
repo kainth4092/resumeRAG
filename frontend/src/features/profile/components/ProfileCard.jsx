@@ -10,23 +10,56 @@ import { useAuth } from "../../auth/context/AuthContext";
 
 export default function ProfileCard({ setProfileSaved }) {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [profileDraft, setProfileDraft] = useState(null);
+  const profileKey = user?.email ? `profile_data_${user.email}` : null;
 
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(() => {
+    if (typeof window !== "undefined" && profileKey) {
+      const cached = localStorage.getItem(profileKey);
+      try {
+        return cached ? JSON.parse(cached) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [profileDraft, setProfileDraft] = useState(() => {
+    if (typeof window !== "undefined" && profileKey) {
+      const cached = localStorage.getItem(profileKey);
+      try {
+        return cached ? JSON.parse(cached) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && profileKey) {
+      return !localStorage.getItem(profileKey);
+    }
+    return true;
+  });
   const [error, setError] = useState("");
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
 
   const loadProfile = async () => {
+    const key = user?.email ? `profile_data_${user.email}` : null;
     try {
-      setLoading(true);
+      if (!key || !localStorage.getItem(key)) {
+        setLoading(true);
+      }
 
       const response = await getProfile();
 
       setProfile(response.data);
       setProfileDraft(response.data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(response.data));
+      }
     } catch (err) {
       if (err.response?.status === 404) {
         const emptyProfile = {
@@ -59,11 +92,28 @@ export default function ProfileCard({ setProfileSaved }) {
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadProfile();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `profile_data_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setProfile(parsed);
+            setProfileDraft(parsed);
+            setLoading(false);
+          } catch (err) {
+            console.error("Failed to parse cached profile:", err);
+          }
+        }
+        loadProfile();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const saveProfile = async () => {
     try {

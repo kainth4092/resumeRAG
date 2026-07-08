@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadResume } from "../services/resumeService";
+import { uploadResume, importProfileToResume, updateResume } from "../services/resumeService";
 import { analyzeResume, generateResume } from "../services/generatorService";
 import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
@@ -9,6 +9,7 @@ import { useAuth } from "../../auth/context/AuthContext";
 export function useResumeGenerator() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
   const lastResumeIdKey = user?.email
     ? `last_resume_id_${user.email}`
     : "last_resume_id";
@@ -16,20 +17,77 @@ export function useResumeGenerator() {
     ? `last_job_description_${user.email}`
     : "last_job_description";
 
-  const [resume, setResume] = useState(null);
-  const [uploaded, setUploaded] = useState(false);
+  const resumeKey = user?.email ? `resume_${user.email}` : "resume";
+  const uploadedKey = user?.email ? `uploaded_${user.email}` : "uploaded";
+  const fileNameGenKey = user?.email
+    ? `file_name_gen_${user.email}`
+    : "file_name_gen";
+  const fileSizeGenKey = user?.email
+    ? `file_size_gen_${user.email}`
+    : "file_size_gen";
+  const jdKey = user?.email ? `jd_${user.email}` : "jd";
+  const analysisKey = user?.email ? `analysis_${user.email}` : "analysis";
+  const generatedKey = user?.email ? `generated_${user.email}` : "generated";
+  const generatedResumeKey = user?.email
+    ? `generated_resume_${user.email}`
+    : "generated_resume";
+
+  const [resume, setResume] = useState(() => {
+    try {
+      const saved = localStorage.getItem(resumeKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [uploaded, setUploaded] = useState(() => {
+    return localStorage.getItem(uploadedKey) === "true";
+  });
+
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [fileName, setFileName] = useState("");
-  const [fileSize, setFileSize] = useState("");
-  const [jd, setJd] = useState("");
-  const [analysis, setAnalysis] = useState(null);
+
+  const [fileName, setFileName] = useState(() => {
+    return localStorage.getItem(fileNameGenKey) || "";
+  });
+
+  const [fileSize, setFileSize] = useState(() => {
+    return localStorage.getItem(fileSizeGenKey) || "";
+  });
+
+  const [jd, setJd] = useState(() => {
+    return localStorage.getItem(jdKey) || "";
+  });
+
+  const [analysis, setAnalysis] = useState(() => {
+    try {
+      const saved = localStorage.getItem(analysisKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [analyzing, setAnalyzing] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
-  const [generatedResume, setGeneratedResume] = useState(null);
+
+  const [generated, setGenerated] = useState(() => {
+    return localStorage.getItem(generatedKey) === "true";
+  });
+
+  const [generatedResume, setGeneratedResume] = useState(() => {
+    try {
+      const saved = localStorage.getItem(generatedResumeKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [generatorError, setGeneratorError] = useState(null);
+  const [importingProfile, setImportingProfile] = useState(false);
 
   const [selectedTemplateName, setSelectedTemplateName] =
     useState("Professional");
@@ -42,7 +100,103 @@ export function useResumeGenerator() {
   const [interviewState, setInterviewState] = useState("idle");
   const [interviewSessionId, setInterviewSessionId] = useState(null);
   const [currentInterviewStep, setCurrentInterviewStep] = useState("");
+
+  useEffect(() => {
+    if (resume) {
+      localStorage.setItem(resumeKey, JSON.stringify(resume));
+    } else {
+      localStorage.removeItem(resumeKey);
+    }
+  }, [resume, resumeKey]);
+
+  useEffect(() => {
+    localStorage.setItem(uploadedKey, String(uploaded));
+  }, [uploaded, uploadedKey]);
+
+  useEffect(() => {
+    localStorage.setItem(fileNameGenKey, fileName);
+  }, [fileName, fileNameGenKey]);
+
+  useEffect(() => {
+    localStorage.setItem(fileSizeGenKey, fileSize);
+  }, [fileSize, fileSizeGenKey]);
+
+  useEffect(() => {
+    localStorage.setItem(jdKey, jd);
+  }, [jd, jdKey]);
+
+  useEffect(() => {
+    if (analysis) {
+      localStorage.setItem(analysisKey, JSON.stringify(analysis));
+    } else {
+      localStorage.removeItem(analysisKey);
+    }
+  }, [analysis, analysisKey]);
+
+  useEffect(() => {
+    localStorage.setItem(generatedKey, String(generated));
+  }, [generated, generatedKey]);
+
+  useEffect(() => {
+    if (generatedResume) {
+      localStorage.setItem(generatedResumeKey, JSON.stringify(generatedResume));
+    } else {
+      localStorage.removeItem(generatedResumeKey);
+    }
+  }, [generatedResume, generatedResumeKey]);
+
+  useEffect(() => {
+    if (resume) {
+      const lastVersionKey = `resume_version_${user?.email || "default"}`;
+      const lastVersion = localStorage.getItem(lastVersionKey);
+      if (lastVersion && lastVersion !== resume.version) {
+        Promise.resolve().then(() => {
+          setAnalysis(null);
+          setGenerated(false);
+          setGeneratedResume(null);
+        });
+      }
+      localStorage.setItem(lastVersionKey, resume.version || "v1");
+    } else {
+      localStorage.removeItem(`resume_version_${user?.email || "default"}`);
+    }
+  }, [resume, user]);
   const [saveMessage, setSaveMessage] = useState("");
+
+  const handleImportProfile = async () => {
+    try {
+      setImportingProfile(true);
+      setGeneratorError(null);
+
+      const response = await importProfileToResume();
+      if (response.data) {
+        const enrichedResume = {
+          id: response.data.resume_id || response.data.id,
+          resume_id: response.data.resume_id || response.data.id,
+          title: "Imported Profile",
+          original_filename: "profile_import.txt",
+          ...response.data,
+        };
+        setResume(enrichedResume);
+        if (enrichedResume.resume_id) {
+          localStorage.setItem(lastResumeIdKey, enrichedResume.resume_id);
+        }
+      }
+      setUploaded(true);
+      setAnalysis(null);
+      setFileName("Profile Import");
+      setFileSize("0.05");
+      setUploadProgress(100);
+    } catch (err) {
+      console.error("Import profile failed", err);
+      setGeneratorError(
+        err.response?.data?.detail ||
+          "Failed to import from your profile. Make sure your profile has some details filled.",
+      );
+    } finally {
+      setImportingProfile(false);
+    }
+  };
 
   const handleUpload = async (file) => {
     try {
@@ -54,9 +208,18 @@ export function useResumeGenerator() {
       formData.append("file", file);
       const response = await uploadResume(formData);
 
-      setResume(response.data);
-      if (response.data?.resume_id) {
-        localStorage.setItem(lastResumeIdKey, response.data.resume_id);
+      if (response.data) {
+        const enrichedResume = {
+          id: response.data.resume_id || response.data.id,
+          resume_id: response.data.resume_id || response.data.id,
+          title: file.name,
+          original_filename: file.name,
+          ...response.data,
+        };
+        setResume(enrichedResume);
+        if (enrichedResume.resume_id) {
+          localStorage.setItem(lastResumeIdKey, enrichedResume.resume_id);
+        }
       }
       setUploaded(true);
       setAnalysis(null);
@@ -175,16 +338,22 @@ export function useResumeGenerator() {
         resume_id: resume.resume_id,
         job_description: jd,
       });
-      const r = response.data.resume;
+      const r = {
+        ...response.data.resume,
+        id: response.data.resume_id || resume?.resume_id || Date.now().toString(),
+        resume_id: response.data.resume_id || resume?.resume_id || Date.now().toString(),
+      };
       setGeneratedResume(r);
       setGenerated(true);
+      localStorage.setItem(generatedKey, "true");
+      localStorage.setItem(generatedResumeKey, JSON.stringify(r));
       setResumeState("completed");
       setActiveTemplate(templateName);
 
       const resumesKey = user?.email
         ? `saved_resumes_${user.email}`
         : "saved_resumes";
-      const resumeId = resume?.resume_id || Date.now().toString();
+      const resumeId = r.id;
       const resumeEntry = {
         id: parseInt(resumeId, 10) || resumeId,
         title: r.personal_info?.name
@@ -221,7 +390,7 @@ export function useResumeGenerator() {
       }
       localStorage.setItem(resumesKey, JSON.stringify(savedList));
       setSaveMessage("Resume saved automatically!");
-      runBackgroundInterviewGeneration(resume.resume_id, jd);
+      runBackgroundInterviewGeneration(resumeId, jd);
     } catch (err) {
       console.error("Generation failed", err);
       setResumeState("failed");
@@ -250,6 +419,14 @@ export function useResumeGenerator() {
       return item;
     });
     localStorage.setItem(resumesKey, JSON.stringify(updated));
+
+    const numericId = parseInt(resumeId, 10);
+    if (!isNaN(numericId)) {
+      updateResume(numericId, { template: newTemplate }).catch((err) =>
+        console.error("Failed to sync template change to backend:", err),
+      );
+    }
+
     setSaveMessage("Template switched!");
     setTimeout(() => setSaveMessage(""), 2000);
   };
@@ -299,5 +476,7 @@ export function useResumeGenerator() {
     handleAnalyze,
     handleGenerate,
     handleSwitchTemplate,
+    importingProfile,
+    handleImportProfile,
   };
 }

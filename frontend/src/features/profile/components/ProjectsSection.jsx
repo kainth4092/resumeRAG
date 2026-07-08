@@ -10,10 +10,29 @@ import {
   getProject,
   updateProject,
 } from "../../resume/services/projectService";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function ProjectSection() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const projectsKey = user?.email ? `profile_projects_${user.email}` : null;
+
+  const [projects, setProjects] = useState(() => {
+    if (typeof window !== "undefined" && projectsKey) {
+      const cached = localStorage.getItem(projectsKey);
+      try {
+        return cached ? JSON.parse(cached) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && projectsKey) {
+      return !localStorage.getItem(projectsKey);
+    }
+    return true;
+  });
   const [projModal, setProjModal] = useState(null);
   const [projDraft, setProjDraft] = useState({
     id: null,
@@ -27,10 +46,16 @@ export default function ProjectSection() {
   const [projError, setProjError] = useState(null);
 
   const loadProjects = async () => {
+    const key = user?.email ? `profile_projects_${user.email}` : null;
     try {
-      setLoading(true);
+      if (!key || !localStorage.getItem(key)) {
+        setLoading(true);
+      }
       const response = await getProject();
       setProjects(response.data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(response.data));
+      }
     } catch (err) {
       console.error("Failed to load project", err);
     } finally {
@@ -38,11 +63,26 @@ export default function ProjectSection() {
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadProjects();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `profile_projects_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            setProjects(JSON.parse(cached));
+            setLoading(false);
+          } catch (err) {
+            console.error("Failed to parse cached projects:", err);
+          }
+        }
+        loadProjects();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const openProjModal = () => {
     setProjDraft({
@@ -83,12 +123,22 @@ export default function ProjectSection() {
       setProjError(null);
       if (projDraft.id) {
         const response = await updateProject(projDraft.id, payload);
-        setProjects((prev) =>
-          prev.map((item) => (item.id === projDraft.id ? response.data : item)),
-        );
+        setProjects((prev) => {
+          const next = prev.map((item) => (item.id === projDraft.id ? response.data : item));
+          if (projectsKey) {
+            localStorage.setItem(projectsKey, JSON.stringify(next));
+          }
+          return next;
+        });
       } else {
         const response = await createProject(payload);
-        setProjects((prev) => [...prev, response.data]);
+        setProjects((prev) => {
+          const next = [...prev, response.data];
+          if (projectsKey) {
+            localStorage.setItem(projectsKey, JSON.stringify(next));
+          }
+          return next;
+        });
       }
       setProjModal(false);
     } catch (err) {
@@ -107,7 +157,13 @@ export default function ProjectSection() {
   const removeProject = async (id) => {
     try {
       await deleteProject(id);
-      setProjects((prev) => prev.filter((item) => item.id !== id));
+      setProjects((prev) => {
+        const next = prev.filter((item) => item.id !== id);
+        if (projectsKey) {
+          localStorage.setItem(projectsKey, JSON.stringify(next));
+        }
+        return next;
+      });
     } catch (err) {
       console.error("Failed to delete project", err);
     }
@@ -123,7 +179,7 @@ export default function ProjectSection() {
       >
         {loading ? (
           <div className="py-4 text-sm text-muted-foreground">
-            Loading education...
+            Loading projects...
           </div>
         ) : projects.length === 0 ? (
           <div className="py-8 text-center">

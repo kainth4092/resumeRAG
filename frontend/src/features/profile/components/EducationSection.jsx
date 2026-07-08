@@ -10,10 +10,29 @@ import {
   getEducation,
   updateEducation,
 } from "../../resume/services/educationService";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function EducationSection() {
-  const [education, setEducation] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const educationKey = user?.email ? `profile_education_${user.email}` : null;
+
+  const [education, setEducation] = useState(() => {
+    if (typeof window !== "undefined" && educationKey) {
+      const cached = localStorage.getItem(educationKey);
+      try {
+        return cached ? JSON.parse(cached) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && educationKey) {
+      return !localStorage.getItem(educationKey);
+    }
+    return true;
+  });
   const [eduModal, setEduModal] = useState(null);
   const [eduDraft, setEduDraft] = useState({
     id: null,
@@ -26,10 +45,16 @@ export default function EducationSection() {
   const [eduError, setEduError] = useState(null);
 
   const loadEducations = async () => {
+    const key = user?.email ? `profile_education_${user.email}` : null;
     try {
-      setLoading(true);
+      if (!key || !localStorage.getItem(key)) {
+        setLoading(true);
+      }
       const response = await getEducation();
       setEducation(response.data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(response.data));
+      }
     } catch (err) {
       console.error("Failed to load education", err);
     } finally {
@@ -37,11 +62,26 @@ export default function EducationSection() {
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadEducations();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `profile_education_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            setEducation(JSON.parse(cached));
+            setLoading(false);
+          } catch (err) {
+            console.error("Failed to parse cached education:", err);
+          }
+        }
+        loadEducations();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const openEduModal = () => {
     setEduDraft({
@@ -79,12 +119,22 @@ export default function EducationSection() {
       setEduError(null);
       if (eduDraft.id) {
         const response = await updateEducation(eduDraft.id, payload);
-        setEducation((prev) =>
-          prev.map((item) => (item.id === eduDraft.id ? response.data : item)),
-        );
+        setEducation((prev) => {
+          const next = prev.map((item) => (item.id === eduDraft.id ? response.data : item));
+          if (educationKey) {
+            localStorage.setItem(educationKey, JSON.stringify(next));
+          }
+          return next;
+        });
       } else {
         const response = await createEducation(payload);
-        setEducation((prev) => [...prev, response.data]);
+        setEducation((prev) => {
+          const next = [...prev, response.data];
+          if (educationKey) {
+            localStorage.setItem(educationKey, JSON.stringify(next));
+          }
+          return next;
+        });
       }
       setEduModal(false);
     } catch (err) {
@@ -103,7 +153,13 @@ export default function EducationSection() {
   const removeEducation = async (id) => {
     try {
       await deleteEducation(id);
-      setEducation((prev) => prev.filter((item) => item.id !== id));
+      setEducation((prev) => {
+        const next = prev.filter((item) => item.id !== id);
+        if (educationKey) {
+          localStorage.setItem(educationKey, JSON.stringify(next));
+        }
+        return next;
+      });
     } catch (err) {
       console.error("Failed to delete education", err);
     }

@@ -125,15 +125,20 @@ export default function JobsPage() {
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-foreground text-3xl font-bold tracking-tight">
-              Job Tracker
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Discover jobs, generate tailored resumes, and manage all your
-              applications in one place.
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm shrink-0">
+              <Briefcase className="text-primary" size={20} />
+            </div>
+            <div>
+              <h1 className="text-foreground text-xl sm:text-xl font-bold tracking-tight">
+                Job Tracker
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-xl">
+                Discover jobs, generate tailored resumes, and manage all your
+                applications in one place.
+              </p>
+            </div>
           </div>
           {tab === "applications" && (
             <div className="flex items-center gap-2 shrink-0">

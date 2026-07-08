@@ -74,6 +74,8 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     resume: GeneratedResume = Field(default_factory=GeneratedResume)
+    resume_id: int | None = None
+
 
 
 class AnalyzeHealthRequest(BaseModel):

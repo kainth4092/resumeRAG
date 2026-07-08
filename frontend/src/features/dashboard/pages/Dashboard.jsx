@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { MoreHorizontal, AlertTriangle } from "lucide-react";
 import DashboardHeader from "../components/DashboardHeader";
-import StatsRow from "../components/StatsRow";
 import ResumeHealth from "../components/ResumeHealth";
 import ActivityFeed from "../components/ActivityFeed";
 import AISuggestions from "../components/AISuggestions";
@@ -13,35 +12,83 @@ import RecruiterSimulation from "../components/RecruiterSimulation";
 import DashboardSkeleton from "../../../components/loading/DashboardSkeleton";
 import { dashboardService } from "../services/dashboardService";
 import { mapApiActivities } from "../data/dashboardData";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const cacheKey = user?.email ? `dashboard_data_${user.email}` : null;
+
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && cacheKey) {
+      const cached = localStorage.getItem(cacheKey);
+      return !cached;
+    }
+    return true;
+  });
   const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(() => {
+    if (typeof window !== "undefined" && cacheKey) {
+      const cached = localStorage.getItem(cacheKey);
+      try {
+        return cached ? JSON.parse(cached) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const loadDashboardData = async (isRefresh = false) => {
-    if (!isRefresh) setLoading(true);
+    const key = user?.email ? `dashboard_data_${user.email}` : null;
+    if (!isRefresh && (!key || !localStorage.getItem(key))) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const localHour = new Date().getHours();
-      const data = await dashboardService.getDashboardData(localHour, isRefresh);
+      const data = await dashboardService.getDashboardData(
+        localHour,
+        isRefresh,
+      );
       setDashboardData(data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
     } catch (e) {
       console.error("Failed to load dashboard statistics:", e);
-      setError(
-        e.response?.data?.detail ||
-          e.message ||
-          "Failed to load dashboard statistics."
-      );
+      if (!dashboardData) {
+        setError(
+          e.response?.data?.detail ||
+            e.message ||
+            "Failed to load dashboard statistics.",
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `dashboard_data_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            setDashboardData(JSON.parse(cached));
+            setLoading(false);
+          } catch (err) {
+            console.error("Failed to parse cached dashboard data:", err);
+          }
+        }
+        loadDashboardData();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -99,7 +146,7 @@ export default function Dashboard() {
   const deltaText = getImprovementDelta();
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto ">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Welcome Banner */}
         <DashboardHeader
@@ -109,15 +156,14 @@ export default function Dashboard() {
           stats={dashboardData}
         />
 
-        {/* Stats Grid */}
-        <StatsRow data={dashboardData} />
-
         {/* First Row Grid: ATS Trend and Resume Health */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-sm font-bold text-foreground">ATS Score Trend</h3>
+                <h3 className="text-sm font-bold text-foreground">
+                  ATS Score Trend
+                </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {trend.length <= 1
                     ? "Historical progress"

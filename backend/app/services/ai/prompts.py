@@ -252,6 +252,10 @@ def get_resume_health_prompt(resume_text: str) -> str:
       "section_completeness": 0,   
       "recruiter_readiness": 0,     
       
+      "summary": "2-3 sentence overall diagnostic review of the resume health.",
+      "formatting_status": "Brief 1-3 word formatting evaluation (e.g. Standard Passed, Layout Issues)",
+      "grammar_status": "Brief 1-3 word grammar evaluation (e.g. Clean, Actions Needed)",
+
       "suggestions": {{
         "quick_fixes": [],          
         "medium_improvements": [],   

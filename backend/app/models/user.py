@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.user_project import UserProject
     from app.models.user_education import UserEducation
     from app.models.user_experience import UserExperience
+    from app.models.user_roadmap import UserRoadmap
 
 
 class User(Base):
@@ -26,7 +27,9 @@ class User(Base):
         index=True,
     )
     password_hash: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    provider: Mapped[str | None] = mapped_column(String(50), nullable=True, default="local")
+    provider: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, default="local"
+    )
     provider_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     is_active: Mapped[bool] = mapped_column(
@@ -37,7 +40,9 @@ class User(Base):
     profile: Mapped["Profile"] = relationship(
         "Profile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    skills: Mapped[list["UserSkill"]] = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
+    skills: Mapped[list["UserSkill"]] = relationship(
+        "UserSkill", back_populates="user", cascade="all, delete-orphan"
+    )
     projects: Mapped[list["UserProject"]] = relationship(
         "UserProject", back_populates="user", cascade="all, delete-orphan"
     )
@@ -47,4 +52,12 @@ class User(Base):
     experiences: Mapped[list["UserExperience"]] = relationship(
         "UserExperience", back_populates="user", cascade="all, delete-orphan"
     )
-    resumes: Mapped[list["Resume"]] = relationship("Resume", back_populates="user", cascade="all, delete-orphan")
+    resumes: Mapped[list["Resume"]] = relationship(
+        "Resume", back_populates="user", cascade="all, delete-orphan"
+    )
+    roadmap: Mapped["UserRoadmap"] = relationship(
+        "UserRoadmap",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

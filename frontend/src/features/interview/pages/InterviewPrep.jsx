@@ -68,7 +68,7 @@ export default function InterviewPrep() {
   return (
     <div className="min-h-screen bg-background pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
               <BrainCircuit className="text-primary" size={20} />
@@ -77,7 +77,7 @@ export default function InterviewPrep() {
               <h1 className="text-xl font-bold text-foreground tracking-tight">
                 Interview Prep
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 Master role-specific questions and technical concepts.
               </p>
             </div>

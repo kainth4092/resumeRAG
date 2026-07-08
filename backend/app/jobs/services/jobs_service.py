@@ -8,6 +8,63 @@ from app.jobs.services.jsearch_service import JSearchService
 
 logger = logging.getLogger(__name__)
 
+
+def clean_headline_for_job_search(headline: str) -> str:
+    if not headline:
+        return ""
+    h = headline.lower()
+    
+    # Remove common experience / level prefixes, suffixes or parentheticals
+    patterns_to_remove = [
+        r'\bentry[- ]level\b',
+        r'\bmid[- ]level\b',
+        r'\bco-op\b',
+        r'\binternship\b',
+        r'\bintern\b',
+        r'\bjunior\b',
+        r'\bmid\b',
+        r'\bsenior\b',
+        r'\blead\b',
+        r'\bprincipal\b',
+        r'\bexperience\b',
+        r'\bexp\b',
+        r'\byears\b',
+        r'\byear\b',
+        r'\byoe\b',
+        r'\d+\+?\s*(yrs|years|yr|yoe|exp)?',
+        r'\bwith\b',
+        r'\bat\b',
+        r'\bseeking\b',
+        r'\blooking for\b',
+        r'\bprofessional\b',
+        r'\baspirant\b',
+        r'\baspiring\b',
+        r'\bopen to\b',
+        r'\bopportunities\b',
+    ]
+    
+    for pattern in patterns_to_remove:
+        h = re.sub(pattern, ' ', h)
+        
+    # Replace common separators/special chars with spaces
+    h = re.sub(r'[|,\-/•()\[\]:;]', ' ', h)
+    
+    # Collapse multiple spaces and strip
+    words = [w.strip() for w in h.split() if w.strip()]
+    cleaned = " ".join(words).title().strip()
+    return cleaned
+
+
+def clean_skill_for_search(skill: str) -> str:
+    if not skill:
+        return ""
+    # Remove anything inside parentheses, e.g. "JavaScript (ES6+)" -> "JavaScript"
+    s = re.sub(r'\(.*?\)', '', skill)
+    # Remove trailing/leading special characters except # or + (for C# / C++)
+    s = re.sub(r'[^\w\s#+.]', ' ', s)
+    return " ".join(s.split()).strip()
+
+
 class JobsService:
     @staticmethod
     async def get_recommended_jobs(
@@ -93,9 +150,16 @@ class JobsService:
                 if extracted:
                     skills = extracted
 
+        # Clean headline and skills to ensure a clean, general job search query
+        if headline:
+            headline = clean_headline_for_job_search(headline)
         if not headline:
-            headline = "Full Stack Developer"
-        if not skills:
+            headline = "Software Engineer"
+
+        if skills:
+            skills = [clean_skill_for_search(s) for s in skills]
+            skills = [s for s in skills if s]
+        else:
             skills = ["React", "Node.js", "Python", "SQL"]
 
         query = ResumeQueryBuilder.build_query(headline=headline, skills=skills)

@@ -34,9 +34,42 @@ def list_resumes(
     return ResumeService.list_resumes(db, current_user.id)
 
 
+from pydantic import BaseModel
+
+class ResumeUpdateSchema(BaseModel):
+    title: str | None = None
+    template: str | None = None
+    version: str | None = None
+    ats_score: int | None = None
+    resume_json: dict | None = None
+
+
 @router.get("/active")
 def get_active_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     return ResumeService.get_active_resume(db, current_user.id)
+
+
+@router.post("/import-profile")
+def import_profile_to_resume(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.import_profile_to_resume(db, current_user.id)
+
+
+@router.put("/{resume_id}")
+def update_resume(
+    resume_id: int,
+    payload: ResumeUpdateSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.update_resume(
+        resume_id,
+        payload.dict(exclude_unset=True),
+        db,
+        current_user.id
+    )

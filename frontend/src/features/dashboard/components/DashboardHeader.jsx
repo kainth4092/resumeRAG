@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { RefreshCw, Zap, MessageSquare, Briefcase, Map } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/context/AuthContext";
@@ -11,17 +11,15 @@ export default function DashboardHeader({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [currentDate, setCurrentDate] = useState("");
-
-  useEffect(() => {
+  const [currentDate] = useState(() => {
     const options = {
       weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
     };
-    setCurrentDate(new Date().toLocaleDateString("en-US", options));
-  }, []);
+    return new Date().toLocaleDateString("en-US", options);
+  });
 
   const quickActions = [
     {
@@ -34,18 +32,20 @@ export default function DashboardHeader({
     {
       icon: MessageSquare,
       label: "Interview Prep",
-      desc: stats?.stats_summary?.interviews_count !== undefined 
-        ? `${stats.stats_summary.interviews_count} practice sessions`
-        : "Start practicing",
+      desc:
+        stats?.stats_summary?.interviews_count !== undefined
+          ? `${stats.stats_summary.interviews_count} practice sessions`
+          : "Start practicing",
       color: "bg-violet-600",
       page: "/interview",
     },
     {
       icon: Briefcase,
       label: "Find Jobs",
-      desc: stats?.stats_summary?.jobs_count !== undefined
-        ? `${stats.stats_summary.jobs_count} tracked jobs`
-        : "Explore target roles",
+      desc:
+        stats?.stats_summary?.jobs_count !== undefined
+          ? `${stats.stats_summary.jobs_count} tracked jobs`
+          : "Explore target roles",
       color: "bg-teal-600",
       page: "/tracker",
     },
@@ -54,7 +54,7 @@ export default function DashboardHeader({
       label: "Career Roadmap",
       desc: "Optimize match skills",
       color: "bg-amber-600",
-      page: "/analysis",
+      page: "/roadmap",
     },
   ];
 
@@ -62,8 +62,7 @@ export default function DashboardHeader({
   const displayGreeting = greeting || `Good morning, ${firstName} 👋`;
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary via-indigo-700 to-indigo-900 rounded-2xl px-7 py-6 shadow-md">
-      {/* Background decorations */}
+    <div className="relative overflow-hidden bg-linear-to-br from-primary via-indigo-700 to-indigo-900 rounded-2xl px-7 py-6 shadow-md">
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       <div className="absolute bottom-0 left-24 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 pointer-events-none" />
 
@@ -78,15 +77,26 @@ export default function DashboardHeader({
           <p className="text-indigo-200 mt-1.5 text-sm max-w-md font-medium leading-relaxed">
             {stats?.stats_summary?.ats_score > 0 ? (
               <>
-                Your active ATS score is <strong className="text-white">{stats.stats_summary.ats_score}/100</strong> ({stats.stats_summary.ats_trend}).
+                Your active ATS score is{" "}
+                <strong className="text-white">
+                  {stats.stats_summary.ats_score}/100
+                </strong>{" "}
+                ({stats.stats_summary.ats_trend}).
               </>
             ) : (
-              <>Upload or generate your resume to calculate your first ATS score.</>
-            )}
-            {" "}You have <strong className="text-white">{stats?.stats_summary?.interviews_count || 0}</strong> interviews scheduled.
+              <>
+                Upload or generate your resume to calculate your first ATS
+                score.
+              </>
+            )}{" "}
+            You have{" "}
+            <strong className="text-white">
+              {stats?.stats_summary?.interviews_count || 0}
+            </strong>{" "}
+            interviews scheduled.
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onRefresh}
             disabled={refreshing}
@@ -112,7 +122,7 @@ export default function DashboardHeader({
             className="flex items-center gap-3 p-3.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-2xl text-left active:scale-[0.98] transition-all group cursor-pointer"
           >
             <div
-              className={`w-9 h-9 rounded-xl ${qa.color} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform`}
+              className={`w-9 h-9 rounded-xl ${qa.color} flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform`}
             >
               <qa.icon size={16} className="text-white" />
             </div>

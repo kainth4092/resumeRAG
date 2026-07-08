@@ -1,14 +1,21 @@
 import { Save, X } from "lucide-react";
 
-export default function Modal({ title, children, onSave, onClose, saving, error }) {
+export default function Modal({
+  title,
+  children,
+  onSave,
+  onClose,
+  saving,
+  error,
+}) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-(--shadow-lg) animate-in fade-in-0 zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <h3 className="text-foreground">{title}</h3>
           <button
             onClick={onClose}
@@ -25,7 +32,7 @@ export default function Modal({ title, children, onSave, onClose, saving, error 
           )}
           {children}
         </div>
-        <div className="flex gap-3 px-5 py-4 border-t border-border flex-shrink-0">
+        <div className="flex gap-3 px-5 py-4 border-t border-border shrink-0">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted transition-all"

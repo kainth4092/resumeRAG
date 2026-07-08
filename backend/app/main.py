@@ -30,6 +30,7 @@ from app.api.tracker.routes import router as tracker_router
 from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
 from app.api.mock_interview.routes import router as mock_interview_router
+from app.api.roadmap.routes import router as roadmap_router
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ for noisy_logger_name in ("sqlalchemy.engine", "httpcore", "httpx"):
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     from app.services.qdrant_service import COLLECTION_NAME
+
     print(f"[STARTUP] Active QDRANT_URL: {settings.QDRANT_URL}")
     print(f"[STARTUP] Active Qdrant collection: {COLLECTION_NAME}")
     logger.info("Active QDRANT_URL: %s", settings.QDRANT_URL)
@@ -60,6 +62,7 @@ async def lifespan(app: FastAPI):
 
     try:
         from app.services.ai import get_ai_provider
+
         provider = get_ai_provider()
         provider.validate_startup()
     except Exception as exc:
@@ -128,6 +131,7 @@ app.include_router(tracker_router)
 app.include_router(email_router)
 app.include_router(dashboard_router)
 app.include_router(mock_interview_router)
+app.include_router(roadmap_router)
 
 
 @app.get("/")

@@ -6,7 +6,7 @@ function Toggle({ value, onChange }) {
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative flex-shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+      className={`relative shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
         value ? "bg-primary" : "bg-muted border border-border"
       }`}
     >
@@ -19,9 +19,38 @@ function Toggle({ value, onChange }) {
   );
 }
 
+function PWInput({ label, showKey, value, onChange, showPw, setShowPw }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type={showPw[showKey] ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPw((s) => ({ ...s, [showKey]: !s[showKey] }))}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          {showPw[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SecuritySettings() {
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
-  const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
+  const [showPw, setShowPw] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const [pwError, setPwError] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
   const [pwSaved, setPwSaved] = useState(false);
@@ -67,29 +96,6 @@ export default function SecuritySettings() {
     }
   };
 
-  const PWInput = ({ label, showKey, value, onChange }) => (
-    <div>
-      <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={showPw[showKey] ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-input-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
-        />
-        <button
-          type="button"
-          onClick={() => setShowPw((s) => ({ ...s, [showKey]: !s[showKey] }))}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-        >
-          {showPw[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
@@ -113,18 +119,24 @@ export default function SecuritySettings() {
           showKey="current"
           value={pw.current}
           onChange={(v) => setPw((p) => ({ ...p, current: v }))}
+          showPw={showPw}
+          setShowPw={setShowPw}
         />
         <PWInput
           label="New Password"
           showKey="next"
           value={pw.next}
           onChange={(v) => setPw((p) => ({ ...p, next: v }))}
+          showPw={showPw}
+          setShowPw={setShowPw}
         />
         <PWInput
           label="Confirm New Password"
           showKey="confirm"
           value={pw.confirm}
           onChange={(v) => setPw((p) => ({ ...p, confirm: v }))}
+          showPw={showPw}
+          setShowPw={setShowPw}
         />
 
         <button
@@ -144,7 +156,9 @@ export default function SecuritySettings() {
       <div className="bg-card border border-border rounded-2xl p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-semibold text-foreground">Two-Factor Authentication</p>
+            <p className="text-sm font-semibold text-foreground">
+              Two-Factor Authentication
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Add an extra layer of security to your account.
             </p>

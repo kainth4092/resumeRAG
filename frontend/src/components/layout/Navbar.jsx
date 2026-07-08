@@ -53,7 +53,6 @@ export default function Navbar({
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Sync theme when updated elsewhere (e.g. Settings page)
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem("theme");
@@ -173,7 +172,6 @@ export default function Navbar({
   return (
     <>
       <header className="shrink-0 h-16 flex items-center justify-between gap-3 px-4 md:px-6 border-b border-border bg-card/85 backdrop-blur-xl z-30 shadow-sm">
-        {/* Left Side: Mobile Menu Toggle & Search Bar trigger */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen?.(true)}
@@ -182,10 +180,9 @@ export default function Navbar({
             <Menu size={18} />
           </button>
 
-          {/* Figma style search input trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="hidden md:flex items-center justify-between gap-2 px-3 py-1.5 bg-muted/60 border border-border hover:border-muted-foreground/30 rounded-xl text-muted-foreground text-xs w-52 hover:bg-muted transition-all cursor-pointer text-left"
+            className="hidden md:flex items-center justify-between gap-2 px-3 py-1.5 bg-muted/60 border border-border hover:border-muted-foreground/30 rounded-xl text-muted-foreground text-xs w-84 hover:bg-muted transition-all cursor-pointer text-left"
           >
             <div className="flex items-center gap-2">
               <Search size={14} className="text-muted-foreground" />
@@ -197,7 +194,6 @@ export default function Navbar({
           </button>
         </div>
 
-        {/* Right Side: Quick Action buttons + Notif + User dropdown */}
         <div className="flex items-center gap-1.5">
           {/* Mobile search button */}
           <button

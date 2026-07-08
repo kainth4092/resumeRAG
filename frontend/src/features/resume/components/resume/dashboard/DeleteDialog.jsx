@@ -11,14 +11,14 @@ function ConfirmDelete({ resume, onConfirm, onCancel }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-300 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-150"
         onClick={!deleting ? onCancel : undefined}
       />
-      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-[var(--shadow-lg)] p-6 animate-in fade-in-0 zoom-in-95 duration-200 space-y-4">
+      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-(--shadow-lg) p-6 animate-in fade-in-0 zoom-in-95 duration-200 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-destructive/10 flex items-center justify-center shrink-0">
             <AlertTriangle size={20} className="text-destructive" />
           </div>
           <div>
@@ -30,7 +30,7 @@ function ConfirmDelete({ resume, onConfirm, onCancel }) {
         </div>
 
         <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <FileText size={14} className="text-primary" />
           </div>
           <div className="min-w-0">
@@ -77,7 +77,11 @@ function ConfirmDelete({ resume, onConfirm, onCancel }) {
   );
 }
 
-export default function DeleteDialog({ deleteTarget, setDeleteTarget, handleDeleteConfirm }) {
+export default function DeleteDialog({
+  deleteTarget,
+  setDeleteTarget,
+  handleDeleteConfirm,
+}) {
   return (
     <>
       {deleteTarget && (

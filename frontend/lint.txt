@@ -1,0 +1,550 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/layout/FloatingAI.jsx
+  306:17  error  Empty block statement  no-empty
+
+/home/kanish/Documents/Resume-Rag/frontend/src/components/layout/Sidebar.jsx
+  12:3  error  'File' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/dashboard/components/ActivityFeed.jsx
+  1:10  error  'Clock' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/dashboard/components/DashboardHeader.jsx
+   1:31  error  'useRef' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+  23:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  21 |       year: "numeric",
+  22 |     };
+> 23 |     setCurrentDate(new Date().toLocaleDateString("en-US", options));
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |   }, []);
+  25 |
+  26 |   const quickActions = [  react-hooks/set-state-in-effect
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/dashboard/components/UpcomingTasks.jsx
+  85:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  83 |     }
+  84 |
+> 85 |     setTasks([...dynamicTasks, ...customTasks]);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  86 |   }, [data]);
+  87 |
+  88 |   const saveTasks = (newTasks) => {  react-hooks/set-state-in-effect
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/dashboard/pages/Dashboard.jsx
+  78:11  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  76 |       if (cached) {
+  77 |         try {
+> 78 |           setDashboardData(JSON.parse(cached));
+     |           ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  79 |           setLoading(false);
+  80 |         } catch {}
+  81 |       }  react-hooks/set-state-in-effect
+  80:17  error    Empty block statement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-empty
+  84:6   warning  React Hook useEffect has a missing dependency: 'loadDashboardData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/profile/components/EducationSection.jsx
+  80:6  warning  React Hook useEffect has a missing dependency: 'loadEducations'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/profile/components/ExperienceSection.jsx
+  87:6  warning  React Hook useEffect has a missing dependency: 'loadExperiences'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/profile/components/ProfileCard.jsx
+  106:17  error    Empty block statement                                                                                           no-empty
+  110:6   warning  React Hook useEffect has a missing dependency: 'loadProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/profile/components/ProjectsSection.jsx
+  81:6  warning  React Hook useEffect has a missing dependency: 'loadProjects'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/profile/components/SkillsSection.jsx
+  56:6  warning  React Hook useEffect has a missing dependency: 'loadSkills'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/components/ai-workspace/GeneralAudit.jsx
+   1:23  error  'AlertCircle' is defined but never used                 no-unused-vars
+  19:3   error  'error' is defined but never used                       no-unused-vars
+  29:9   error  'getScoreFillColor' is assigned a value but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/components/ai-workspace/ResumeSelector.jsx
+  6:3  error  'CheckCircle2' is defined but never used  no-unused-vars
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/hooks/useResumeAnalysis.js
+  120:11  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  118 |       if (freshResume) {
+  119 |         if (freshResume.version !== selectedResume.version) {
+> 120 |           setAnalysisResult(null);
+      |           ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  121 |           setSelectedResume(freshResume);
+  122 |         }
+  123 |       }  react-hooks/set-state-in-effect
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/hooks/useResumeGenerator.js
+  153:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  151 |       const lastVersion = localStorage.getItem(lastVersionKey);
+  152 |       if (lastVersion && lastVersion !== resume.version) {
+> 153 |         setAnalysis(null);
+      |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  154 |         setGenerated(false);
+  155 |         setGeneratedResume(null);
+  156 |       }  react-hooks/set-state-in-effect
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/resume/pages/AIWorkspace.jsx
+  10:39  error    'onBack' is defined but never used                                                                                 no-unused-vars
+  28:6   warning  React Hook useEffect has a missing dependency: 'generatorState'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  41:6   warning  React Hook useEffect has a missing dependency: 'analysisState'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/settings/components/AccountSettings.jsx
+  41:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  39 |   useEffect(() => {
+  40 |     if (user) {
+> 41 |       setAccount({
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |         name: user.name || "",
+  43 |         email: user.email || "",
+  44 |         phone: user.profile?.phone || "",  react-hooks/set-state-in-effect
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/settings/components/AppearanceSettings.jsx
+  66:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  64 |
+  65 |       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+> 66 |         <Card
+     |          ^^^^ This component is created during render
+  67 |           id="light"
+  68 |           label="Light Theme"
+  69 |           icon={Sun}
+
+  30 |   };
+  31 |
+> 32 |   const Card = ({ id, label, icon: Icon, desc }) => (
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |     <button
+     | ^^^^^^^^^^^
+> 34 |       onClick={() => selectTheme(id)}
+     …
+     | ^^^^^^^^^^^
+> 51 |     </button>
+     | ^^^^^^^^^^^
+> 52 |   );
+     | ^^^^ The component is created during render here
+  53 |
+  54 |   return (
+  55 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">                react-hooks/static-components
+  72:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  70 |           desc="Clean, high-contrast bright mode interface."
+  71 |         />
+> 72 |         <Card
+     |          ^^^^ This component is created during render
+  73 |           id="dark"
+  74 |           label="Dark Theme"
+  75 |           icon={Moon}
+
+  30 |   };
+  31 |
+> 32 |   const Card = ({ id, label, icon: Icon, desc }) => (
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |     <button
+     | ^^^^^^^^^^^
+> 34 |       onClick={() => selectTheme(id)}
+     …
+     | ^^^^^^^^^^^
+> 51 |     </button>
+     | ^^^^^^^^^^^
+> 52 |   );
+     | ^^^^ The component is created during render here
+  53 |
+  54 |   return (
+  55 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">         react-hooks/static-components
+  78:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  76 |           desc="Vibrant dark mode for reduced eye strain."
+  77 |         />
+> 78 |         <Card
+     |          ^^^^ This component is created during render
+  79 |           id="system"
+  80 |           label="System Default"
+  81 |           icon={Monitor}
+
+  30 |   };
+  31 |
+> 32 |   const Card = ({ id, label, icon: Icon, desc }) => (
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |     <button
+     | ^^^^^^^^^^^
+> 34 |       onClick={() => selectTheme(id)}
+     …
+     | ^^^^^^^^^^^
+> 51 |     </button>
+     | ^^^^^^^^^^^
+> 52 |   );
+     | ^^^^ The component is created during render here
+  53 |
+  54 |   return (
+  55 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">  react-hooks/static-components
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/settings/components/IntegrationSettings.jsx
+  57:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  55 |
+  56 |       <div className="space-y-3">
+> 57 |         <Row
+     |          ^^^ This component is created during render
+  58 |           label="Google Account"
+  59 |           desc="Log in and import your email address and profile picture."
+  60 |           providerKey="google"
+
+  15 |   };
+  16 |
+> 17 |   const Row = ({ label, desc, providerKey, icon: Icon, colorClass }) => {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |     const isConnected = connections[providerKey];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |     return (
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |     );
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |   };
+     | ^^^^ The component is created during render here
+  45 |
+  46 |   return (
+  47 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">                                                            react-hooks/static-components
+  64:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  62 |           colorClass="text-emerald-500 dark:text-emerald-400"
+  63 |         />
+> 64 |         <Row
+     |          ^^^ This component is created during render
+  65 |           label="GitHub Profile"
+  66 |           desc="Sync repositories, projects, and contributions directly into your portfolio."
+  67 |           providerKey="github"
+
+  15 |   };
+  16 |
+> 17 |   const Row = ({ label, desc, providerKey, icon: Icon, colorClass }) => {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |     const isConnected = connections[providerKey];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |     return (
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |     );
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |   };
+     | ^^^^ The component is created during render here
+  45 |
+  46 |   return (
+  47 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">  react-hooks/static-components
+  71:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  69 |           colorClass="text-foreground"
+  70 |         />
+> 71 |         <Row
+     |          ^^^ This component is created during render
+  72 |           label="LinkedIn Profile"
+  73 |           desc="Export work history, educational achievements, and endorsements."
+  74 |           providerKey="linkedin"
+
+  15 |   };
+  16 |
+> 17 |   const Row = ({ label, desc, providerKey, icon: Icon, colorClass }) => {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |     const isConnected = connections[providerKey];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |     return (
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |     );
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |   };
+     | ^^^^ The component is created during render here
+  45 |
+  46 |   return (
+  47 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">                                 react-hooks/static-components
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/settings/components/NotificationSettings.jsx
+   79:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  77 |           Email Notifications
+  78 |         </h4>
+> 79 |         <Row
+     |          ^^^ This component is created during render
+  80 |           label="Resume Hits & Feedback"
+  81 |           desc="Get notified when AI resume scanner rates your uploaded resume."
+  82 |           stateKey="resumeHits"
+
+  47 |   };
+  48 |
+> 49 |   const Row = ({ label, desc, stateKey }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     <div className="flex items-start justify-between py-3 border-b border-border last:border-0 last:pb-0 first:pt-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       <div className="mr-4">
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |   );
+     | ^^^^ The component is created during render here
+  61 |
+  62 |   return (
+  63 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">                       react-hooks/static-components
+   84:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  82 |           stateKey="resumeHits"
+  83 |         />
+> 84 |         <Row
+     |          ^^^ This component is created during render
+  85 |           label="Job Matches"
+  86 |           desc="Receive daily email summaries of job postings that match your target role."
+  87 |           stateKey="jobMatches"
+
+  47 |   };
+  48 |
+> 49 |   const Row = ({ label, desc, stateKey }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     <div className="flex items-start justify-between py-3 border-b border-border last:border-0 last:pb-0 first:pt-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       <div className="mr-4">
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |   );
+     | ^^^^ The component is created during render here
+  61 |
+  62 |   return (
+  63 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">                        react-hooks/static-components
+   89:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  87 |           stateKey="jobMatches"
+  88 |         />
+> 89 |         <Row
+     |          ^^^ This component is created during render
+  90 |           label="Weekly Summary Report"
+  91 |           desc="A summary of your dashboard activity, resumes, and interview performance."
+  92 |           stateKey="weeklySummary"
+
+  47 |   };
+  48 |
+> 49 |   const Row = ({ label, desc, stateKey }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     <div className="flex items-start justify-between py-3 border-b border-border last:border-0 last:pb-0 first:pt-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       <div className="mr-4">
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |   );
+     | ^^^^ The component is created during render here
+  61 |
+  62 |   return (
+  63 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">            react-hooks/static-components
+  100:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+   98 |           In-App & Push Notifications
+   99 |         </h4>
+> 100 |         <Row
+      |          ^^^ This component is created during render
+  101 |           label="Application Updates"
+  102 |           desc="Get updates when new features and performance enhancements are released."
+  103 |           stateKey="appUpdates"
+
+  47 |   };
+  48 |
+> 49 |   const Row = ({ label, desc, stateKey }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     <div className="flex items-start justify-between py-3 border-b border-border last:border-0 last:pb-0 first:pt-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       <div className="mr-4">
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |   );
+     | ^^^^ The component is created during render here
+  61 |
+  62 |   return (
+  63 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">  react-hooks/static-components
+  105:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  103 |           stateKey="appUpdates"
+  104 |         />
+> 105 |         <Row
+      |          ^^^ This component is created during render
+  106 |           label="Interview Alerts"
+  107 |           desc="Alerts and reminders for scheduled mock interviews and feedback reviews."
+  108 |           stateKey="interviewAlerts"
+
+  47 |   };
+  48 |
+> 49 |   const Row = ({ label, desc, stateKey }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     <div className="flex items-start justify-between py-3 border-b border-border last:border-0 last:pb-0 first:pt-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       <div className="mr-4">
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |   );
+     | ^^^^ The component is created during render here
+  61 |
+  62 |   return (
+  63 |     <div className="bg-card border border-border rounded-2xl p-5 space-y-4">         react-hooks/static-components
+
+/home/kanish/Documents/Resume-Rag/frontend/src/features/settings/components/SecuritySettings.jsx
+  115:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  113 |         )}
+  114 |
+> 115 |         <PWInput
+      |          ^^^^^^^ This component is created during render
+  116 |           label="Current Password"
+  117 |           showKey="current"
+  118 |           value={pw.current}
+
+  72 |   };
+  73 |
+> 74 |   const PWInput = ({ label, showKey, value, onChange }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 75 |     <div>
+     | ^^^^^^^^^
+> 76 |       <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+     …
+     | ^^^^^^^^^
+> 94 |     </div>
+     | ^^^^^^^^^
+> 95 |   );
+     | ^^^^ The component is created during render here
+  96 |
+  97 |   return (
+  98 |     <div className="space-y-4">                                                                    react-hooks/static-components
+  121:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  119 |           onChange={(v) => setPw((p) => ({ ...p, current: v }))}
+  120 |         />
+> 121 |         <PWInput
+      |          ^^^^^^^ This component is created during render
+  122 |           label="New Password"
+  123 |           showKey="next"
+  124 |           value={pw.next}
+
+  72 |   };
+  73 |
+> 74 |   const PWInput = ({ label, showKey, value, onChange }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 75 |     <div>
+     | ^^^^^^^^^
+> 76 |       <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+     …
+     | ^^^^^^^^^
+> 94 |     </div>
+     | ^^^^^^^^^
+> 95 |   );
+     | ^^^^ The component is created during render here
+  96 |
+  97 |   return (
+  98 |     <div className="space-y-4">             react-hooks/static-components
+  127:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  125 |           onChange={(v) => setPw((p) => ({ ...p, next: v }))}
+  126 |         />
+> 127 |         <PWInput
+      |          ^^^^^^^ This component is created during render
+  128 |           label="Confirm New Password"
+  129 |           showKey="confirm"
+  130 |           value={pw.confirm}
+
+  72 |   };
+  73 |
+> 74 |   const PWInput = ({ label, showKey, value, onChange }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 75 |     <div>
+     | ^^^^^^^^^
+> 76 |       <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
+     …
+     | ^^^^^^^^^
+> 94 |     </div>
+     | ^^^^^^^^^
+> 95 |   );
+     | ^^^^ The component is created during render here
+  96 |
+  97 |   return (
+  98 |     <div className="space-y-4">  react-hooks/static-components
+
+✖ 39 problems (31 errors, 8 warnings)
+

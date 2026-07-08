@@ -129,3 +129,27 @@ def get_complete_profile(
             for exp in experiences
         ],
     }
+
+
+@router.post("/extract-from-resume")
+def extract_profile_from_resume(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resume_id = payload.get("resume_id")
+    if not resume_id:
+        raise HTTPException(status_code=400, detail="resume_id is required")
+
+    from app.resume.repository.resume_repository import ResumeRepository
+    resume = ResumeRepository.get_resume_by_id(db, resume_id, current_user.id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    from app.services.profile_population_service import extract_and_populate_profile
+    data = extract_and_populate_profile(db, current_user.id, resume.parsed_text)
+    if not data:
+        raise HTTPException(status_code=500, detail="Failed to extract profile details from the resume.")
+
+    return {"message": "Profile extracted and populated successfully", "profile": data}
+

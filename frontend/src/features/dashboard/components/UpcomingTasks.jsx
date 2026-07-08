@@ -1,95 +1,127 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
 
 export default function UpcomingTasks({ data }) {
-  const [tasks, setTasks] = useState([]);
-  const [input, setInput] = useState("");
-
-  useEffect(() => {
-    // 1. Check if user has custom tasks saved in localStorage
+  const [customTasks, setCustomTasks] = useState(() => {
     const saved = localStorage.getItem("resupilot_dashboard_tasks");
     if (saved) {
       try {
-        setTasks(JSON.parse(saved));
-        return;
-      } catch (e) {
-        console.error("Failed to parse saved tasks:", e);
+        const parsed = JSON.parse(saved);
+        return parsed.filter((t) => !t.isDynamic);
+      } catch (err) {
+        console.error("Failed to parse custom tasks:", err);
+        return [];
       }
     }
+    return [];
+  });
 
-    // 2. Otherwise, generate dynamic onboarding tasks based on database state
-    const initialTasks = [];
-    const hasResumes = (data?.resume_history?.length || 0) > 0;
-    const hasJobs = (data?.total_tracked_jobs || 0) > 0;
-    const hasInterviews = (data?.total_interviews || 0) > 0;
-
-    if (hasResumes) {
-      const latestResume = data.resume_history[0];
-      initialTasks.push({
-        id: "res-1",
-        text: `Review ATS suggestions for ${latestResume.title || "Resume"}`,
-        done: false,
-        isDynamic: true,
-      });
-    } else {
-      initialTasks.push({
-        id: "res-0",
-        text: "Upload or generate your first AI Resume",
-        done: false,
-        isDynamic: true,
-      });
+  const [doneDynamicIds, setDoneDynamicIds] = useState(() => {
+    const saved = localStorage.getItem("resupilot_dashboard_tasks");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.filter((t) => t.isDynamic && t.done).map((t) => t.id);
+      } catch (err) {
+        console.error("Failed to parse done dynamic tasks:", err);
+        return [];
+      }
     }
+    return [];
+  });
 
-    if (hasJobs) {
-      initialTasks.push({
-        id: "job-1",
-        text: "Track status updates and follow-ups in Job Tracker",
-        done: false,
-        isDynamic: true,
-      });
-    } else {
-      initialTasks.push({
-        id: "job-0",
-        text: "Add a target role application to Job Tracker",
-        done: false,
-        isDynamic: true,
-      });
-    }
+  const [input, setInput] = useState("");
 
-    if (hasInterviews) {
-      initialTasks.push({
-        id: "int-1",
-        text: "Practice tailored questions for upcoming interviews",
-        done: false,
-        isDynamic: true,
-      });
-    } else {
-      initialTasks.push({
-        id: "int-0",
-        text: "Complete a custom Mock Interview session",
-        done: false,
-        isDynamic: true,
-      });
-    }
+  const dynamicTasks = [];
+  const hasResumes = (data?.resume_history?.length || 0) > 0;
+  const hasJobs = (data?.total_tracked_jobs || 0) > 0;
+  const hasInterviews = (data?.total_interviews || 0) > 0;
 
-    setTasks(initialTasks);
-  }, [data]);
+  if (hasResumes) {
+    const latestResume = data.resume_history[0];
+    dynamicTasks.push({
+      id: "res-1",
+      text: `Review ATS suggestions for ${latestResume.title || "Resume"}`,
+      done: doneDynamicIds.includes("res-1"),
+      isDynamic: true,
+    });
+  } else {
+    dynamicTasks.push({
+      id: "res-0",
+      text: "Upload or generate your first AI Resume",
+      done: doneDynamicIds.includes("res-0"),
+      isDynamic: true,
+    });
+  }
 
-  const saveTasks = (newTasks) => {
-    setTasks(newTasks);
-    localStorage.setItem("resupilot_dashboard_tasks", JSON.stringify(newTasks));
+  if (hasJobs) {
+    dynamicTasks.push({
+      id: "job-1",
+      text: "Track status updates and follow-ups in Job Tracker",
+      done: doneDynamicIds.includes("job-1"),
+      isDynamic: true,
+    });
+  } else {
+    dynamicTasks.push({
+      id: "job-0",
+      text: "Add a target role application to Job Tracker",
+      done: doneDynamicIds.includes("job-0"),
+      isDynamic: true,
+    });
+  }
+
+  if (hasInterviews) {
+    dynamicTasks.push({
+      id: "int-1",
+      text: "Practice tailored questions for upcoming interviews",
+      done: doneDynamicIds.includes("int-1"),
+      isDynamic: true,
+    });
+  } else {
+    dynamicTasks.push({
+      id: "int-0",
+      text: "Complete a custom Mock Interview session",
+      done: doneDynamicIds.includes("int-0"),
+      isDynamic: true,
+    });
+  }
+
+  const tasks = [...dynamicTasks, ...customTasks];
+
+  const saveTasksToStorage = (updatedCustom, updatedDoneDynamic) => {
+    const all = [
+      ...dynamicTasks.map(dt => ({
+        ...dt,
+        done: updatedDoneDynamic.includes(dt.id)
+      })),
+      ...updatedCustom
+    ];
+    localStorage.setItem("resupilot_dashboard_tasks", JSON.stringify(all));
   };
 
   const toggleTask = (id) => {
-    const updated = tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-    saveTasks(updated);
+    const isDynamic = id.startsWith("res-") || id.startsWith("job-") || id.startsWith("int-");
+    if (isDynamic) {
+      const nextDoneDynamic = doneDynamicIds.includes(id)
+        ? doneDynamicIds.filter(x => x !== id)
+        : [...doneDynamicIds, id];
+      setDoneDynamicIds(nextDoneDynamic);
+      saveTasksToStorage(customTasks, nextDoneDynamic);
+    } else {
+      const nextCustom = customTasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      setCustomTasks(nextCustom);
+      saveTasksToStorage(nextCustom, doneDynamicIds);
+    }
   };
 
   const addTask = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
+    // eslint-disable-next-line react-hooks/purity
     const newTask = { id: String(Date.now()), text: input.trim(), done: false };
-    saveTasks([...tasks, newTask]);
+    const nextCustom = [...customTasks, newTask];
+    setCustomTasks(nextCustom);
+    saveTasksToStorage(nextCustom, doneDynamicIds);
     setInput("");
   };
 

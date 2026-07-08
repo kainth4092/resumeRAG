@@ -5,11 +5,10 @@ import {
   FileText,
   MessageSquare,
   Briefcase,
-  Map,
-  BarChart3,
   User,
   Star,
   Settings,
+  Map as MapIcon,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/context/AuthContext";
@@ -63,13 +62,23 @@ const NAV_GROUPS = [
       },
     ],
   },
-  // {
-  //   title: "Career",
-  //   items: [
-  //     { id: "roadmap", icon: Map, label: "Career Roadmap", route: "/analysis" },
-  //     { id: "analytics", icon: BarChart3, label: "Analytics", route: "/analysis" },
-  //   ],
-  // },
+  {
+    title: "Career",
+    items: [
+      {
+        id: "roadmap",
+        icon: MapIcon,
+        label: "Career Roadmap",
+        route: "/roadmap",
+      },
+      // {
+      //   id: "analytics",
+      //   icon: BarChart3,
+      //   label: "Analytics",
+      //   route: "/analysis",
+      // },
+    ],
+  },
   {
     title: "Account",
     items: [
@@ -79,12 +88,7 @@ const NAV_GROUPS = [
   },
 ];
 
-export default function Sidebar({
-  collapsed,
-  isBaseCollapsed,
-  setCollapsed,
-  setMobileOpen,
-}) {
+export default function Sidebar({ collapsed, setMobileOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -121,6 +125,20 @@ export default function Sidebar({
     if (route === "/dashboard") {
       return location.pathname === "/dashboard";
     }
+    if (route === "/generator") {
+      return (
+        location.pathname.startsWith("/generator") ||
+        location.pathname.startsWith("/analysis") ||
+        (location.pathname.startsWith("/resumes") &&
+          location.search.includes("view=new"))
+      );
+    }
+    if (route === "/resumes") {
+      return (
+        location.pathname.startsWith("/resumes") &&
+        !location.search.includes("view=new")
+      );
+    }
     return location.pathname.startsWith(route);
   };
 
@@ -130,7 +148,6 @@ export default function Sidebar({
 
   return (
     <div className="flex flex-col h-full bg-card border-r border-border text-foreground transition-all duration-300">
-      {/* Header logo */}
       <div
         className={`flex items-center h-16 px-4 border-b border-border shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}
       >
@@ -139,7 +156,7 @@ export default function Sidebar({
             <Zap size={16} className="text-white" />
           </div>
           {!collapsed && (
-            <span className="text-md font-bold leading-none truncate bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-md font-bold leading-none truncate bg-linear-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
               ResuPilot AI
             </span>
           )}
@@ -168,12 +185,12 @@ export default function Sidebar({
                     onClick={() => handleNav(item.route)}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      w-full flex items-center gap-3 rounded-xl text-xs transition-all duration-150 group relative cursor-pointer
+                      w-full flex items-center gap-3 rounded-xl text-md transition-all duration-150 group relative cursor-pointer
                       ${collapsed ? "justify-center p-2.5" : "px-3 py-2.5"}
                       ${
                         active
-                          ? "bg-primary/10 text-primary font-bold"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreround"
                       }
                     `}
                   >
@@ -228,7 +245,7 @@ export default function Sidebar({
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-primary/5 to-indigo-500/5 border border-primary/10 p-3 rounded-xl flex flex-col gap-2">
+          <div className="bg-linear-to-br from-primary/5 to-indigo-500/5 border border-primary/10 p-3 rounded-xl flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                 <Star size={11} className="fill-primary" />

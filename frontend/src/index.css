@@ -1,306 +1,308 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @import "tailwindcss";
 @source '../**/*.{js,ts,jsx,tsx}';
 
-@import 'tw-animate-css';
-
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    --font-size: 15px;
-    --background: #F8FAFC;
-    --foreground: #0F172A;
-    --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --popover: #FFFFFF;
-    --popover-foreground: #0F172A;
-    --primary: #4F46E5;
-    --primary-foreground: #ffffff;
-    --secondary: #EEF2FF;
-    --secondary-foreground: #4F46E5;
-    --muted: #F1F5F9;
-    --muted-foreground: #64748B;
-    --accent: #F0FDFA;
-    --accent-foreground: #14B8A6;
-    --destructive: #EF4444;
-    --destructive-foreground: #ffffff;
-    --border: #E2E8F0;
-    --input: transparent;
-    --input-background: #F1F5F9;
-    --switch-background: #CBD5E1;
-    --font-weight-medium: 500;
-    --font-weight-normal: 400;
-    --ring: #4F46E5;
-    --chart-1: #4F46E5;
-    --chart-2: #14B8A6;
-    --chart-3: #F59E0B;
-    --chart-4: #3B82F6;
-    --chart-5: #EF4444;
-    --radius: 0.75rem;
-    --sidebar: #FFFFFF;
-    --sidebar-foreground: #0F172A;
-    --sidebar-primary: #4F46E5;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #EEF2FF;
-    --sidebar-accent-foreground: #4F46E5;
-    --sidebar-border: #E2E8F0;
-    --sidebar-ring: #4F46E5;
+  --font-size: 15px;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #4f46e5;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f0fdfa;
+  --accent-foreground: #14b8a6;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: transparent;
+  --input-background: #f1f5f9;
+  --switch-background: #cbd5e1;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #4f46e5;
+  --chart-1: #4f46e5;
+  --chart-2: #14b8a6;
+  --chart-3: #f59e0b;
+  --chart-4: #3b82f6;
+  --chart-5: #ef4444;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef2ff;
+  --sidebar-accent-foreground: #4f46e5;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #4f46e5;
 }
 
 .dark {
-    --background: #0F172A;
-    --foreground: #F8FAFC;
-    --card: #1E293B;
-    --card-foreground: #F8FAFC;
-    --popover: #1E293B;
-    --popover-foreground: #F8FAFC;
-    --primary: #4F46E5;
-    --primary-foreground: #ffffff;
-    --secondary: #1E293B;
-    --secondary-foreground: #F8FAFC;
-    --muted: #1E293B;
-    --muted-foreground: #94A3B8;
-    --accent: #115E59;
-    --accent-foreground: #14B8A6;
-    --destructive: #EF4444;
-    --destructive-foreground: #FCA5A5;
-    --border: #334155;
-    --input: rgba(255, 255, 255, 0.05);
-    --input-background: #1E293B;
-    --switch-background: #475569;
-    --font-weight-medium: 500;
-    --font-weight-normal: 400;
-    --ring: #4F46E5;
-    --chart-1: #4F46E5;
-    --chart-2: #14B8A6;
-    --chart-3: #F59E0B;
-    --chart-4: #3B82F6;
-    --chart-5: #EF4444;
-    --sidebar: #1E293B;
-    --sidebar-foreground: #F8FAFC;
-    --sidebar-primary: #4F46E5;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #334155;
-    --sidebar-accent-foreground: #F8FAFC;
-    --sidebar-border: #334155;
-    --sidebar-ring: #4F46E5;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #115e59;
+  --accent-foreground: #14b8a6;
+  --destructive: #ef4444;
+  --destructive-foreground: #fca5a5;
+  --border: #334155;
+  --input: rgba(255, 255, 255, 0.05);
+  --input-background: #1e293b;
+  --switch-background: #475569;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #4f46e5;
+  --chart-1: #4f46e5;
+  --chart-2: #14b8a6;
+  --chart-3: #f59e0b;
+  --chart-4: #3b82f6;
+  --chart-5: #ef4444;
+  --sidebar: #1e293b;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #334155;
+  --sidebar-ring: #4f46e5;
 }
 
 @theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-input-background: var(--input-background);
-    --color-switch-background: var(--switch-background);
-    --color-ring: var(--ring);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
+  * {
+    @apply border-border outline-ring/50;
+  }
 
-    body {
-        @apply bg-background text-foreground;
-        font-family: var(--font-sans);
-        -webkit-font-smoothing: antialiased;
-        height: 100vh;
-        overflow: hidden;
-    }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    height: 100vh;
+    overflow: hidden;
+  }
 
-    html {
-        font-size: var(--font-size);
-        height: 100vh;
-        overflow: hidden;
-    }
+  html {
+    font-size: var(--font-size);
+    height: 100vh;
+    overflow: hidden;
+  }
 
-    #root {
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-    }
+  #root {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
 
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+  }
 
-    h1 {
-        font-size: var(--text-2xl);
-        font-weight: 600;
-        line-height: 1.4;
-        letter-spacing: -0.02em;
-    }
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
 
-    h2 {
-        font-size: var(--text-xl);
-        font-weight: 600;
-        line-height: 1.4;
-        letter-spacing: -0.01em;
-    }
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: 500;
+    line-height: 1.5;
+  }
 
-    h3 {
-        font-size: var(--text-lg);
-        font-weight: 500;
-        line-height: 1.5;
-    }
+  h4 {
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: 1.5;
+  }
 
-    h4 {
-        font-size: var(--text-base);
-        font-weight: 500;
-        line-height: 1.5;
-    }
+  label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.5;
+  }
 
-    label {
-        font-size: var(--text-sm);
-        font-weight: 500;
-        line-height: 1.5;
-    }
+  button {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+  }
 
-    button {
-        font-size: var(--text-sm);
-        font-weight: 500;
-        line-height: 1.5;
-        cursor: pointer;
-    }
+  input,
+  textarea,
+  select {
+    font-size: var(--text-sm);
+    font-weight: 400;
+    line-height: 1.5;
+  }
 
-    input,
-    textarea,
-    select {
-        font-size: var(--text-sm);
-        font-weight: 400;
-        line-height: 1.5;
-    }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+    opacity: 0;
+  }
 
-    ::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 999px;
-        opacity: 0;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--muted-foreground);
-    }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
 }
 
 @utility shimmer {
-    background: linear-gradient(
-        90deg,
-        rgba(226, 232, 240, 0.15) 25%,
-        rgba(226, 232, 240, 0.6) 50%,
-        rgba(226, 232, 240, 0.15) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.15) 25%,
+    rgba(226, 232, 240, 0.6) 50%,
+    rgba(226, 232, 240, 0.15) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
 }
 
 .dark {
-    --shimmer-bg: linear-gradient(
-        90deg,
-        rgba(30, 41, 59, 0.2) 25%,
-        rgba(71, 85, 105, 0.4) 50%,
-        rgba(30, 41, 59, 0.2) 75%
-    );
+  --shimmer-bg: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.2) 25%,
+    rgba(71, 85, 105, 0.4) 50%,
+    rgba(30, 41, 59, 0.2) 75%
+  );
 }
 
 .dark .shimmer {
-    background: var(--shimmer-bg);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
+  background: var(--shimmer-bg);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
 }
 
 @keyframes shimmer {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 :root {
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 body {
-    font-family: var(--font-sans);
+  font-family: var(--font-sans);
 }
 
 code,
 pre,
 .font-mono {
-    font-family: var(--font-mono);
+  font-family: var(--font-mono);
 }
 
 @media print {
-    @page {
-        margin: 15mm; /* Restore standard margins for print savings */
-    }
-    
-    /* Override SPA height and overflow limitations during printing */
-    html, body, #root, #root * {
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        transform: none !important;
-    }
-    
-    body * {
-        visibility: hidden;
-    }
-    
-    .printable-resume, .printable-resume * {
-        visibility: visible !important;
-    }
-    
-    .printable-resume {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
+  @page {
+    margin: 15mm; /* Restore standard margins for print savings */
+  }
+
+  /* Override SPA height and overflow limitations during printing */
+  html,
+  body,
+  #root,
+  #root * {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-resume,
+  .printable-resume * {
+    visibility: visible !important;
+  }
+
+  .printable-resume {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
 }

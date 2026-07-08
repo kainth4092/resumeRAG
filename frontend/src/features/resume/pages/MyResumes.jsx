@@ -7,9 +7,9 @@ import SearchFilter from "../components/resume/dashboard/SearchFilter";
 import ResumeTable from "../components/resume/dashboard/ResumeTable";
 import ResumePreviewModal from "../components/resume/dashboard/ResumePreviewModal";
 import DeleteDialog from "../components/resume/dashboard/DeleteDialog";
-import { setActiveResume } from "../services/resumeService";
+import { setActiveResume, getResumes } from "../services/resumeService";
 import { useAuth } from "../../auth/context/AuthContext";
-import { ResumeGenerator } from "./Generator";
+import AIWorkspace from "./AIWorkspace";
 import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
 
@@ -70,38 +70,149 @@ export default function MyResumes() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user) return;
+
+    const mapSavedList = (list) => {
+      return list
+        .filter((item) => {
+          const name = item.title || item.name || "";
+          const origName = item.original_filename || item.resume?.original_filename || "";
+          
+          if (name === "Imported Profile" || origName === "profile_import.txt") {
+            return false;
+          }
+          const lowerName = name.toLowerCase();
+          const lowerOrig = origName.toLowerCase();
+          if (
+            lowerName.endsWith(".pdf") || 
+            lowerName.endsWith(".docx") || 
+            lowerName.endsWith(".doc") ||
+            lowerOrig.endsWith(".pdf") || 
+            lowerOrig.endsWith(".docx") || 
+            lowerOrig.endsWith(".doc")
+          ) {
+            if (lowerName.startsWith("optimized:")) {
+              return true;
+            }
+            return false;
+          }
+          return true;
+        })
+        .map((item) => {
+          let score = item.score || item.resume?.score;
+          if (!score) {
+            const str = String(item.id || item.title || "");
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+              hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            score = 75 + (Math.abs(hash) % 20);
+          }
+          return {
+            id: item.id,
+            name: item.title || item.name || "Untitled Resume",
+            role:
+              item.resume?.personal_info?.title ||
+              item.resume?.headline ||
+              "Software Engineer",
+            company: item.resume?.work_experience?.[0]?.company || "",
+            score: score,
+            status: item.status || "Active",
+            updated: item.updatedAt || item.updated || "Just now",
+            pages: item.pages || estimatePageCount(item.resume),
+            version: item.version || "v1",
+            starred: item.starred || false,
+            template: item.template || "Professional",
+            color: item.color || "#4F46E5",
+            resume: item.resume,
+            jobDescription: item.jobDescription,
+          };
+        });
+    };
+
     const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
-    const mapped = saved.map((item) => {
-      let score = item.score || item.resume?.score;
-      if (!score) {
-        const str = String(item.id || item.title || "");
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-          hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        score = 75 + (Math.abs(hash) % 20);
+    setResumes(mapSavedList(saved));
+
+    let active = true;
+    const syncWithBackend = async () => {
+      try {
+        const dbResumes = await getResumes();
+        if (!active) return;
+        if (!Array.isArray(dbResumes)) return;
+
+        const latestSaved = JSON.parse(
+          localStorage.getItem(resumesKey) || "[]",
+        );
+        const mergedList = [...latestSaved];
+
+        dbResumes.forEach((dbItem) => {
+          const idx = mergedList.findIndex(
+            (item) => String(item.id) === String(dbItem.id),
+          );
+
+          if (idx >= 0) {
+            mergedList[idx] = {
+              ...mergedList[idx],
+              id: dbItem.id,
+              title: dbItem.title || mergedList[idx].title || "Untitled Resume",
+              score: dbItem.ats_score || mergedList[idx].score || 75,
+              status: dbItem.is_active ? "Active" : "Draft",
+              updatedAt: dbItem.created_at
+                ? new Date(dbItem.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : mergedList[idx].updatedAt || "Just now",
+              version: dbItem.version || mergedList[idx].version || "v1",
+              template:
+                dbItem.template || mergedList[idx].template || "Professional",
+              starred: mergedList[idx].starred || false,
+              color: mergedList[idx].color || "#4F46E5",
+              resume: dbItem.resume_json || mergedList[idx].resume || {
+                personal_info: { name: dbItem.title || "" },
+                skills: dbItem.skills || [],
+              },
+              jobDescription: mergedList[idx].jobDescription || "",
+            };
+          } else {
+            mergedList.push({
+              id: dbItem.id,
+              title: dbItem.title || "Untitled Resume",
+              score: dbItem.ats_score || 75,
+              status: dbItem.is_active ? "Active" : "Draft",
+              updatedAt: dbItem.created_at
+                ? new Date(dbItem.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Just now",
+              template: dbItem.template || "Professional",
+              color: "#4F46E5",
+              starred: false,
+              version: dbItem.version || "v1",
+              pages: 1,
+              resume: dbItem.resume_json || {
+                personal_info: { name: dbItem.title || "" },
+                skills: dbItem.skills || [],
+              },
+              jobDescription: "",
+            });
+          }
+        });
+
+        localStorage.setItem(resumesKey, JSON.stringify(mergedList));
+        setResumes(mapSavedList(mergedList));
+      } catch (err) {
+        console.error("Failed to sync resumes with backend:", err);
       }
-      return {
-        id: item.id,
-        name: item.title || "Untitled Resume",
-        role:
-          item.resume?.personal_info?.title ||
-          item.resume?.headline ||
-          "Software Engineer",
-        company: item.resume?.work_experience?.[0]?.company || "",
-        score: score,
-        status: item.status || "Active",
-        updated: item.updatedAt || "Just now",
-        pages: item.pages || estimatePageCount(item.resume),
-        version: item.version || "v1",
-        starred: item.starred || false,
-        template: item.template || "Professional",
-        color: item.color || "#4F46E5",
-        resume: item.resume,
-        jobDescription: item.jobDescription,
-      };
-    });
-    setResumes(mapped);
+    };
+
+    syncWithBackend();
+
+    return () => {
+      active = false;
+    };
   }, [user, resumesKey, reloadTrigger]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -143,11 +254,11 @@ export default function MyResumes() {
   const toggleStar = (id) => {
     setResumes((prev) => {
       const next = prev.map((r) =>
-        r.id === id ? { ...r, starred: !r.starred } : r,
+        String(r.id) === String(id) ? { ...r, starred: !r.starred } : r,
       );
       const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
       const updatedSaved = saved.map((item) => {
-        if (item.id === id) {
+        if (String(item.id) === String(id)) {
           return { ...item, starred: !item.starred };
         }
         return item;
@@ -159,9 +270,9 @@ export default function MyResumes() {
 
   const handleSetActive = async (id) => {
     const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
-    const updated = saved.map((item) => ({
-      ...item,
-      status: String(item.id) === String(id) ? "Active" : "Draft",
+    const updated = saved.map((r) => ({
+      ...r,
+      status: String(r.id) === String(id) ? "Active" : "Draft",
     }));
     localStorage.setItem(resumesKey, JSON.stringify(updated));
     localStorage.setItem(lastResumeIdKey, id);
@@ -191,12 +302,13 @@ export default function MyResumes() {
     await new Promise((r) => setTimeout(r, 350));
 
     const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
-    const updated = saved.filter((r) => r.id !== id);
+    const updated = saved.filter((r) => String(r.id) !== String(id));
     localStorage.setItem(resumesKey, JSON.stringify(updated));
 
-    setResumes((prev) => prev.filter((r) => r.id !== id));
+    setResumes((prev) => prev.filter((r) => String(r.id) !== String(id)));
     setRemovingId(null);
-    if (previewResume?.id === id) setPreviewResume(null);
+    if (previewResume && String(previewResume.id) === String(id))
+      setPreviewResume(null);
   };
 
   const handleEdit = (r) => {
@@ -273,7 +385,7 @@ export default function MyResumes() {
   ];
 
   if (view === "new") {
-    return <ResumeGenerator onBack={() => setSearchParams({})} />;
+    return <AIWorkspace onBack={() => setSearchParams({})} />;
   }
 
   return (

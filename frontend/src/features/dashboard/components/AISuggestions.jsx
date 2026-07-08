@@ -1,21 +1,25 @@
 import { Sparkles, Target, MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function AISuggestions({ data }) {
-  // Map API suggestions if available, otherwise use premium defaults
-  const apiSuggestions = data?.resume_insights?.suggestions || [];
+  const navigate = useNavigate();
+  const apiSuggestions = data?.ai_suggestions || [];
   
+  const getIconForUrl = (url) => {
+    if (url === "/interview") return MessageSquare;
+    if (url === "/tracker") return Target;
+    return Sparkles;
+  };
+
   const suggestions = apiSuggestions.length > 0
-    ? apiSuggestions.map((s, idx) => {
-        const priorities = ["High", "Medium", "Low"];
-        const icons = [Sparkles, Target, MessageSquare];
-        return {
-          id: idx,
-          title: s,
-          desc: "AI suggested optimization based on your active resume.",
-          priority: priorities[idx % 3],
-          icon: icons[idx % 3],
-        };
-      })
+    ? apiSuggestions.map((s, idx) => ({
+        id: idx,
+        title: s.title,
+        desc: s.desc,
+        priority: s.priority,
+        icon: getIconForUrl(s.action_url),
+        action_url: s.action_url
+      }))
     : [
         {
           id: 1,
@@ -23,6 +27,7 @@ export default function AISuggestions({ data }) {
           desc: "Add your professional history to let our AI scan and score your profile.",
           priority: "High",
           icon: Sparkles,
+          action_url: "/resumes"
         },
         {
           id: 2,
@@ -30,6 +35,7 @@ export default function AISuggestions({ data }) {
           desc: "Add target roles to Job Tracker to get personalized keyword matching.",
           priority: "Medium",
           icon: Target,
+          action_url: "/tracker"
         },
         {
           id: 3,
@@ -37,6 +43,7 @@ export default function AISuggestions({ data }) {
           desc: "Run a simulated interview to test alignment and review live AI feedback.",
           priority: "Low",
           icon: MessageSquare,
+          action_url: "/interview"
         },
       ];
 
@@ -62,7 +69,8 @@ export default function AISuggestions({ data }) {
           return (
             <div
               key={s.id}
-              className="flex gap-3 p-3 rounded-xl bg-muted/30 border border-border hover:border-muted-foreground/30 transition-colors"
+              onClick={() => s.action_url && navigate(s.action_url)}
+              className="flex gap-3 p-3 rounded-xl bg-muted/30 border border-border hover:border-muted-foreground/30 transition-all duration-200 cursor-pointer active:scale-[0.99] hover:bg-muted/50"
             >
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                 <Icon size={14} className="text-primary" />

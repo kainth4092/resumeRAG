@@ -128,13 +128,18 @@ def generate(
             analysis_results=json.dumps(optimized_analysis),
             version=new_ver,
             template=resume.template or "Professional",
+            is_generated=True,
+            resume_json=json.dumps(r_data),
         )
 
         db.add(new_resume)
         db.commit()
         db.refresh(new_resume)
 
-        return result
+        return {
+            "resume": result.get("resume", {}),
+            "resume_id": new_resume.id
+        }
     except AppException as e:
         raise e
     except Exception:
@@ -181,7 +186,14 @@ def analyze_health(
         health_report.section_completeness = result.get("section_completeness", 0)
         health_report.recruiter_readiness = result.get("recruiter_readiness", 0)
 
-        health_report.suggestions = json.dumps(result.get("suggestions", {}))
+        sug_dict = result.get("suggestions", {})
+        if not isinstance(sug_dict, dict):
+            sug_dict = {}
+        sug_dict["summary"] = result.get("summary", "")
+        sug_dict["formatting_status"] = result.get("formatting_status", "Standard Passed")
+        sug_dict["grammar_status"] = result.get("grammar_status", "Clean")
+
+        health_report.suggestions = json.dumps(sug_dict)
         health_report.missing_sections = json.dumps(result.get("missing_sections", []))
         health_report.strengths = json.dumps(result.get("strengths", []))
         health_report.weaknesses = json.dumps(result.get("weaknesses", []))
@@ -252,6 +264,7 @@ def get_resume_health(
     if not health_report:
         return None
 
+    suggestions_data = json.loads(health_report.suggestions) if health_report.suggestions else {}
     return {
         "ats_score": health_report.ats_score,
         "resume_health_score": health_report.resume_health_score,
@@ -265,9 +278,10 @@ def get_resume_health(
         "grammar_writing": health_report.grammar_writing,
         "section_completeness": health_report.section_completeness,
         "recruiter_readiness": health_report.recruiter_readiness,
-        "suggestions": (
-            json.loads(health_report.suggestions) if health_report.suggestions else {}
-        ),
+        "summary": suggestions_data.get("summary", ""),
+        "formatting_status": suggestions_data.get("formatting_status", ""),
+        "grammar_status": suggestions_data.get("grammar_status", ""),
+        "suggestions": suggestions_data,
         "missing_sections": (
             json.loads(health_report.missing_sections)
             if health_report.missing_sections

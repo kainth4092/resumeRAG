@@ -30,8 +30,16 @@ class ExperienceCreate(ExperienceBase):
         return self
 
 
-class ExperienceResponse(ExperienceBase):
+class ExperienceResponse(BaseModel):
     id: int
     user_id: int
+    company: str
+    role: str
+    description: str | None = None
+    start_month: str | None = None
+    start_year: int | None = None
+    end_month: str | None = None
+    end_year: int | None = None
+    currently_working: bool = False
 
     model_config = ConfigDict(from_attributes=True)

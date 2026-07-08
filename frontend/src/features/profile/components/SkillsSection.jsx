@@ -6,26 +6,58 @@ import {
   deleteSkill,
   getSkills,
 } from "../../resume/services/skillService";
+import { useAuth } from "../../auth/context/AuthContext";
 
 export default function SkillSection() {
-  const [skills, setSkills] = useState([]);
+  const { user } = useAuth();
+  const skillsKey = user?.email ? `profile_skills_${user.email}` : null;
+
+  const [skills, setSkills] = useState(() => {
+    if (typeof window !== "undefined" && skillsKey) {
+      const cached = localStorage.getItem(skillsKey);
+      try {
+        return cached ? JSON.parse(cached) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [newSkill, setNewSkill] = useState("");
   const [skillError, setSkillError] = useState(null);
 
   const loadSkills = async () => {
+    const key = user?.email ? `profile_skills_${user.email}` : null;
     try {
       const response = await getSkills();
       setSkills(response.data);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(response.data));
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadSkills();
-  }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (user) {
+      const load = async () => {
+        await Promise.resolve();
+        const key = `profile_skills_${user.email}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            setSkills(JSON.parse(cached));
+          } catch (err) {
+            console.error("Failed to parse cached skills:", err);
+          }
+        }
+        loadSkills();
+      };
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleAddSkill = async () => {
     if (!newSkill.trim()) return;
@@ -34,7 +66,13 @@ export default function SkillSection() {
       const response = await createSkill({
         skill_name: newSkill,
       });
-      setSkills((prev) => [...prev, response.data]);
+      setSkills((prev) => {
+        const next = [...prev, response.data];
+        if (skillsKey) {
+          localStorage.setItem(skillsKey, JSON.stringify(next));
+        }
+        return next;
+      });
       setNewSkill("");
     } catch (err) {
       console.error(err);
@@ -45,7 +83,13 @@ export default function SkillSection() {
   const handleDeleteSkill = async (id) => {
     await deleteSkill(id);
 
-    setSkills((prev) => prev.filter((skill) => skill.id !== id));
+    setSkills((prev) => {
+      const next = prev.filter((skill) => skill.id !== id);
+      if (skillsKey) {
+        localStorage.setItem(skillsKey, JSON.stringify(next));
+      }
+      return next;
+    });
   };
 
   return (
@@ -57,7 +101,7 @@ export default function SkillSection() {
         {skills.map((s) => (
           <span
             key={s.id}
-            className="group flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-muted border border-border rounded-xl text-md font-medium text-foreground hover:border-destructive/30 transition-all"
+            className="group flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-muted border border-border rounded-xl text-xs font-medium text-foreground hover:border-destructive/30 transition-all"
           >
             {s.skill_name}
             <button

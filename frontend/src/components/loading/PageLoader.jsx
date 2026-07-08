@@ -1,4 +1,3 @@
-
 export default function PageLoader() {
   return (
     <div
@@ -15,11 +14,11 @@ export default function PageLoader() {
         {/* Pulsing premium logo icon */}
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 w-16 h-16 bg-indigo-500/20 dark:bg-indigo-500/10 rounded-2xl blur-xl animate-pulse" />
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-teal-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-extrabold text-xl tracking-tight">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-indigo-600 to-teal-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-extrabold text-xl tracking-tight">
             RP
           </div>
         </div>
-        
+
         {/* Shimmering brand and text */}
         <div className="text-center space-y-2">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 tracking-tight">
