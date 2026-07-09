@@ -1,9 +1,35 @@
 from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnalyzeRequest(BaseModel):
-    resume_id: int
-    job_description: str = Field(..., min_length=50)
+    resume_id: int = Field(..., gt=0, description="Valid resume ID")
+
+    job_description: str = Field(
+        ...,
+        min_length=50,
+        max_length=20000,
+        description="Job description used for ATS analysis",
+    )
+
+    @field_validator("job_description")
+    @classmethod
+    def validate_job_description(cls, value: str) -> str:
+        cleaned = " ".join(value.split())
+
+        if not cleaned:
+            raise ValueError(
+                "Job description is required. Please paste the complete job description."
+            )
+
+        words = cleaned.split()
+
+        if len(words) < 10:
+            raise ValueError(
+                "Job description is too short. Please enter at least 10 meaningful words including the role, responsibilities, or required skills."
+            )
+
+        return cleaned
 
 
 class Heatmap(BaseModel):
@@ -77,7 +103,6 @@ class GenerateResponse(BaseModel):
     resume_id: int | None = None
 
 
-
 class AnalyzeHealthRequest(BaseModel):
     resume_id: int
 
@@ -86,4 +111,3 @@ class ImproveSectionRequest(BaseModel):
     resume_id: int
     section_name: str
     content: str = None
-

@@ -15,6 +15,7 @@ from app.services.pdf_service import extract_text_from_pdf
 
 logger = logging.getLogger(__name__)
 
+
 class ResumeService:
     @staticmethod
     async def upload_resume(
@@ -46,11 +47,15 @@ class ResumeService:
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
         if len(content) > settings.MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="File size must not exceed 5 MB.")
+            raise HTTPException(
+                status_code=400, detail="File size must not exceed 5 MB."
+            )
 
         temp_path = None
         try:
-            with tempfile.NamedTemporaryFile(delete=False, dir=upload_dir, suffix=suffix) as temp_file:
+            with tempfile.NamedTemporaryFile(
+                delete=False, dir=upload_dir, suffix=suffix
+            ) as temp_file:
                 temp_file.write(content)
                 temp_path = Path(temp_file.name)
 
@@ -58,14 +63,34 @@ class ResumeService:
                 parsed_text = extract_text_from_pdf(str(temp_path))
             else:
                 from app.services.docx_service import extract_text_from_docx
+
                 parsed_text = extract_text_from_docx(str(temp_path))
         except Exception:
             if temp_path and temp_path.exists():
                 temp_path.unlink()
-            raise HTTPException(status_code=400, detail="Unable to read PDF or DOCX file.")
+            raise HTTPException(
+                status_code=400, detail="Unable to read PDF or DOCX file."
+            )
         finally:
             if temp_path and temp_path.exists():
                 temp_path.unlink()
+
+        from app.resume.services.resume_analysis_service import (
+            parse_resume_text_to_json,
+        )
+        from app.resume.services.resume_normalizer import (
+            normalize_resume,
+            get_canonical_hash,
+            canonical_resume_to_text,
+        )
+        from app.resume.services.resume_scoring_service import calculate_scores
+
+        parsed_json = parse_resume_text_to_json(parsed_text)
+        normalized = normalize_resume(parsed_json)
+        canonical_hash = get_canonical_hash(normalized)
+        parsed_text = canonical_resume_to_text(normalized)
+
+        scores = calculate_scores(normalized)
 
         resume = Resume(
             user_id=user_id,
@@ -74,30 +99,36 @@ class ResumeService:
             file_path=unique_name,
             file_content_base64=base64.b64encode(content).decode("utf-8"),
             parsed_text=parsed_text,
-            ats_score=75,
-            skills="React,JavaScript,HTML,CSS,SQL",
-            analysis_results=json.dumps({
-                "ats_score": 75,
-                "matched_keywords": ["React", "JavaScript", "HTML", "CSS", "SQL"],
-                "missing_keywords": ["TypeScript", "AWS", "Docker", "CI/CD"],
-                "suggestions": [
-                    "Include specific metrics (e.g. 'improved performance by 20%')",
-                    "Add details about cloud deployment (AWS/GCP)",
-                    "Strengthen your professional summary by aligning with target roles",
-                    "List individual Docker/CI/CD tool integrations",
-                    "Format project sections with clear technology listings"
-                ],
-                "heatmap": {
-                    "contact_info": 95,
-                    "summary": 70,
-                    "skills": 80,
-                    "experience": 72,
-                    "projects": 65,
-                    "education": 90
+            ats_score=scores["ats_score"],
+            skills=",".join(normalized.get("skills", [])),
+            analysis_results=json.dumps(
+                {
+                    "ats_score": scores["ats_score"],
+                    "matched_keywords": scores["matched_keywords"],
+                    "missing_keywords": scores["missing_keywords"],
+                    "suggestions": [
+                        "Include specific metrics (e.g. 'improved performance by 20%')",
+                        "Add details about cloud deployment (AWS/GCP)",
+                        "Strengthen your professional summary by aligning with target roles",
+                        "List individual Docker/CI/CD tool integrations",
+                        "Format project sections with clear technology listings",
+                    ],
+                    "heatmap": {
+                        "contact_info": scores["formatting_score"],
+                        "summary": scores["readability_score"],
+                        "skills": scores["skills_coverage"],
+                        "experience": scores["experience_quality"],
+                        "projects": scores["projects_quality"],
+                        "education": scores["education_quality"],
+                    },
                 }
-            }),
+            ),
             version="v1",
             template="Professional",
+            resume_json=json.dumps(normalized),
+            canonical_hash=canonical_hash,
+            scoring_version="v1",
+            prompt_version="v1",
         )
         try:
             ResumeRepository.create_resume(db, resume)
@@ -109,17 +140,29 @@ class ResumeService:
 
         # Check if the user has any experience entries in the database to detect first-time/empty profile.
         from app.models.user_experience import UserExperience
+
         profile_extracted = False
         try:
-            exp_count = db.query(UserExperience).filter(UserExperience.user_id == user_id).count()
+            exp_count = (
+                db.query(UserExperience)
+                .filter(UserExperience.user_id == user_id)
+                .count()
+            )
             if exp_count == 0:
-                from app.services.profile_population_service import extract_and_populate_profile
+                from app.services.profile_population_service import (
+                    extract_and_populate_profile,
+                )
+
                 extract_and_populate_profile(db, user_id, parsed_text)
                 profile_extracted = True
         except Exception as e:
             logger.error(f"Failed to auto-populate profile on resume upload: {e}")
 
-        return {"message": "Resume uploaded", "resume_id": resume.id, "profile_extracted": profile_extracted}
+        return {
+            "message": "Resume uploaded",
+            "resume_id": resume.id,
+            "profile_extracted": profile_extracted,
+        }
 
     @staticmethod
     def set_active_resume(
@@ -138,7 +181,9 @@ class ResumeService:
             db.commit()
         except SQLAlchemyError:
             db.rollback()
-            raise HTTPException(status_code=500, detail="Failed to update active status.")
+            raise HTTPException(
+                status_code=500, detail="Failed to update active status."
+            )
 
         return {"message": "Resume set as active", "resume_id": resume.id}
 
@@ -156,8 +201,14 @@ class ResumeService:
                 "is_active": r.is_active,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "ats_score": r.ats_score,
-                "skills": [s.strip() for s in r.skills.split(",") if s.strip()] if r.skills else [],
-                "analysis_results": json.loads(r.analysis_results) if r.analysis_results else None,
+                "skills": (
+                    [s.strip() for s in r.skills.split(",") if s.strip()]
+                    if r.skills
+                    else []
+                ),
+                "analysis_results": (
+                    json.loads(r.analysis_results) if r.analysis_results else None
+                ),
                 "version": r.version or "v1",
                 "template": r.template or "Professional",
                 "resume_json": json.loads(r.resume_json) if r.resume_json else None,
@@ -190,62 +241,118 @@ class ResumeService:
         profile = db.query(Profile).filter(Profile.user_id == user_id).first()
         skills = db.query(UserSkill).filter(UserSkill.user_id == user_id).all()
         projects = db.query(UserProject).filter(UserProject.user_id == user_id).all()
-        experiences = db.query(UserExperience).filter(UserExperience.user_id == user_id).all()
-        education = db.query(UserEducation).filter(UserEducation.user_id == user_id).all()
+        experiences = (
+            db.query(UserExperience).filter(UserExperience.user_id == user_id).all()
+        )
+        education = (
+            db.query(UserEducation).filter(UserEducation.user_id == user_id).all()
+        )
 
-        if not profile and not skills and not projects and not experiences and not education:
+        if (
+            not profile
+            and not skills
+            and not projects
+            and not experiences
+            and not education
+        ):
             raise HTTPException(
                 status_code=400,
-                detail="Profile is completely empty. Please enter your profile information first."
+                detail="Profile is completely empty. Please enter your profile information first.",
             )
 
-        lines = []
-        if profile:
-            lines.append(f"Name: {profile.full_name or ''}")
-            lines.append(f"Headline: {profile.headline or ''}")
-            lines.append(f"Phone: {profile.phone or ''}")
-            lines.append(f"Location: {profile.location or ''}")
-            lines.append(f"LinkedIn: {profile.linkedin_url or ''}")
-            lines.append(f"GitHub: {profile.github_url or ''}")
-            lines.append(f"Portfolio: {profile.portfolio_url or ''}")
-            lines.append(f"Summary: {profile.summary or ''}")
-            lines.append("")
+        contact = {
+            "name": profile.full_name or "" if profile else "",
+            "email": "",
+            "phone": profile.phone or "" if profile else "",
+            "location": profile.location or "" if profile else "",
+            "linkedin": profile.linkedin_url or "" if profile else "",
+            "github": profile.github_url or "" if profile else "",
+            "portfolio": profile.portfolio_url or "" if profile else "",
+        }
+        headline = profile.headline or "" if profile else ""
+        summary = profile.summary or "" if profile else ""
 
-        if skills:
-            lines.append("Skills:")
-            lines.append(", ".join([s.skill_name for s in skills]))
-            lines.append("")
+        skills_list = [s.skill_name for s in skills] if skills else []
 
-        if experiences:
-            lines.append("Experience:")
-            for exp in experiences:
-                lines.append(f"Company: {exp.company}")
-                lines.append(f"Role: {exp.role}")
-                lines.append(f"Duration: {exp.start_month or ''} {exp.start_year or ''} - {exp.end_month or 'Present' if exp.currently_working else exp.end_year or ''}")
-                lines.append(f"Description: {exp.description or ''}")
-                lines.append("")
+        experience_list = []
+        for exp in experiences:
+            bullets = []
+            if exp.description:
+                bullets = [
+                    item.strip() for item in exp.description.split("\n") if item.strip()
+                ]
+            experience_list.append(
+                {
+                    "company": exp.company or "",
+                    "role": exp.role or "",
+                    "start_date": f"{exp.start_month or ''} {exp.start_year or ''}".strip(),
+                    "end_date": (
+                        "Present"
+                        if exp.currently_working
+                        else f"{exp.end_month or ''} {exp.end_year or ''}".strip()
+                    ),
+                    "currently_working": bool(exp.currently_working),
+                    "location": "",
+                    "bullets": bullets,
+                }
+            )
 
-        if projects:
-            lines.append("Projects:")
-            for proj in projects:
-                lines.append(f"Title: {proj.title}")
-                lines.append(f"Technologies: {proj.tech_stack or ''}")
-                lines.append(f"Description: {proj.description}")
-                if proj.github_url:
-                    lines.append(f"GitHub: {proj.github_url}")
-                if proj.live_url:
-                    lines.append(f"Live: {proj.live_url}")
-                lines.append("")
+        projects_list = []
+        for proj in projects:
+            projects_list.append(
+                {
+                    "title": proj.title or "",
+                    "description": proj.description or "",
+                    "technologies": (
+                        [t.strip() for t in proj.tech_stack.split(",") if t.strip()]
+                        if proj.tech_stack
+                        else []
+                    ),
+                    "github_url": proj.github_url or "",
+                    "live_url": proj.live_url or "",
+                }
+            )
 
-        if education:
-            lines.append("Education:")
-            for edu in education:
-                lines.append(f"Institution: {edu.institution}")
-                lines.append(f"Degree: {edu.degree}")
-                lines.append(f"Duration: {edu.start_year or ''} - {edu.end_year or ''}")
-                lines.append("")
+        education_list = []
+        for edu in education:
+            education_list.append(
+                {
+                    "institution": edu.institution or "",
+                    "degree": edu.degree or "",
+                    "start_date": str(edu.start_year or ""),
+                    "end_date": str(edu.end_year or ""),
+                    "location": "",
+                }
+            )
 
-        parsed_text = "\n".join(lines)
+        raw_canonical = {
+            "contact": contact,
+            "headline": headline,
+            "summary": summary,
+            "skills": skills_list,
+            "experience": experience_list,
+            "projects": projects_list,
+            "education": education_list,
+            "certifications": [],
+            "achievements": [],
+            "languages": [],
+            "publications": [],
+            "volunteer_experience": [],
+        }
+
+        from app.resume.services.resume_normalizer import (
+            normalize_resume,
+            get_canonical_hash,
+            canonical_resume_to_text,
+        )
+
+        normalized = normalize_resume(raw_canonical)
+        canonical_hash = get_canonical_hash(normalized)
+        parsed_text = canonical_resume_to_text(normalized)
+
+        from app.resume.services.resume_scoring_service import calculate_scores
+
+        scores = calculate_scores(normalized)
 
         resume = Resume(
             user_id=user_id,
@@ -253,29 +360,36 @@ class ResumeService:
             original_filename="profile_import.txt",
             file_path=f"profile_import_{uuid.uuid4()}.txt",
             parsed_text=parsed_text,
-            skills=",".join([s.skill_name for s in skills]) if skills else "",
-            ats_score=75,
-            analysis_results=json.dumps({
-                "ats_score": 75,
-                "matched_keywords": [s.skill_name for s in skills][:5] if skills else [],
-                "missing_keywords": [],
-                "suggestions": ["Add more details from your experiences"],
-                "heatmap": {
-                    "contact_info": 90,
-                    "summary": 80,
-                    "skills": 80,
-                    "experience": 70,
-                    "projects": 70,
-                    "education": 80
+            resume_json=json.dumps(normalized),
+            canonical_hash=canonical_hash,
+            ats_score=scores["ats_score"],
+            skills=",".join(normalized["skills"]),
+            analysis_results=json.dumps(
+                {
+                    "ats_score": scores["ats_score"],
+                    "matched_keywords": scores["matched_keywords"],
+                    "missing_keywords": scores["missing_keywords"],
+                    "suggestions": ["Add more details from your experiences"],
+                    "heatmap": {
+                        "contact_info": scores["formatting_score"],
+                        "summary": scores["readability_score"],
+                        "skills": scores["skills_coverage"],
+                        "experience": scores["experience_quality"],
+                        "projects": scores["projects_quality"],
+                        "education": scores["education_quality"],
+                    },
                 }
-            })
+            ),
         )
 
         try:
             ResumeRepository.create_resume(db, resume)
         except SQLAlchemyError:
             db.rollback()
-            raise HTTPException(status_code=500, detail="Database error occurred while importing profile.")
+            raise HTTPException(
+                status_code=500,
+                detail="Database error occurred while importing profile.",
+            )
 
         return {"message": "Profile imported successfully", "resume_id": resume.id}
 

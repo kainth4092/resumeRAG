@@ -5,11 +5,92 @@ from app.services.ai import get_ai_provider, prompts
 
 logger = logging.getLogger(__name__)
 
-# Adapts the OpenAI client.chat.completions.create signature to the active AIProvider
+
+def extract_json(content: str) -> dict:
+    """
+    Safely extract a JSON object from an LLM response.
+
+    Handles:
+    - Pure JSON
+    - ```json code blocks
+    - ``` code blocks
+    - Extra text surrounding a JSON object
+
+    Raises ValueError when no valid JSON object can be extracted.
+    """
+
+    if not content or not isinstance(content, str):
+        raise ValueError("AI returned an empty or invalid response.")
+
+    cleaned = content.strip()
+
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+
+    cleaned = cleaned.strip()
+
+    try:
+        result = json.loads(cleaned)
+
+        if not isinstance(result, dict):
+            raise ValueError("AI response must be a JSON object.")
+
+        return result
+
+    except json.JSONDecodeError:
+        pass
+
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+
+    if start == -1 or end == -1 or end <= start:
+        logger.error(
+            "No JSON object found in AI response. response_length=%s",
+            len(cleaned),
+        )
+
+        raise ValueError("The AI returned an invalid response format.")
+
+    json_candidate = cleaned[start : end + 1]
+
+    try:
+        result = json.loads(json_candidate)
+
+        if not isinstance(result, dict):
+            raise ValueError("AI response must be a JSON object.")
+
+        return result
+
+    except json.JSONDecodeError as exc:
+        logger.error(
+            "Failed to parse AI JSON response. " "response_length=%s error=%s",
+            len(cleaned),
+            exc,
+        )
+
+        raise ValueError("The AI returned malformed JSON.") from exc
+
+
 class ChatCompletionsAdapter:
-    def create(self, model: str = None, messages: list = [], temperature: float = 0.1, timeout: float = None):
+    def create(
+        self,
+        model: str = None,
+        messages: list = None,
+        temperature: float = 0.1,
+        timeout: float = None,
+        feature: str = "legacy_adapter",
+    ):
+        if messages is None:
+            messages = []
+
         system_content = "You are an expert assistant."
         user_content = ""
+
         for msg in messages:
             if msg.get("role") == "system":
                 system_content = msg.get("content", "")
@@ -17,11 +98,13 @@ class ChatCompletionsAdapter:
                 user_content = msg.get("content", "")
 
         provider = get_ai_provider()
+
         content = provider.chat(
             system_prompt=system_content,
             user_prompt=user_content,
             temperature=temperature,
-            timeout=timeout
+            timeout=timeout,
+            feature=feature,
         )
 
         class MessageObj:
@@ -38,11 +121,14 @@ class ChatCompletionsAdapter:
 
         return ResponseObj(content)
 
+
 class ChatAdapter:
     completions = ChatCompletionsAdapter()
 
+
 class OpenAIClientAdapter:
     chat = ChatAdapter()
+
 
 # Expose 'client' as an instance of the adapter to maintain backward compatibility
 client = OpenAIClientAdapter()
@@ -50,83 +136,55 @@ client = OpenAIClientAdapter()
 
 def call_llm_with_retry(
     prompt: str,
-    max_retries: int = 3,
-    initial_delay: float = 1.5,
+    *,
+    feature: str,
+    temperature: float = 0.0,
     json_response: bool = False,
+    timeout: float = None,
 ):
     """
-    Call active AI LLM provider.
+    Call the active AI provider exactly once.
+
+    IMPORTANT:
+    This function intentionally performs no automatic retries.
+    One application action should result in at most one LLM request.
     """
-    system_prompt = "You are an expert ATS Resume Writer. Always return valid JSON only."
+
+    system_prompt = (
+        "You are an expert ATS Resume Writer. "
+        "Follow the user's instructions exactly. "
+        "When JSON is requested, return valid JSON only with no markdown."
+    )
+
     provider = get_ai_provider()
-    
+
+    logger.info(
+        "[LLM_SERVICE_CALL] feature=%s prompt_size=%s json_response=%s",
+        feature,
+        len(prompt),
+        json_response,
+    )
+
     try:
         content = provider.chat(
             system_prompt=system_prompt,
             user_prompt=prompt,
-            temperature=0.1
+            temperature=temperature,
+            timeout=timeout,
+            feature=feature,
         )
+
         if json_response:
             return extract_json(content)
+
         return content
-    except Exception as e:
-        logger.error("LLM call failed in call_llm_with_retry: %s", str(e))
-        raise e
 
-
-def extract_json(text: str):
-    text = text.strip()
-    text = re.sub(r"^```json", "", text)
-    text = re.sub(r"^```", "", text)
-    text = re.sub(r"```$", "", text)
-
-    start = text.find("{")
-    end = text.rfind("}")
-
-    if start == -1 or end == -1:
-        raise ValueError("LLM did not return valid JSON")
-    text = text[start : end + 1]
-    return json.loads(text)
-
-
-def normalize_analyze_response(result: dict) -> dict:
-    if not isinstance(result, dict):
-        result = {}
-
-    # Ensure key fields
-    if "ats_score" not in result:
-        result["ats_score"] = 70
-    else:
-        try:
-            result["ats_score"] = int(result["ats_score"])
-        except (ValueError, TypeError):
-            result["ats_score"] = 70
-
-    for list_field in ["matched_keywords", "missing_keywords", "suggestions"]:
-        if list_field not in result or not isinstance(result[list_field], list):
-            result[list_field] = []
-
-    if "heatmap" not in result or not isinstance(result["heatmap"], dict):
-        result["heatmap"] = {}
-
-    heatmap = result["heatmap"]
-    for field in [
-        "contact_info",
-        "summary",
-        "skills",
-        "experience",
-        "projects",
-        "education",
-    ]:
-        if field not in heatmap:
-            heatmap[field] = 70
-        else:
-            try:
-                heatmap[field] = int(heatmap[field])
-            except (ValueError, TypeError):
-                heatmap[field] = 70
-
-    return result
+    except Exception:
+        logger.exception(
+            "[LLM_SERVICE_FAILED] feature=%s",
+            feature,
+        )
+        raise
 
 
 def normalize_generate_response(result: dict) -> dict:
@@ -308,7 +366,11 @@ def normalize_health_response(result: dict) -> dict:
         result["suggestions"] = {}
 
     sug = result["suggestions"]
-    for list_field in ["quick_fixes", "medium_improvements", "high_impact_improvements"]:
+    for list_field in [
+        "quick_fixes",
+        "medium_improvements",
+        "high_impact_improvements",
+    ]:
         if list_field not in sug or not isinstance(sug[list_field], list):
             sug[list_field] = []
         else:
@@ -323,10 +385,61 @@ def normalize_health_response(result: dict) -> dict:
     return result
 
 
-def analyze_resume(resume_text, job_description):
-    prompt_str = prompts.get_ats_prompt(resume_text, job_description)
-    result = call_llm_with_retry(prompt_str, json_response=True)
+def analyze_resume(resume_text: str, job_description: str):
+    prompt_str = prompts.get_ats_prompt(
+        resume_text,
+        job_description,
+    )
+
+    result = call_llm_with_retry(
+        prompt_str,
+        feature="ats_analysis",
+        temperature=0.0,
+        json_response=True,
+    )
+
     return normalize_analyze_response(result)
+
+
+def generate_general_answer(
+    question: str,
+    skill: str,
+    category: str,
+    experience_level: str,
+) -> str:
+    prompt_str = prompts.get_general_answer_prompt(
+        question,
+        skill,
+        category,
+        experience_level,
+    )
+
+    try:
+        response = call_llm_with_retry(
+            prompt_str,
+            feature="interview_general_answer",
+            temperature=0.2,
+        )
+
+        response = response.strip()
+
+        if response.startswith("```"):
+            lines = response.splitlines()
+
+            if len(lines) >= 2:
+                response = "\n".join(lines[1:-1])
+
+        return response.strip()
+
+    except Exception:
+        logger.exception(
+            "Failed to generate AI answer. " "skill=%s category=%s experience_level=%s",
+            skill,
+            category,
+            experience_level,
+        )
+
+        return f"AI generated sample answer for: {question}"
 
 
 OUTPUT_SCHEMA = {
@@ -375,39 +488,46 @@ OUTPUT_SCHEMA = {
 }
 
 
-def generate_resume(resume_text, job_description):
+def generate_resume(resume_text: str, job_description: str):
     schema_str = json.dumps(OUTPUT_SCHEMA)
     prompt_str = prompts.get_resume_prompt(resume_text, job_description, schema_str)
-    result = call_llm_with_retry(prompt_str, json_response=True)
+    result = call_llm_with_retry(
+        prompt_str,
+        feature="resume_generation",
+        temperature=0.0,
+        json_response=True,
+    )
     return normalize_generate_response(result)
-
-
-def generate_general_answer(
-    question: str, skill: str, category: str, experience_level: str
-) -> str:
-    prompt_str = prompts.get_general_answer_prompt(question, skill, category, experience_level)
-    try:
-        response = call_llm_with_retry(prompt_str)
-        response = response.strip()
-        if response.startswith("```"):
-            lines = response.splitlines()
-            if len(lines) >= 2:
-                response = "\n".join(lines[1:-1])
-        return response.strip()
-    except Exception as e:
-        logger.error("Failed to generate AI answer: %s", e, exc_info=True)
-        return f"AI generated sample answer for: {question}"
 
 
 def analyze_resume_health(resume_text: str):
     prompt_str = prompts.get_resume_health_prompt(resume_text)
-    result = call_llm_with_retry(prompt_str, json_response=True)
+
+    result = call_llm_with_retry(
+        prompt_str,
+        feature="resume_health_analysis",
+        temperature=0.0,
+        json_response=True,
+    )
+
     return normalize_health_response(result)
 
 
 def improve_resume_section(
-    resume_text: str, section_name: str, section_content: str = None
+    resume_text: str,
+    section_name: str,
+    section_content: str = None,
 ) -> str:
-    prompt_str = prompts.get_improve_section_prompt(resume_text, section_name, section_content)
-    response = call_llm_with_retry(prompt_str)
+    prompt_str = prompts.get_improve_section_prompt(
+        resume_text,
+        section_name,
+        section_content,
+    )
+
+    response = call_llm_with_retry(
+        prompt_str,
+        feature="resume_section_improvement",
+        temperature=0.2,
+    )
+
     return response.strip()

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import ForeignKey, Text, DateTime, Integer
+from sqlalchemy import ForeignKey, Text, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -30,6 +30,13 @@ class ResumeHealthAnalysis(Base):
     strengths: Mapped[str] = mapped_column(Text, nullable=True)
     weaknesses: Mapped[str] = mapped_column(Text, nullable=True)
 
+    canonical_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    scoring_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    analysis_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    jd_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     resume = relationship("Resume")
+

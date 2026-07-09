@@ -10,7 +10,7 @@ export default function WelcomeScreen({
   alert,
 }) {
   return (
-    <Slide animKey="welcome">
+    <Slide animKey="welcome" className="overflow-x-hidden">
       <Logo />
 
       <div className="text-center mb-8">

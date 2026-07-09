@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadResume, importProfileToResume, updateResume } from "../services/resumeService";
+import {
+  uploadResume,
+  importProfileToResume,
+  updateResume,
+} from "../services/resumeService";
 import { analyzeResume, generateResume } from "../services/generatorService";
 import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
@@ -189,10 +193,24 @@ export function useResumeGenerator() {
       setUploadProgress(100);
     } catch (err) {
       console.error("Import profile failed", err);
-      setGeneratorError(
-        err.response?.data?.detail ||
-          "Failed to import from your profile. Make sure your profile has some details filled.",
-      );
+
+      if (err.code === "ECONNABORTED") {
+        setGeneratorError(
+          "The server took too long to respond. Please try again in a moment.",
+        );
+      } else if (!err.response) {
+        setGeneratorError(
+          "Unable to connect to the server. Please check your internet connection and try again.",
+        );
+      } else {
+        const detail = err.response?.data?.detail;
+
+        setGeneratorError(
+          typeof detail === "string"
+            ? detail
+            : "Failed to import your profile. Please make sure your profile contains enough information.",
+        );
+      }
     } finally {
       setImportingProfile(false);
     }
@@ -228,10 +246,24 @@ export function useResumeGenerator() {
       setFileSize((file.size / (1024 * 1024)).toFixed(2));
     } catch (err) {
       console.error("Upload failed", err);
-      setGeneratorError(
-        err.response?.data?.detail ||
-          "Upload failed. Please ensure the file is a valid PDF or DOCX.",
-      );
+
+      if (err.code === "ECONNABORTED") {
+        setGeneratorError(
+          "The upload timed out because the server took too long to respond. Please try again.",
+        );
+      } else if (!err.response) {
+        setGeneratorError(
+          "Unable to connect to the server. Please check your connection and try again.",
+        );
+      } else {
+        const detail = err.response?.data?.detail;
+
+        setGeneratorError(
+          typeof detail === "string"
+            ? detail
+            : "Upload failed. Please use a valid PDF or DOCX file.",
+        );
+      }
     } finally {
       setUploading(false);
     }
@@ -340,8 +372,10 @@ export function useResumeGenerator() {
       });
       const r = {
         ...response.data.resume,
-        id: response.data.resume_id || resume?.resume_id || Date.now().toString(),
-        resume_id: response.data.resume_id || resume?.resume_id || Date.now().toString(),
+        id:
+          response.data.resume_id || resume?.resume_id || Date.now().toString(),
+        resume_id:
+          response.data.resume_id || resume?.resume_id || Date.now().toString(),
       };
       setGeneratedResume(r);
       setGenerated(true);

@@ -25,4 +25,9 @@ class Resume(Base):
     )
     is_generated: Mapped[bool] = mapped_column(Boolean, default=False)
     resume_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    canonical_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    scoring_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    jd_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     user = relationship("User", back_populates="resumes")

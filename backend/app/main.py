@@ -81,7 +81,46 @@ def _error(detail: str, status_code: int) -> JSONResponse:
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ):
-    return _error("Validation error occurred.", 422)
+    errors = exc.errors()
+    if not errors:
+        return _error("The submitted data is invalid. Please check your input.", 422)
+
+    first_error = errors[0]
+
+    field_path = first_error.get("loc", [])
+    field_name = str(field_path[-1].replace("_", "").title() if field_path else "Input")
+
+    error_type = first_error.get("type", "")
+    ctx = first_error.get("ctx", {})
+
+    if error_type == "string_too_short":
+        min_length = ctx.get("min_length")
+        message = (
+            f"{field_name} is too short."
+            f"Please enter at least {min_length} characters."
+        )
+
+    elif error_type == "missing":
+        message = f"{field_name} is required."
+
+    elif error_type == "string_type":
+        message = f"{field_name} must be valid text."
+
+    elif error_type == "int_parsing":
+        message = f"{field_name} must be a valid number."
+
+    else:
+        raw_message = first_error.get("msg", "Invalid input.")
+        message = f"{field_name}: {raw_message}"
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": message,
+            "error_code": "VALIDATION_ERROR",
+            "field": field_path[-1] if field_path else None,
+        },
+    )
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -108,7 +147,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origins or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

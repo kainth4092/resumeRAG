@@ -18,9 +18,7 @@ from app.schemas.generator import (
     ImproveSectionRequest,
 )
 from app.services.llm_service import (
-    analyze_resume,
     generate_resume,
-    analyze_resume_health,
     improve_resume_section,
 )
 
@@ -43,23 +41,23 @@ def analyze(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        result = analyze_resume(resume.parsed_text, payload.job_description)
+        from app.resume.services.resume_analysis_service import analyze_resume_canonical
 
-        # Save analysis to the database
-        resume.ats_score = result.get("ats_score", 75)
-        resume.analysis_results = json.dumps(result)
-        matched = result.get("matched_keywords", [])
-        resume.skills = ",".join(matched)
-
-        db.commit()
-        db.refresh(resume)
-
+        result = analyze_resume_canonical(db, resume, payload.job_description)
         return result
-    except AppException as e:
-        raise e
-    except Exception:
+    except HTTPException:
+        raise
+    except AppException:
+        raise
+
+    except Exception as exc:
         logger.exception("Failed to analyze resume")
-        raise HTTPException(status_code=500, detail="Failed to analyze resume.")
+        raise HTTPException(
+            status_code=500,
+            detail="We couldn't analyze your resume right now. "
+            "Please verify that your resume contains readable text and "
+            "that the job description is complete, then try again.",
+        ) from exc
 
 
 @router.post("/generate", response_model=GenerateResponse)
@@ -79,7 +77,6 @@ def generate(
     try:
         result = generate_resume(resume.parsed_text, payload.job_description)
 
-        # Save new optimized resume entry
         r_data = result.get("resume", {})
         headline = r_data.get("headline", "Optimized Resume")
         summary = r_data.get("summary", "")
@@ -136,10 +133,7 @@ def generate(
         db.commit()
         db.refresh(new_resume)
 
-        return {
-            "resume": result.get("resume", {}),
-            "resume_id": new_resume.id
-        }
+        return {"resume": result.get("resume", {}), "resume_id": new_resume.id}
     except AppException as e:
         raise e
     except Exception:
@@ -162,47 +156,9 @@ def analyze_health(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        result = analyze_resume_health(resume.parsed_text)
+        from app.resume.services.resume_analysis_service import analyze_resume_canonical
 
-        health_report = (
-            db.query(ResumeHealthAnalysis)
-            .filter(ResumeHealthAnalysis.resume_id == resume.id)
-            .first()
-        )
-        if not health_report:
-            health_report = ResumeHealthAnalysis(resume_id=resume.id)
-            db.add(health_report)
-
-        health_report.ats_score = result.get("ats_score", 0)
-        health_report.resume_health_score = result.get("resume_health_score", 0)
-        health_report.formatting_score = result.get("formatting_score", 0)
-        health_report.readability_score = result.get("readability_score", 0)
-        health_report.skills_coverage = result.get("skills_coverage", 0)
-        health_report.experience_quality = result.get("experience_quality", 0)
-        health_report.projects_quality = result.get("projects_quality", 0)
-        health_report.education_quality = result.get("education_quality", 0)
-        health_report.keyword_optimization = result.get("keyword_optimization", 0)
-        health_report.grammar_writing = result.get("grammar_writing", 0)
-        health_report.section_completeness = result.get("section_completeness", 0)
-        health_report.recruiter_readiness = result.get("recruiter_readiness", 0)
-
-        sug_dict = result.get("suggestions", {})
-        if not isinstance(sug_dict, dict):
-            sug_dict = {}
-        sug_dict["summary"] = result.get("summary", "")
-        sug_dict["formatting_status"] = result.get("formatting_status", "Standard Passed")
-        sug_dict["grammar_status"] = result.get("grammar_status", "Clean")
-
-        health_report.suggestions = json.dumps(sug_dict)
-        health_report.missing_sections = json.dumps(result.get("missing_sections", []))
-        health_report.strengths = json.dumps(result.get("strengths", []))
-        health_report.weaknesses = json.dumps(result.get("weaknesses", []))
-
-        resume.ats_score = health_report.ats_score
-
-        db.commit()
-        db.refresh(health_report)
-
+        result = analyze_resume_canonical(db, resume, None)
         return result
     except AppException as e:
         raise e
@@ -264,7 +220,9 @@ def get_resume_health(
     if not health_report:
         return None
 
-    suggestions_data = json.loads(health_report.suggestions) if health_report.suggestions else {}
+    suggestions_data = (
+        json.loads(health_report.suggestions) if health_report.suggestions else {}
+    )
     return {
         "ats_score": health_report.ats_score,
         "resume_health_score": health_report.resume_health_score,

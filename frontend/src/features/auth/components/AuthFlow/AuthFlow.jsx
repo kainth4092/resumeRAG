@@ -139,14 +139,13 @@ export function AuthFlow({ initialScreen = "welcome" }) {
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center px-4 py-12 relative overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors duration-300"
+      className="min-h-screen w-full flex items-center justify-center px-4 py-12 relative overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors duration-300"
       style={{
         backgroundImage:
           "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79, 70, 229, 0.12) 0%, transparent 60%)",
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Decorative background glow circles */}
       <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/5 dark:bg-indigo-500/3 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-teal-500/5 dark:bg-teal-500/3 rounded-full blur-3xl pointer-events-none" />
 

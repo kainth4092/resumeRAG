@@ -3,7 +3,7 @@
 def get_ats_prompt(resume_text: str, job_description: str) -> str:
     return f"""
     You are an expert ATS Resume Analyzer, Technical Recruiter, and Resume Reviewer.
-    Your task is to compare the candidate's uploaded resume with the Job Description and evaluate how well the resume matches the role.
+    Your task is to compare the candidate's uploaded resume with the Job Description and evaluate how well the resume matches the role qualitatively.
 
     #########################
     INPUT
@@ -26,34 +26,13 @@ def get_ats_prompt(resume_text: str, job_description: str) -> str:
     - Projects
     - Certifications
     - Education
+    
+    Do NOT compute or include any numeric scores, ATS scores, or heatmap scores, as these are calculated by a deterministic backend service.
+    
     Use the Job Description to identify:
-    1. Skills already present
-    2. Skills missing
-    3. ATS weaknesses
-    4. Resume strengths
-    5. Improvement opportunities
-
-    #########################
-    SCORING
-    #########################
-    ATS Score should consider:
-    - Skills Match
-    - Experience Relevance
-    - Projects
-    - Keywords
-    - Resume Structure
-    - Technical Stack Alignment
-    Return a score between 0 and 100.
-
-    #########################
-    KEYWORDS
-    #########################
-    matched_keywords
-    - Maximum 10
-    - Only keywords actually found in the resume.
-    missing_keywords
-    - Maximum 10
-    - Important keywords from the Job Description that are missing.
+    1. ATS weaknesses
+    2. Resume strengths
+    3. Actionable improvement opportunities (suggestions)
 
     #########################
     SUGGESTIONS
@@ -68,33 +47,20 @@ def get_ats_prompt(resume_text: str, job_description: str) -> str:
     - Strengthen summary using JD keywords.
 
     #########################
-    HEATMAP
-    #########################
-    Score every section between 0 and 100.
-
-    #########################
     OUTPUT
     #########################
     Return ONLY valid JSON.
-    No markdown.
-    No explanation.
-    No code block.
+    No markdown formatting (do NOT wrap in ```json or ```).
+    No explanations outside the JSON structure.
+    
     JSON Schema:
     {{
-      "ats_score": 0,
-      "matched_keywords": [],
-      "missing_keywords": [],
       "suggestions": [],
-      "heatmap": {{
-        "contact_info": 0,
-        "summary": 0,
-        "skills": 0,
-        "experience": 0,
-        "projects": 0,
-        "education": 0
-      }}
+      "strengths": [],
+      "weaknesses": []
     }}
     """
+
 
 
 def get_resume_prompt(resume_text: str, job_description: str, schema_str: str) -> str:
@@ -210,7 +176,7 @@ def get_general_answer_prompt(
 def get_resume_health_prompt(resume_text: str) -> str:
     return f"""
     You are an expert ATS Resume Analyzer, Technical Recruiter, and Resume Reviewer.
-    Your task is to perform a comprehensive health audit of the candidate's resume and generate an ATS health report.
+    Your task is to perform a comprehensive health audit of the candidate's resume and generate an ATS health report qualitatively.
     This analysis does NOT compare against any specific job description, but evaluates overall professional resume quality, ATS-friendliness, structure, and readability.
 
     #########################
@@ -234,24 +200,13 @@ def get_resume_health_prompt(resume_text: str) -> str:
     - Volunteer Experience
     - Publications
 
+    Do NOT compute or include any numeric scores, ATS scores, formatting scores, readability scores, or category scores, as these are calculated by a deterministic backend service.
+
     #########################
     OUTPUT SCHEMA
     #########################
-    Return ONLY valid JSON with the following structure:
+    Return ONLY valid JSON with the following structure. Do NOT wrap in markdown code blocks like ```json or ```. No explanations outside JSON.
     {{
-      "ats_score": 0,               
-      "resume_health_score": 0,    
-      "formatting_score": 0,    
-      "readability_score": 0,    
-      "skills_coverage": 0,    
-      "experience_quality": 0,    
-      "projects_quality": 0,    
-      "education_quality": 0,    
-      "keyword_optimization": 0,   
-      "grammar_writing": 0,        
-      "section_completeness": 0,   
-      "recruiter_readiness": 0,     
-      
       "summary": "2-3 sentence overall diagnostic review of the resume health.",
       "formatting_status": "Brief 1-3 word formatting evaluation (e.g. Standard Passed, Layout Issues)",
       "grammar_status": "Brief 1-3 word grammar evaluation (e.g. Clean, Actions Needed)",
@@ -266,6 +221,7 @@ def get_resume_health_prompt(resume_text: str) -> str:
       "weaknesses": []             
     }}
     """
+
 
 
 def get_improve_section_prompt(
