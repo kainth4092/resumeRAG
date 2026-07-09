@@ -32,16 +32,17 @@ export default function ResumeTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {["Resume", "Status", "Updated", "Template", "Actions"].map(
+              {["Resume", "Headline", "Status", "Updated", "Actions"].map(
                 (h, i) => (
                   <th
                     key={h}
-                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${i === 4
-                      ? "text-right px-5"
-                      : i === 0
-                        ? "text-left px-5"
-                        : "text-left px-4"
-                      }`}
+                    className={`py-3.5 text-[11px] font-bold text-muted-foreground uppercase tracking-widest ${
+                      i === 4
+                        ? "text-right px-5"
+                        : i === 0
+                          ? "text-left px-5"
+                          : "text-left px-4"
+                    }`}
                   >
                     {h}
                   </th>
@@ -111,6 +112,14 @@ export default function ResumeTable({
                     </div>
                   </td>
 
+                  <td className="px-4 py-4">
+                    <span
+                      className="inline-flex items-center max-w-[220px] truncate text-sm font-medium text-foreground"
+                      title={r.role || "Not specified"}
+                    >
+                      {r.role || "Not specified"}
+                    </span>
+                  </td>
 
                   <td className="px-4 py-4">
                     <span
@@ -127,12 +136,6 @@ export default function ResumeTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-4">
-                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-lg border border-border">
-                      {r.template}
-                    </span>
-                  </td>
-
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-3">
                       <button
@@ -142,7 +145,6 @@ export default function ResumeTable({
                       >
                         <Edit2 size={14} />
                       </button>
-
 
                       <div className="relative">
                         <button
@@ -164,7 +166,10 @@ export default function ResumeTable({
       </div>
 
       {menuOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-end p-4" onClick={() => setMenuOpen(null)}>
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-end p-4"
+          onClick={() => setMenuOpen(null)}
+        >
           <div
             className="bg-card border border-border rounded-3xl w-full max-w-sm overflow-hidden shadow-(--shadow-xl) animate-in fade-in zoom-in-95 duration-200 text-left"
             ref={menuRef}
@@ -205,7 +210,10 @@ export default function ResumeTable({
                     // Wait for template to render in DOM
                     await new Promise((resolve) => setTimeout(resolve, 200));
                     const resumeData = target.resume || target;
-                    await downloadPDF(resumeData, `${target.name || "Resume"}.pdf`);
+                    await downloadPDF(
+                      resumeData,
+                      `${target.name || "Resume"}.pdf`,
+                    );
                     setPreviewResume(null);
                   }
                   setMenuOpen(null);
@@ -221,7 +229,11 @@ export default function ResumeTable({
                   const target = allResumes.find((r) => r.id === menuOpen);
                   if (target) {
                     const resumeData = target.resume || target;
-                    downloadDOCX(resumeData, `${target.name || "Resume"}.docx`, target.template || "Professional");
+                    downloadDOCX(
+                      resumeData,
+                      `${target.name || "Resume"}.docx`,
+                      target.template || "Professional",
+                    );
                   }
                   setMenuOpen(null);
                 }}

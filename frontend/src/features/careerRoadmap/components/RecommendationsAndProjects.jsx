@@ -21,15 +21,25 @@ export default function RecommendationsAndProjects({
               IconComp = BookOpen;
             }
 
+            const hasUrl = Boolean(r.url);
+            const Wrapper = hasUrl ? "a" : "div";
             const isHigh = r.priority === "High";
 
             return (
-              <a
-                key={i}
-                href={r.url || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer group border border-transparent hover:border-border no-underline"
+              <Wrapper
+                key={`${r.skill || r.title}-${i}`}
+                {...(hasUrl
+                  ? {
+                      href: r.url,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                    }
+                  : {})}
+                className={`flex items-start gap-3 p-3 rounded-xl transition-all group border border-transparent ${
+                  hasUrl
+                    ? "hover:bg-muted/50 hover:border-border cursor-pointer"
+                    : "cursor-default"
+                }`}
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <IconComp size={16} className="text-primary" />
@@ -39,7 +49,8 @@ export default function RecommendationsAndProjects({
                     {r.title}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {r.platform} · {r.time}
+                    {r.provider || "Learning Path"}
+                    {r.duration ? ` · ${r.duration}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -52,12 +63,14 @@ export default function RecommendationsAndProjects({
                   >
                     {r.priority}
                   </span>
-                  <ArrowRight
-                    size={13}
-                    className="text-muted-foreground group-hover:text-primary transition-colors duration-300"
-                  />
+                  {hasUrl && (
+                    <ArrowRight
+                      size={13}
+                      className="text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300"
+                    />
+                  )}
                 </div>
-              </a>
+              </Wrapper>
             );
           })}
         </div>
@@ -72,17 +85,27 @@ export default function RecommendationsAndProjects({
           {projects.map((p, i) => {
             const isHard = p.difficulty === "Hard";
             return (
-              <a
+              <div
                 key={i}
-                href={p.url || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="block p-4 border border-border rounded-xl hover:border-primary/30 hover:bg-muted/30 transition-all duration-300 cursor-pointer group no-underline"
               >
                 <div className="flex items-start justify-between mb-2.5">
                   <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                     {p.name}
                   </p>
+                  {p.description && (
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                      {p.description}
+                    </p>
+                  )}
+                  {p.why && (
+                    <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+                      <span className="font-semibold text-foreground">
+                        Why it matters:
+                      </span>{" "}
+                      {p.why}
+                    </p>
+                  )}
                   <span
                     className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full tracking-wider ${
                       isHard
@@ -103,7 +126,7 @@ export default function RecommendationsAndProjects({
                     </span>
                   ))}
                 </div>
-              </a>
+              </div>
             );
           })}
         </div>

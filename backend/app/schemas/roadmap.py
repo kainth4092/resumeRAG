@@ -52,11 +52,10 @@ class RoadmapResponse(BaseModel):
     projects_to_build: List[ProjectItem]
 
 
-class UpdateTargetRoleRequest(BaseModel):
-    target_role: str
-    target_level: str
+class RoadmapTargetUpdate(BaseModel):
+    target_role: str | None = None
+    target_level: str | None = None
 
 
-class ToggleTaskRequest(BaseModel):
-    task_text: str
-    done: bool
+class RoadmapTaskToggle(BaseModel):
+    task_id: str

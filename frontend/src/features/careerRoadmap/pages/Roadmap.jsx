@@ -12,7 +12,6 @@ import {
 } from "../services/roadmapService";
 import RoadmapSkeleton from "../../../components/loading/RoadmapSkeleton";
 
-
 export default function Roadmap() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,27 +41,60 @@ export default function Roadmap() {
   }, [fetchRoadmap]);
 
   const handleUpdateRole = async (role, level) => {
-    setIsModalOpen(false);
     setLoading(true);
+    setError("");
+
     try {
       const updated = await updateTargetRole(role, level);
       setData(updated);
+      setIsModalOpen(false);
     } catch (err) {
       console.error("Error updating target role:", err);
-      setError("Failed to update target role. Please try again.");
-      setLoading(false);
+
+      setError(
+        err.response?.data?.detail ||
+          "Failed to update target role. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleTask = async (taskText, done) => {
+  const handleToggleTask = async (taskId) => {
+    if (!taskId || isToggling) return;
+
     setIsToggling(true);
+    setError("");
+
     try {
-      const updated = await toggleTask(taskText, done);
-      setData(updated);
+      const result = await toggleTask(taskId);
+
+      setData((current) => {
+        if (!current) return current;
+
+        return {
+          ...current,
+          completed_tasks: result.completed_tasks,
+          roadmap: current.roadmap.map((phase) => ({
+            ...phase,
+            tasks: phase.tasks.map((task) =>
+              task.id === result.task_id
+                ? {
+                    ...task,
+                    completed: result.completed,
+                  }
+                : task,
+            ),
+          })),
+        };
+      });
     } catch (err) {
-      console.error("Error toggling task:", err);
+      console.error("Error toggling roadmap task:", err);
+
+      setError(
+        err.response?.data?.detail ||
+          "Failed to update this roadmap task. Please try again.",
+      );
     } finally {
       setIsToggling(false);
     }

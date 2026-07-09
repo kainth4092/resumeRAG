@@ -75,19 +75,23 @@ export default function MyResumes() {
       return list
         .filter((item) => {
           const name = item.title || item.name || "";
-          const origName = item.original_filename || item.resume?.original_filename || "";
-          
-          if (name === "Imported Profile" || origName === "profile_import.txt") {
+          const origName =
+            item.original_filename || item.resume?.original_filename || "";
+
+          if (
+            name === "Imported Profile" ||
+            origName === "profile_import.txt"
+          ) {
             return false;
           }
           const lowerName = name.toLowerCase();
           const lowerOrig = origName.toLowerCase();
           if (
-            lowerName.endsWith(".pdf") || 
-            lowerName.endsWith(".docx") || 
+            lowerName.endsWith(".pdf") ||
+            lowerName.endsWith(".docx") ||
             lowerName.endsWith(".doc") ||
-            lowerOrig.endsWith(".pdf") || 
-            lowerOrig.endsWith(".docx") || 
+            lowerOrig.endsWith(".pdf") ||
+            lowerOrig.endsWith(".docx") ||
             lowerOrig.endsWith(".doc")
           ) {
             if (lowerName.startsWith("optimized:")) {
@@ -111,9 +115,12 @@ export default function MyResumes() {
             id: item.id,
             name: item.title || item.name || "Untitled Resume",
             role:
-              item.resume?.personal_info?.title ||
               item.resume?.headline ||
-              "Software Engineer",
+              item.resume?.personal_info?.title ||
+              item.resume?.personal_info?.headline ||
+              item.resume_json?.headline ||
+              item.headline ||
+              "Not specified",
             company: item.resume?.work_experience?.[0]?.company || "",
             score: score,
             status: item.status || "Active",
@@ -154,6 +161,7 @@ export default function MyResumes() {
               ...mergedList[idx],
               id: dbItem.id,
               title: dbItem.title || mergedList[idx].title || "Untitled Resume",
+              resume: dbItem.resume_json || mergedList[idx].resume || null,
               score: dbItem.ats_score || mergedList[idx].score || 75,
               status: dbItem.is_active ? "Active" : "Draft",
               updatedAt: dbItem.created_at
@@ -168,10 +176,11 @@ export default function MyResumes() {
                 dbItem.template || mergedList[idx].template || "Professional",
               starred: mergedList[idx].starred || false,
               color: mergedList[idx].color || "#4F46E5",
-              resume: dbItem.resume_json || mergedList[idx].resume || {
-                personal_info: { name: dbItem.title || "" },
-                skills: dbItem.skills || [],
-              },
+              resume: dbItem.resume_json ||
+                mergedList[idx].resume || {
+                  personal_info: { name: dbItem.title || "" },
+                  skills: dbItem.skills || [],
+                },
               jobDescription: mergedList[idx].jobDescription || "",
             };
           } else {

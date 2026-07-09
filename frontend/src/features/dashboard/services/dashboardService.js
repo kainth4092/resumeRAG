@@ -8,5 +8,5 @@ export const dashboardService = {
     }
     const response = await api.get("/dashboard", { params, bypassCache });
     return response.data;
-  }
+  },
 };
