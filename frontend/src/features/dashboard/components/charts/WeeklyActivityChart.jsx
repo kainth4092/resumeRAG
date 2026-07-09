@@ -30,42 +30,44 @@ const WeeklyActivityChart = memo(({ loading, data }) => {
           </p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={140}>
-          <BarChart data={data} barGap={2}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="day"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "var(--color-popover)",
-                border: "1px solid var(--color-border)",
-                borderRadius: 12,
-                fontSize: 11,
-              }}
-            />
-            <Bar
-              dataKey="applied"
-              name="Applied"
-              fill="var(--color-primary)"
-              radius={[3, 3, 0, 0]}
-              opacity={0.7}
-            />
-            <Bar
-              dataKey="interviews"
-              name="Interviews"
-              fill="#10b981"
-              radius={[3, 3, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="w-full min-w-0 h-[260px] min-h-[260px]">
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={data} barGap={2}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--color-border)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="day"
+                tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--color-popover)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 12,
+                  fontSize: 11,
+                }}
+              />
+              <Bar
+                dataKey="applied"
+                name="Applied"
+                fill="var(--color-primary)"
+                radius={[3, 3, 0, 0]}
+                opacity={0.7}
+              />
+              <Bar
+                dataKey="interviews"
+                name="Interviews"
+                fill="#10b981"
+                radius={[3, 3, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

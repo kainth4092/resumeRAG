@@ -277,7 +277,12 @@ def analyze_resume_canonical(
     if job_description:
         logger.info("Executing LLM call for ATS Analysis...")
         prompt_str = get_ats_prompt(serialized_text, normalized_jd)
-        raw_llm = call_llm_with_retry(prompt_str)
+        raw_llm = call_llm_with_retry(
+            prompt_str,
+            feature="ats_analysis",
+            temperature=0.0,
+            json_response=True,
+        )
         qualitative = extract_json(raw_llm)
 
         # Merge deterministic scores and LLM qualitative results
@@ -306,7 +311,12 @@ def analyze_resume_canonical(
     else:
         logger.info("Executing LLM call for General Health Analysis...")
         prompt_str = get_resume_health_prompt(serialized_text)
-        raw_llm = call_llm_with_retry(prompt_str)
+        raw_llm = call_llm_with_retry(
+            prompt_str,
+            feature="resume_health_analysis",
+            temperature=0.0,
+            json_response=True,
+        )
         qualitative = extract_json(raw_llm)
 
         # Merge deterministic scores and LLM qualitative results

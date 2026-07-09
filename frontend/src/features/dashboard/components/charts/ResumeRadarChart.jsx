@@ -26,23 +26,29 @@ const ResumeRadarChart = memo(({ loading, data }) => {
           </p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={190}>
-          <RadarChart data={data}>
-            <PolarGrid stroke="var(--color-border)" />
-            <PolarAngleAxis
-              dataKey="skill"
-              tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-            />
-            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-            <Radar
-              dataKey="A"
-              stroke="var(--color-primary)"
-              fill="var(--color-primary)"
-              fillOpacity={0.2}
-              strokeWidth={2}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
+        <div className="w-full min-w-0 h-[260px] min-h-[260px]">
+          <ResponsiveContainer width="100%" height={190}>
+            <RadarChart data={data}>
+              <PolarGrid stroke="var(--color-border)" />
+              <PolarAngleAxis
+                dataKey="skill"
+                tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
+              />
+              <PolarRadiusAxis
+                domain={[0, 100]}
+                tick={false}
+                axisLine={false}
+              />
+              <Radar
+                dataKey="A"
+                stroke="var(--color-primary)"
+                fill="var(--color-primary)"
+                fillOpacity={0.2}
+                strokeWidth={2}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );

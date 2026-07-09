@@ -23,7 +23,10 @@ const ROLE_LEVELS = {
   "Cybersecurity Engineer": ["Junior", "Mid-Level", "Senior"],
 };
 
-const TARGET_ROLES = Object.keys(ROLE_LEVELS);
+const TARGET_ROLES = Object.keys(ROLE_LEVELS).map((role) => ({
+  value: role,
+  label: role,
+}));
 
 const LEVEL_DETAILS = {
   Junior: {
@@ -77,16 +80,16 @@ export default function UpdateRoleModal({
 
   const availableLevels = ROLE_LEVELS[role] || [];
 
-  const handleRoleChange = (event) => {
-    const newRole = event.target.value;
-    const supportedLevels = ROLE_LEVELS[newRole] || [];
-
+  const handleRoleChange = (newRole) => {
     setRole(newRole);
-    setLocalError("");
 
-    if (!supportedLevels.includes(level)) {
-      setLevel(supportedLevels[0] || "");
+    const availableLevels = ROLE_LEVELS[newRole] || [];
+
+    if (!availableLevels.includes(level)) {
+      setLevel(availableLevels[0] || "");
     }
+
+    setLocalError("");
   };
 
   const handleSubmit = async (event) => {
@@ -185,18 +188,13 @@ export default function UpdateRoleModal({
             </label>
 
             <Select
-              id="target-role"
+              options={TARGET_ROLES}
               value={role}
-              disabled={submitting}
               onChange={handleRoleChange}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {TARGET_ROLES.map((targetRole) => (
-                <option key={targetRole} value={targetRole}>
-                  {targetRole}
-                </option>
-              ))}
-            </Select>
+              placeholder="Select your target role"
+              size="md"
+              disabled={submitting}
+            />
           </div>
 
           <div className="space-y-2">

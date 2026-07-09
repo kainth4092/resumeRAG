@@ -78,7 +78,12 @@ def extract_and_populate_profile(db: Session, user_id: int, resume_text: str):
     """
 
     try:
-        data = call_llm_with_retry(prompt, json_response=True)
+        data = call_llm_with_retry(
+            prompt,
+            feature="profile_population",
+            temperature=0.0,
+            json_response=True,
+        )
     except Exception as e:
         logger.error(f"Failed to call LLM for profile extraction: {e}")
         return None

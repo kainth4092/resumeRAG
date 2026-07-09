@@ -23,6 +23,12 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+    }
+  }, [disabled]);
+
   const selectedOption = options.find((opt) => opt.value === value);
 
   const sizeClasses = {
@@ -42,10 +48,20 @@ export default function Select({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!disabled) {
+            setIsOpen((prev) => !prev);
+          }
+        }}
         className={`flex items-center justify-between w-full border border-border text-left cursor-pointer transition-all duration-200 bg-card text-foreground hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses[size] || sizeClasses.md}`}
       >
-        <span className={selectedOption ? "text-foreground font-medium" : "text-muted-foreground"}>
+        <span
+          className={
+            selectedOption
+              ? "text-foreground font-medium"
+              : "text-muted-foreground"
+          }
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown

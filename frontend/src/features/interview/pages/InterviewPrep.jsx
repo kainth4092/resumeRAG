@@ -9,8 +9,10 @@ import ChallengeContainer from "../Challenge/ChallengeContainer";
 import StudyLibrary from "../components/StudyLibrary";
 import SessionHistory from "../components/SessionHistory";
 import AIMockInterview from "../components/mock/AIMockInterview";
+import { useState } from "react";
 
 export default function InterviewPrep() {
+  const [communityRefreshKey, setCommunityRefreshKey] = useState(0);
   const {
     navigate,
     location,
@@ -60,7 +62,11 @@ export default function InterviewPrep() {
     generatingAI,
     isAISuggested,
     handleSuggestAnswer,
-  } = useInterviewPrep();
+  } = useInterviewPrep({
+    onQuestionShared: () => {
+      setCommunityRefreshKey((prev) => prev + 1);
+    },
+  });
 
   const showPersonalizedEmpty =
     viewState === "empty" || !session || session.resumeUsed === "None";
@@ -217,6 +223,7 @@ export default function InterviewPrep() {
               onEdit={handleEditClick}
               onDelete={handleDeleteClick}
               defaultSource="community"
+              refreshKey={communityRefreshKey}
             />
           </div>
         )}

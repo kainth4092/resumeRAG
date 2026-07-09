@@ -4,11 +4,36 @@ import { useInterviewQuestions } from "./useInterviewQuestions";
 import { useQuestionFilters } from "./useQuestionFilters";
 import { generateAIAnswer } from "../services/interviewBankService";
 
-export function useInterviewPrep() {
+export function useInterviewPrep({ onQuestionShared }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState("personalized");
+  const VALID_TABS = [
+    "personalized",
+    "library",
+    "challenge",
+    "mock",
+    "history",
+    "community",
+  ];
+
+  const [activeTab, setActiveTabState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+
+    return VALID_TABS.includes(tab) ? tab : "personalized";
+  });
+
+  const setActiveTab = useCallback((tab) => {
+    if (!VALID_TABS.includes(tab)) return;
+
+    setActiveTabState(tab);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, []);
 
   const {
     questions,
@@ -157,9 +182,11 @@ export function useInterviewPrep() {
       e.preventDefault();
 
       const errors = {};
+
       if (!formData.question?.trim()) {
         errors.question = "Question is required.";
       }
+
       if (!formData.skill?.trim()) {
         errors.skill = "Skill is required.";
       }
@@ -190,9 +217,16 @@ export function useInterviewPrep() {
           tags: tagsArray,
         };
 
+        const isEditing = Boolean(editingQuestion?.id);
+
         const ok = await handleSaveQuestion(payload, editingQuestion?.id);
+
         if (ok) {
           setShowModal(false);
+
+          if (!isEditing) {
+            onQuestionShared?.();
+          }
         }
       } catch (err) {
         setFormError(
@@ -204,11 +238,7 @@ export function useInterviewPrep() {
         setSubmitting(false);
       }
     },
-    [
-      formData,
-      editingQuestion,
-      handleSaveQuestion,
-    ],
+    [formData, editingQuestion, handleSaveQuestion, onQuestionShared],
   );
 
   const handleShareClick = useCallback(() => {

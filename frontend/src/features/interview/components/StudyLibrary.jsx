@@ -22,7 +22,12 @@ const QuestionSkeleton = () => (
   </div>
 );
 
-export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
+export default function StudyLibrary({
+  onEdit,
+  onDelete,
+  defaultSource,
+  refreshKey = 0,
+}) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSkill, setSelectedSkill] = useState("");
@@ -141,27 +146,55 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
 
   useEffect(() => {
     loadQuestions(page);
-  }, [page, loadQuestions]);
+  }, [page, loadQuestions, refreshKey]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const [bookmarkLoadingId, setBookmarkLoadingId] = useState(null);
+
   const handleToggleBookmark = async (id) => {
+    if (bookmarkLoadingId === id) return;
+
+    const currentQuestion = questions.find((q) => q.id === id);
+    if (!currentQuestion) return;
+
+    const previousBookmarked = Boolean(currentQuestion.bookmarked);
+    const nextBookmarked = !previousBookmarked;
+
+    setBookmarkLoadingId(id);
+    setError("");
+    setSuccess("");
+
     setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, bookmarked: !q.bookmarked } : q)),
+      prev.map((q) => (q.id === id ? { ...q, bookmarked: nextBookmarked } : q)),
     );
+
     try {
-      setError("");
-      setSuccess("");
       await toggleBankBookmark(id);
-      fetchMeta();
-      setSuccess("Bookmark updated successfully.");
+
+      if (bookmarkOnly && !nextBookmarked) {
+        setQuestions((prev) => prev.filter((q) => q.id !== id));
+        setTotal((prev) => Math.max(0, prev - 1));
+      }
+
+      await fetchMeta();
+
+      setSuccess(
+        nextBookmarked
+          ? "Question bookmarked successfully."
+          : "Bookmark removed successfully.",
+      );
     } catch (err) {
       console.error("Failed to toggle bookmark:", err);
-      setError("Failed to update bookmark.");
+
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === id ? { ...q, bookmarked: !q.bookmarked } : q,
+          q.id === id ? { ...q, bookmarked: previousBookmarked } : q,
         ),
       );
+
+      setError(err?.response?.data?.detail || "Failed to update bookmark.");
+    } finally {
+      setBookmarkLoadingId(null);
     }
   };
 
@@ -189,7 +222,9 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start mt-6">
-      <div className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}>
+      <div
+        className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}
+      >
         <InterviewFilterSidebar
           search={search}
           setSearch={setSearch}
@@ -215,7 +250,9 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
       </div>
 
       {/* Main Questions List Content Area */}
-      <div className={`${showSidebar ? "lg:col-span-3" : "lg:col-span-4"} space-y-5 transition-all duration-300`}>
+      <div
+        className={`${showSidebar ? "lg:col-span-3" : "lg:col-span-4"} space-y-5 transition-all duration-300`}
+      >
         {error && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-semibold flex items-center justify-between animate-in fade-in-0 duration-200">
             <span>{error}</span>
@@ -255,7 +292,7 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
               of <strong className="text-foreground">{total}</strong> Questions
             </span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {isFiltered && (
               <span className="hidden sm:inline-block text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full select-none">
@@ -272,7 +309,12 @@ export default function StudyLibrary({ onEdit, onDelete, defaultSource }) {
               }}
               className="flex items-center gap-1.5 h-8 px-3 bg-muted hover:bg-muted/80 border border-border/40 text-foreground rounded-xl text-xs font-semibold transition-all cursor-pointer"
             >
-              <SlidersHorizontal size={13} className={showSidebar ? "text-primary" : "text-muted-foreground"} />
+              <SlidersHorizontal
+                size={13}
+                className={
+                  showSidebar ? "text-primary" : "text-muted-foreground"
+                }
+              />
               <span>Filters</span>
             </button>
           </div>
