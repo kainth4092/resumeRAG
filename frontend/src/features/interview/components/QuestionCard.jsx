@@ -157,6 +157,7 @@ export const QuestionCard = memo(function QuestionCard({
   question,
   index,
   onToggleBookmark,
+  onToggleImportant,
   onEdit,
   onDelete,
   isInitiallyExpanded = false,
@@ -164,12 +165,16 @@ export const QuestionCard = memo(function QuestionCard({
   isLoading = false,
 }) {
   const { user } = useAuth();
+  const isBookmarked = Boolean(
+    question.bookmarked ?? question.is_bookmarked ?? false,
+  );
   const isCreatedByCurrentUser = user && question.created_by === user.id;
 
   const [open, setOpen] = useState(isInitiallyExpanded);
   const [localAnswer, setLocalAnswer] = useState(null);
 
-  const sampleAnswerText = localAnswer || toText(question.sampleAnswer || question.answer);
+  const sampleAnswerText =
+    localAnswer || toText(question.sampleAnswer || question.answer);
   const isGenerating = sampleAnswerText === "Generating answer...";
 
   useEffect(() => {
@@ -185,7 +190,11 @@ export const QuestionCard = memo(function QuestionCard({
             const res = await getInterviewQuestionById(question.id);
             updatedAnswer = res.data?.answer || "";
           }
-          if (active && updatedAnswer && updatedAnswer !== "Generating answer...") {
+          if (
+            active &&
+            updatedAnswer &&
+            updatedAnswer !== "Generating answer..."
+          ) {
             setLocalAnswer(updatedAnswer);
             return true;
           }
@@ -384,13 +393,13 @@ export const QuestionCard = memo(function QuestionCard({
               onToggleBookmark(question.id);
             }}
             className={`w-7 h-7 flex items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-95 ${
-              question.bookmarked
+              isBookmarked
                 ? "text-amber-500"
                 : "text-muted-foreground hover:text-amber-500"
             }`}
-            title={question.bookmarked ? "Remove bookmark" : "Bookmark"}
+            title={isBookmarked ? "Remove bookmark" : "Bookmark"}
           >
-            {question.bookmarked ? (
+            {isBookmarked ? (
               <BookmarkCheck
                 size={14}
                 className="fill-amber-500 text-amber-500"
@@ -434,9 +443,7 @@ export const QuestionCard = memo(function QuestionCard({
             {isLoading || isGenerating ? (
               <div className="flex items-center gap-2.5 py-4 px-5 bg-primary/4 border border-primary/12 rounded-2xl text-xs text-muted-foreground animate-pulse">
                 <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
-                <span>
-                  Generating a sample answer in background...
-                </span>
+                <span>Generating a sample answer in background...</span>
               </div>
             ) : sampleAnswerText ? (
               <div className="bg-linear-to-br from-primary/4 via-transparent to-transparent border border-primary/12 rounded-2xl p-5">

@@ -110,9 +110,20 @@ export default function StudyLibrary({
         };
 
         const res = await getAllInterviewQuestions(params);
+
         if (res.data) {
-          const { questions: fetchedQuestions, total: totalCount } = res.data;
-          setQuestions(fetchedQuestions);
+          const { questions: fetchedQuestions = [], total: totalCount = 0 } =
+            res.data;
+
+          const normalizedQuestions = fetchedQuestions.map((q) => ({
+            ...q,
+
+            bookmarked: Boolean(
+              q.bookmarked ?? q.is_bookmarked ?? (bookmarkOnly ? true : false),
+            ),
+          }));
+
+          setQuestions(normalizedQuestions);
           setTotal(totalCount);
         }
       } catch (err) {
@@ -157,7 +168,12 @@ export default function StudyLibrary({
     const currentQuestion = questions.find((q) => q.id === id);
     if (!currentQuestion) return;
 
-    const previousBookmarked = Boolean(currentQuestion.bookmarked);
+    const previousBookmarked = Boolean(
+      currentQuestion.bookmarked ??
+      currentQuestion.is_bookmarked ??
+      (bookmarkOnly ? true : false),
+    );
+
     const nextBookmarked = !previousBookmarked;
 
     setBookmarkLoadingId(id);
@@ -165,12 +181,19 @@ export default function StudyLibrary({
     setSuccess("");
 
     setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, bookmarked: nextBookmarked } : q)),
+      prev.map((q) =>
+        q.id === id
+          ? {
+              ...q,
+              bookmarked: nextBookmarked,
+              is_bookmarked: nextBookmarked,
+            }
+          : q,
+      ),
     );
 
     try {
       await toggleBankBookmark(id);
-
       if (bookmarkOnly && !nextBookmarked) {
         setQuestions((prev) => prev.filter((q) => q.id !== id));
         setTotal((prev) => Math.max(0, prev - 1));
@@ -185,10 +208,15 @@ export default function StudyLibrary({
       );
     } catch (err) {
       console.error("Failed to toggle bookmark:", err);
-
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === id ? { ...q, bookmarked: previousBookmarked } : q,
+          q.id === id
+            ? {
+                ...q,
+                bookmarked: previousBookmarked,
+                is_bookmarked: previousBookmarked,
+              }
+            : q,
         ),
       );
 
@@ -327,7 +355,7 @@ export default function StudyLibrary({
             ))}
           </div>
         ) : questions.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in-50 duration-200">
             {questions.map((q, index) => {
               const overallIndex = (page - 1) * limit + index;
               return (
@@ -336,6 +364,7 @@ export default function StudyLibrary({
                   question={q}
                   index={overallIndex}
                   onToggleBookmark={handleToggleBookmark}
+                  // onToggleImportant={onToggleImportant}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   isInitiallyExpanded={q.id === expandedQuestionId}
