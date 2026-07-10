@@ -20,7 +20,6 @@ export default function JobTailor({
 
   return (
     <div className="space-y-6 text-left">
-      {/* Job Description Paste & Action */}
       <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="space-y-1">
           <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
@@ -257,7 +256,7 @@ export default function JobTailor({
               </p>
             </div>
             <button
-              onClick={onGenerate}
+              onClick={() => onGenerate()}
               disabled={generating}
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/95 transition-all cursor-pointer shadow-sm shadow-primary/20 shrink-0"
             >

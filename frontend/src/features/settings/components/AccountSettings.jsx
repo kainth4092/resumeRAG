@@ -12,8 +12,8 @@ function Field({ label, value, onChange, type = "text", disabled = false }) {
 
       <input
         type={type}
-        value={value}
-        onChange={onChange}
+        value={typeof value === "string" ? value : ""}
+        onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={`w-full h-11 px-3.5 rounded-xl border border-border text-sm transition-all ${
           disabled
@@ -39,15 +39,46 @@ export default function AccountSettings() {
     headline: "",
   });
 
+  const getUserName = (userData) => {
+    if (typeof userData?.name === "string") {
+      return userData.name.trim();
+    }
+
+    if (typeof userData?.full_name === "string") {
+      return userData.full_name.trim();
+    }
+
+    if (typeof userData?.profile?.name === "string") {
+      return userData.profile.name.trim();
+    }
+
+    const firstName =
+      typeof userData?.first_name === "string"
+        ? userData.first_name.trim()
+        : "";
+
+    const lastName =
+      typeof userData?.last_name === "string" ? userData.last_name.trim() : "";
+
+    return `${firstName} ${lastName}`.trim();
+  };
+
   useEffect(() => {
     if (user) {
       Promise.resolve().then(() => {
         setAccount({
-          name: user.name || "",
-          email: user.email || "",
-          phone: user.profile?.phone || "",
-          location: user.profile?.location || "",
-          headline: user.profile?.headline || "",
+          name: getUserName(user),
+          email: typeof user.email === "string" ? user.email : "",
+          phone:
+            typeof user.profile?.phone === "string" ? user.profile.phone : "",
+          location:
+            typeof user.profile?.location === "string"
+              ? user.profile.location
+              : "",
+          headline:
+            typeof user.profile?.headline === "string"
+              ? user.profile.headline
+              : "",
         });
       });
     }
@@ -62,10 +93,11 @@ export default function AccountSettings() {
     setError("");
     try {
       await api.put("/auth/settings/account", {
-        name: account.name,
-        phone: account.phone,
-        location: account.location,
-        headline: account.headline,
+        name: account.name.trim(),
+        email: account.email,
+        phone: account.phone.trim(),
+        location: account.location.trim(),
+        headline: account.headline.trim(),
       });
       await fetchUser(true);
       setSaved(true);
@@ -79,12 +111,15 @@ export default function AccountSettings() {
       setSaving(false);
     }
   };
-
   const getInitials = () => {
-    if (!account.name) return "U";
-    return account.name
-      .split(" ")
-      .map((n) => n[0])
+    const name = typeof account.name === "string" ? account.name.trim() : "";
+
+    if (!name) return "U";
+
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);

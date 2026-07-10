@@ -175,6 +175,11 @@ def call_llm_with_retry(
         )
 
         if json_response:
+            logger.warning(
+                "[LLM_RAW_JSON_RESPONSE] feature=%s content=%r",
+                feature,
+                content[:3000],
+            )
             return extract_json(content)
 
         return content

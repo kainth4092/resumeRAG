@@ -97,14 +97,59 @@ def generate(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        result = generate_resume(resume.parsed_text, payload.job_description)
+        source_resume_text = resume.parsed_text or ""
+        if resume.resume_json:
+            try:
+                stored_resume = json.loads(resume.resume_json)
 
+                if isinstance(stored_resume, dict) and stored_resume:
+                    source_resume_text = json.dumps(
+                        stored_resume,
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+            except (TypeError, ValueError, json.JSONDecodeError):
+                logger.warning(
+                    "Invalid resume_json for resume id=%s; using parsed_text.",
+                    resume.id,
+                )
+
+        if not source_resume_text.strip():
+            raise HTTPException(
+                status_code=422,
+                detail="The selected resume does not contain usable content.",
+            )
+
+        logger.warning(
+            "[GENERATOR_SOURCE] user_id=%s resume_id=%s title=%s "
+            "original_filename=%s parsed_preview=%s resume_json_preview=%s",
+            current_user.id,
+            resume.id,
+            resume.title,
+            resume.original_filename,
+            (resume.parsed_text or "")[:500],
+            (resume.resume_json or "")[:500],
+        )
+
+        result = generate_resume(
+            source_resume_text,
+            payload.job_description,
+        )
         r_data = result.get("resume", {})
+        if not isinstance(r_data, dict) or not r_data:
+            raise HTTPException(
+                status_code=502,
+                detail="The AI returned an invalid resume. Please try again.",
+            )
         headline = r_data.get("headline", "Optimized Resume")
         summary = r_data.get("summary", "")
         skills_list = r_data.get("skills", [])
 
-        optimized_text = f"Headline: {headline}\nSummary: {summary}\nSkills: {', '.join(skills_list)}\n"
+        optimized_text = json.dumps(
+            r_data,
+            ensure_ascii=False,
+            indent=2,
+        )
 
         try:
             curr_ver = resume.version or "v1"

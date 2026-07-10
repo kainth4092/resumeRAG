@@ -245,6 +245,10 @@ export function useResumeGenerator() {
   };
 
   const handleGenerate = async (templateName = "Professional") => {
+    const resolvedTemplateName =
+      typeof templateName === "string" && templateName.trim()
+        ? templateName
+        : "Professional";
     try {
       setResumeState("generating");
       setGenerating(true);
@@ -281,12 +285,14 @@ export function useResumeGenerator() {
       setGeneratedResume(r);
       setGenerated(true);
       setResumeState("completed");
-      setActiveTemplate(templateName);
+      setActiveTemplate(resolvedTemplateName);
 
       const resumesKey = user?.email
         ? `saved_resumes_${user.email}`
         : "saved_resumes";
+
       const resumeId = r.id;
+
       const resumeEntry = {
         id: parseInt(resumeId, 10) || resumeId,
         title: r.personal_info?.name
@@ -299,7 +305,7 @@ export function useResumeGenerator() {
           day: "numeric",
           year: "numeric",
         }),
-        template: templateName,
+        template: resolvedTemplateName,
         color: "#4F46E5",
         starred: false,
         version: "v1",
@@ -307,7 +313,6 @@ export function useResumeGenerator() {
         resume: r,
         jobDescription: jd,
       };
-
       const savedList = JSON.parse(localStorage.getItem(resumesKey) || "[]");
       savedList.forEach((item) => {
         item.status = "Inactive";

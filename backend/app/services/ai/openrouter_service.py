@@ -1,6 +1,7 @@
 import httpx
 import logging
 import time
+import json
 
 from app.core.config import settings
 from app.services.ai.base import AIProvider, AIProviderException
@@ -207,9 +208,16 @@ class OpenRouterProvider(AIProvider):
             choices = data.get("choices", [])
 
             if not choices:
+                logger.error(
+                    "[LLM_EMPTY_CHOICES] feature=%s model=%s response=%s",
+                    feature,
+                    self.model,
+                    json.dumps(data, default=str)[:2000],
+                )
+
                 raise AIProviderException(
-                    "OpenRouter returned no response choices.",
-                    status_code=500,
+                    "The AI provider returned an empty response. Please try again.",
+                    status_code=503,
                 )
 
             content = choices[0].get("message", {}).get("content", "")
@@ -269,7 +277,6 @@ class OpenRouterProvider(AIProvider):
     ) -> str:
 
         url = f"{self.base_url}/chat/completions"
-
         payload = {
             "model": self.model,
             "messages": [
@@ -283,6 +290,7 @@ class OpenRouterProvider(AIProvider):
                 },
             ],
             "temperature": temperature,
+            "max_tokens": 7000,
         }
 
         prompt_size = len(system_prompt) + len(user_prompt)
