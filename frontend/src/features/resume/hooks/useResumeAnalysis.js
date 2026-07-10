@@ -10,63 +10,17 @@ import { useAuth } from "../../auth/context/AuthContext";
 
 export function useResumeAnalysis() {
   const { user } = useAuth();
-
-  const selectedResumeKey = user?.email
-    ? `selected_resume_${user.email}`
-    : "selected_resume";
-  const uploadedFileKey = user?.email
-    ? `uploaded_file_${user.email}`
-    : "uploaded_file";
-  const fileNameKey = user?.email ? `file_name_${user.email}` : "file_name";
-  const fileSizeKey = user?.email ? `file_size_${user.email}` : "file_size";
-  const analysisResultKey = user?.email
-    ? `analysis_result_${user.email}`
-    : "analysis_result";
-
   const [resumesList, setResumesList] = useState([]);
-
-  const [selectedResume, setSelectedResume] = useState(() => {
-    try {
-      const saved = localStorage.getItem(selectedResumeKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [uploadedFile, setUploadedFile] = useState(() => {
-    try {
-      const saved = localStorage.getItem(uploadedFileKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
-
-  const [fileName, setFileName] = useState(() => {
-    return localStorage.getItem(fileNameKey) || "";
-  });
-
-  const [fileSize, setFileSize] = useState(() => {
-    return localStorage.getItem(fileSizeKey) || "";
-  });
-
+  const [fileName, setFileName] = useState("");
+  const [fileSize, setFileSize] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState("");
-
-  const [analysisResult, setAnalysisResult] = useState(() => {
-    try {
-      const saved = localStorage.getItem(analysisResultKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [error, setError] = useState("");
   const [improvingSection, setImprovingSection] = useState(null);
   const [improvedText, setImprovedText] = useState("");
@@ -75,39 +29,6 @@ export function useResumeAnalysis() {
 
   const fileRef = useRef(null);
 
-  useEffect(() => {
-    if (selectedResume) {
-      localStorage.setItem(selectedResumeKey, JSON.stringify(selectedResume));
-    } else {
-      localStorage.removeItem(selectedResumeKey);
-    }
-  }, [selectedResume, selectedResumeKey]);
-
-  useEffect(() => {
-    if (uploadedFile) {
-      localStorage.setItem(uploadedFileKey, JSON.stringify(uploadedFile));
-    } else {
-      localStorage.removeItem(uploadedFileKey);
-    }
-  }, [uploadedFile, uploadedFileKey]);
-
-  useEffect(() => {
-    localStorage.setItem(fileNameKey, fileName);
-  }, [fileName, fileNameKey]);
-
-  useEffect(() => {
-    localStorage.setItem(fileSizeKey, fileSize);
-  }, [fileSize, fileSizeKey]);
-
-  useEffect(() => {
-    if (analysisResult) {
-      localStorage.setItem(analysisResultKey, JSON.stringify(analysisResult));
-    } else {
-      localStorage.removeItem(analysisResultKey);
-    }
-  }, [analysisResult, analysisResultKey]);
-
-  // Invalidate cache if the resume has been updated/changed
   useEffect(() => {
     if (resumesList.length > 0 && selectedResume) {
       const freshResume = resumesList.find(

@@ -10,6 +10,8 @@ from app.jobs.services.jsearch_service import JSearchService
 from app.jobs.services.jobs_service import JobsService
 from app.tracker.services.tracker_service import TrackerService
 from app.schemas.tracker import SaveJobRequest, TrackedJobResponse
+from app.services.notification_service import create_notification
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
@@ -27,12 +29,12 @@ async def search_jobs(
 ):
     try:
         return await JSearchService.search_jobs(
-            db, 
-            query=query, 
-            page=page, 
+            db,
+            query=query,
+            page=page,
             location=location,
             employment_type=employment_type,
-            remote=remote
+            remote=remote,
         )
     except HTTPException:
         raise
@@ -55,7 +57,7 @@ async def recommended_jobs(
             current_user=current_user,
             location=location,
             employment_type=employment_type,
-            remote=remote
+            remote=remote,
         )
     except HTTPException:
         raise
@@ -89,10 +91,35 @@ async def save_job(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        job = TrackerService.save_job(db, current_user.id, request)
+        job = TrackerService.save_job(
+            db,
+            current_user.id,
+            request,
+        )
+
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            title="Job saved successfully",
+            message=(
+                f'You saved the "{job.job_title}" position ' f"at {job.company_name}."
+            ),
+            notification_type="job",
+            action_url="/tracker",
+        )
+
         return job
+
     except HTTPException:
         raise
+
     except Exception as e:
-        logger.error("Error in save_job: %s", str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(
+            "Error in save_job: %s",
+            str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error",
+        )

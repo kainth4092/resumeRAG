@@ -9,7 +9,7 @@ from app.core.dependencies import get_current_user
 from app.models.user_roadmap import UserRoadmap
 from app.schemas.roadmap import RoadmapTargetUpdate, RoadmapTaskToggle
 from app.services.roadmap.roadmap_service import generate_personalized_roadmap
-
+from app.services.notification_service import create_notification
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +229,18 @@ def update_roadmap_target(
         db.add(user_roadmap)
         db.commit()
         db.refresh(user_roadmap)
+
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            title="Career roadmap updated",
+            message=(
+                f"Your career roadmap for {user_roadmap.target_level} "
+                f"{user_roadmap.target_role} has been updated successfully."
+            ),
+            notification_type="roadmap",
+            action_url="/roadmap",
+        )
 
         return generated_data
 

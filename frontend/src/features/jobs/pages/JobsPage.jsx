@@ -43,8 +43,6 @@ export default function JobsPage() {
     saving,
     location,
     setLocation,
-    experience,
-    setExperience,
     jobType,
     setJobType,
     remote,
@@ -59,14 +57,13 @@ export default function JobsPage() {
     setMenuOpen,
     addJobOpen,
     setAddJobOpen,
-    loadRecommended,
     loadTrackedJobs,
-    handleSearch,
     handleViewDetails,
     handleSaveJob,
     handleStatusChange,
     handleDeleteTracked,
     loadingJobId,
+    handleClearFilters,
   } = useJobTracker();
 
   const [menuCoords, setMenuCoords] = useState({ top: 0, left: 0 });
@@ -198,12 +195,9 @@ export default function JobsPage() {
               <SearchBar
                 query={search}
                 setQuery={setSearch}
-                onSearch={handleSearch}
                 loading={loading}
                 location={location}
                 setLocation={setLocation}
-                experience={experience}
-                setExperience={setExperience}
                 jobType={jobType}
                 setJobType={setJobType}
                 remote={remote}
@@ -219,11 +213,7 @@ export default function JobsPage() {
                   buttonText="Clear Filters"
                   onAction={() => {
                     setSearch("");
-                    setLocation("");
-                    setExperience("");
-                    setJobType("");
-                    setRemote("");
-                    loadRecommended();
+                    handleClearFilters();
                   }}
                 />
               ) : (

@@ -60,11 +60,33 @@ def send_email(
             provider=result.get("provider", "Unknown"),
             messageId=result.get("id"),
         )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Email dispatch failed.",
+    except Exception as exc:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception(
+            "Email dispatch failed for user_id=%s recipient=%s",
+            current_user.id,
+            request.recipientEmail,
         )
+        error_message = str(exc)
+        if "403" in error_message:
+            detail = (
+                "Email delivery was rejected by Resend. "
+                "Verify your sending domain or send only to your verified email address while testing."
+            )
+        elif "401" in error_message:
+            detail = "Resend authentication failed. Check RESEND_API_KEY."
+        elif "429" in error_message:
+            detail = "Email rate limit exceeded. Please try again shortly."
+        else:
+            detail = "Email dispatch failed. Please try again."
+
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=detail,
+        ) from exc
+
     finally:
         if attachment_created and attachment_path and os.path.exists(attachment_path):
             try:

@@ -338,36 +338,14 @@ class JSearchService:
             return mapped_jobs
 
         except Exception as http_err:
-            logger.warning(
-                "JSearch API request failed (%s): %s. Attempting fallback.",
+            logger.error(
+                "JSearch API request failed for query '%s': %s",
                 query,
                 str(http_err),
+                exc_info=True,
             )
 
-            # Fallback 1: Return the latest cached search query results if any exist
-            try:
-                latest_cache = (
-                    db.query(SearchCache)
-                    .order_by(SearchCache.created_at.desc())
-                    .first()
-                )
-                if latest_cache and latest_cache.jobs_json:
-                    logger.info(
-                        "Fallback: Returning latest cached jobs from query '%s'",
-                        latest_cache.query,
-                    )
-                    return [
-                        JobResponse(**job) if isinstance(job, dict) else job
-                        for job in latest_cache.jobs_json
-                    ]
-            except Exception as fb_err:
-                logger.error(
-                    "Error fetching latest search cache fallback: %s", str(fb_err)
-                )
-
-            # Fallback 2: Return high-quality mock jobs matching the query/headline
-            logger.info("Fallback: No cache found. Returning realistic mock jobs.")
-            return JSearchService.get_mock_fallback_jobs(query)
+            return []
 
     @staticmethod
     async def get_job(db: Session, job_id: str):

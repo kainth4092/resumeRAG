@@ -21,6 +21,8 @@ from app.services.llm_service import (
     generate_resume,
     improve_resume_section,
 )
+from app.services.notification_service import create_notification
+
 
 router = APIRouter(prefix="/api/generator", tags=["Generator"])
 logger = logging.getLogger(__name__)
@@ -34,29 +36,49 @@ def analyze(
 ):
     resume = (
         db.query(Resume)
-        .filter(Resume.id == payload.resume_id, Resume.user_id == current_user.id)
+        .filter(
+            Resume.id == payload.resume_id,
+            Resume.user_id == current_user.id,
+        )
         .first()
     )
+
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        from app.resume.services.resume_analysis_service import analyze_resume_canonical
+        from app.resume.services.resume_analysis_service import (
+            analyze_resume_canonical,
+        )
 
-        result = analyze_resume_canonical(db, resume, payload.job_description)
+        result = analyze_resume_canonical(
+            db,
+            resume,
+            payload.job_description,
+        )
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            title="Resume analysis ready",
+            message=f'Your resume "{resume.title}" has been analyzed successfully.',
+            notification_type="resume_analysis",
+            action_url=f"/resumes/{resume.id}",
+        )
+
         return result
     except HTTPException:
         raise
     except AppException:
         raise
-
     except Exception as exc:
         logger.exception("Failed to analyze resume")
         raise HTTPException(
             status_code=500,
-            detail="We couldn't analyze your resume right now. "
-            "Please verify that your resume contains readable text and "
-            "that the job description is complete, then try again.",
+            detail=(
+                "We couldn't analyze your resume right now. "
+                "Please verify that your resume contains readable text and "
+                "that the job description is complete, then try again."
+            ),
         ) from exc
 
 

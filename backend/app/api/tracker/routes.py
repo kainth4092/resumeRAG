@@ -6,6 +6,7 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.tracker.services.tracker_service import TrackerService
 from app.schemas.tracker import TrackedJobResponse, UpdateJobStatusRequest
+from app.services.notification_service import create_notification
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +47,67 @@ def update_job_status(
             job_id=job_id,
             status=payload.status,
         )
+
         if not job:
-            raise HTTPException(status_code=404, detail="Tracked job not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Tracked job not found",
+            )
+
+        normalized_status = (
+            payload.status.value
+            if hasattr(payload.status, "value")
+            else str(payload.status)
+        ).lower()
+
+        status_messages = {
+            "saved": (
+                f'"{job.job_title}" at {job.company_name} ' f"is saved in your tracker."
+            ),
+            "applied": (
+                f'You marked "{job.job_title}" at ' f"{job.company_name} as applied."
+            ),
+            "interview": (
+                f'Great! "{job.job_title}" at {job.company_name} '
+                f"has moved to the interview stage."
+            ),
+            "offer": (
+                f'Congratulations! "{job.job_title}" at '
+                f"{job.company_name} has been marked as an offer."
+            ),
+            "rejected": (
+                f'Your application for "{job.job_title}" at '
+                f"{job.company_name} has been marked as rejected."
+            ),
+        }
+
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            title=f"Job status updated: {normalized_status.title()}",
+            message=status_messages.get(
+                normalized_status,
+                (
+                    f'Your application for "{job.job_title}" at '
+                    f"{job.company_name} has been updated to "
+                    f"{normalized_status.title()}."
+                ),
+            ),
+            notification_type="job",
+            action_url="/tracker",
+        )
+
         return job
+
     except HTTPException:
         raise
+
     except Exception as e:
-        logger.error("Error in update_job_status: %s", str(e), exc_info=True)
+        logger.error(
+            "Error in update_job_status: %s",
+            str(e),
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=500,
             detail="Internal server error",

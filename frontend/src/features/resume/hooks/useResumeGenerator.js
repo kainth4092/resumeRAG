@@ -21,74 +21,19 @@ export function useResumeGenerator() {
     ? `last_job_description_${user.email}`
     : "last_job_description";
 
-  const resumeKey = user?.email ? `resume_${user.email}` : "resume";
-  const uploadedKey = user?.email ? `uploaded_${user.email}` : "uploaded";
-  const fileNameGenKey = user?.email
-    ? `file_name_gen_${user.email}`
-    : "file_name_gen";
-  const fileSizeGenKey = user?.email
-    ? `file_size_gen_${user.email}`
-    : "file_size_gen";
-  const jdKey = user?.email ? `jd_${user.email}` : "jd";
-  const analysisKey = user?.email ? `analysis_${user.email}` : "analysis";
-  const generatedKey = user?.email ? `generated_${user.email}` : "generated";
-  const generatedResumeKey = user?.email
-    ? `generated_resume_${user.email}`
-    : "generated_resume";
-
-  const [resume, setResume] = useState(() => {
-    try {
-      const saved = localStorage.getItem(resumeKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [uploaded, setUploaded] = useState(() => {
-    return localStorage.getItem(uploadedKey) === "true";
-  });
-
+  const [resume, setResume] = useState(null);
+  const [uploaded, setUploaded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
-
-  const [fileName, setFileName] = useState(() => {
-    return localStorage.getItem(fileNameGenKey) || "";
-  });
-
-  const [fileSize, setFileSize] = useState(() => {
-    return localStorage.getItem(fileSizeGenKey) || "";
-  });
-
-  const [jd, setJd] = useState(() => {
-    return localStorage.getItem(jdKey) || "";
-  });
-
-  const [analysis, setAnalysis] = useState(() => {
-    try {
-      const saved = localStorage.getItem(analysisKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
+  const [fileName, setFileName] = useState("");
+  const [fileSize, setFileSize] = useState("");
+  const [jd, setJd] = useState("");
+  const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [generating, setGenerating] = useState(false);
-
-  const [generated, setGenerated] = useState(() => {
-    return localStorage.getItem(generatedKey) === "true";
-  });
-
-  const [generatedResume, setGeneratedResume] = useState(() => {
-    try {
-      const saved = localStorage.getItem(generatedResumeKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [generated, setGenerated] = useState(false);
+  const [generatedResume, setGeneratedResume] = useState(null);
 
   const [generatorError, setGeneratorError] = useState(null);
   const [importingProfile, setImportingProfile] = useState(false);
@@ -104,50 +49,6 @@ export function useResumeGenerator() {
   const [interviewState, setInterviewState] = useState("idle");
   const [interviewSessionId, setInterviewSessionId] = useState(null);
   const [currentInterviewStep, setCurrentInterviewStep] = useState("");
-
-  useEffect(() => {
-    if (resume) {
-      localStorage.setItem(resumeKey, JSON.stringify(resume));
-    } else {
-      localStorage.removeItem(resumeKey);
-    }
-  }, [resume, resumeKey]);
-
-  useEffect(() => {
-    localStorage.setItem(uploadedKey, String(uploaded));
-  }, [uploaded, uploadedKey]);
-
-  useEffect(() => {
-    localStorage.setItem(fileNameGenKey, fileName);
-  }, [fileName, fileNameGenKey]);
-
-  useEffect(() => {
-    localStorage.setItem(fileSizeGenKey, fileSize);
-  }, [fileSize, fileSizeGenKey]);
-
-  useEffect(() => {
-    localStorage.setItem(jdKey, jd);
-  }, [jd, jdKey]);
-
-  useEffect(() => {
-    if (analysis) {
-      localStorage.setItem(analysisKey, JSON.stringify(analysis));
-    } else {
-      localStorage.removeItem(analysisKey);
-    }
-  }, [analysis, analysisKey]);
-
-  useEffect(() => {
-    localStorage.setItem(generatedKey, String(generated));
-  }, [generated, generatedKey]);
-
-  useEffect(() => {
-    if (generatedResume) {
-      localStorage.setItem(generatedResumeKey, JSON.stringify(generatedResume));
-    } else {
-      localStorage.removeItem(generatedResumeKey);
-    }
-  }, [generatedResume, generatedResumeKey]);
 
   useEffect(() => {
     if (resume) {
@@ -379,8 +280,6 @@ export function useResumeGenerator() {
       };
       setGeneratedResume(r);
       setGenerated(true);
-      localStorage.setItem(generatedKey, "true");
-      localStorage.setItem(generatedResumeKey, JSON.stringify(r));
       setResumeState("completed");
       setActiveTemplate(templateName);
 

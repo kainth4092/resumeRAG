@@ -1,7 +1,6 @@
 import Select from "../../resume/components/resume/dashboard/Select";
 import {
   LOCATION_OPTS,
-  EXPERIENCE_OPTS,
   JOB_TYPE_OPTS,
   REMOTE_OPTS,
 } from "../constants/jobs.constants";
@@ -9,8 +8,6 @@ import {
 export default function FilterBar({
   location,
   setLocation,
-  experience,
-  setExperience,
   jobType,
   setJobType,
   remote,
@@ -25,13 +22,7 @@ export default function FilterBar({
         placeholder="Location"
         size="sm"
       />
-      <Select
-        options={EXPERIENCE_OPTS}
-        value={experience}
-        onChange={setExperience}
-        placeholder="Experience"
-        size="sm"
-      />
+
       <Select
         options={JOB_TYPE_OPTS}
         value={jobType}

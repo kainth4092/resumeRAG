@@ -21,7 +21,6 @@ export function useJobTracker() {
 
   // Discover Filters
   const [location, setLocation] = useState("");
-  const [experience, setExperience] = useState("");
   const [jobType, setJobType] = useState("");
   const [remote, setRemote] = useState("");
 
@@ -50,7 +49,9 @@ export function useJobTracker() {
     try {
       const data = await getTrackedJobs();
       setTrackedJobs(data || []);
-      window.dispatchEvent(new CustomEvent("tracker-updated", { detail: data?.length || 0 }));
+      window.dispatchEvent(
+        new CustomEvent("tracker-updated", { detail: data?.length || 0 }),
+      );
     } catch (e) {
       console.error("Failed to load tracked jobs:", e);
     }
@@ -75,14 +76,26 @@ export function useJobTracker() {
     [loadRecommended, location, jobType, remote],
   );
 
+  const handleClearFilters = useCallback(() => {
+    setLocation("");
+    setJobType("");
+    setRemote("");
+  }, []);
+
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (search.trim()) {
-      handleSearch(search);
-    } else {
-      loadRecommended();
-    }
-  }, [location, jobType, remote, loadRecommended, handleSearch, search]);
+    const timer = setTimeout(() => {
+      const trimmedSearch = search.trim();
+
+      if (trimmedSearch) {
+        handleSearch(trimmedSearch);
+      } else {
+        loadRecommended();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search, location, jobType, remote, handleSearch, loadRecommended]);
 
   useEffect(() => {
     loadTrackedJobs();
@@ -190,8 +203,6 @@ export function useJobTracker() {
     saving,
     location,
     setLocation,
-    experience,
-    setExperience,
     jobType,
     setJobType,
     remote,
@@ -214,5 +225,6 @@ export function useJobTracker() {
     handleStatusChange,
     handleDeleteTracked,
     loadingJobId,
+    handleClearFilters,
   };
 }

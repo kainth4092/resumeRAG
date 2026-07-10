@@ -126,7 +126,7 @@ export default function Layout() {
           onEmailClick={() => setEmailModalOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background">
           <Suspense fallback={<ActivePageSkeleton />}>
             <Outlet />
           </Suspense>

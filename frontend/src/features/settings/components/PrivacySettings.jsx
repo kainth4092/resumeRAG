@@ -1,12 +1,21 @@
-import { useState } from "react";
-import { Check, Download, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Trash2 } from "lucide-react";
 import DeleteAccountModal from "./DeleteAccountModal";
+import api from "../../../services/api";
 
-function Toggle({ value, onChange }) {
+let privacySettingsCache = null;
+
+function Toggle({ value, onChange, disabled = false }) {
   return (
     <button
-      onClick={() => onChange(!value)}
-      className={`relative shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer ${
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        if (!disabled) {
+          onChange(!value);
+        }
+      }}
+      className={`relative shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
         value ? "bg-primary" : "bg-muted border border-border"
       }`}
     >
@@ -20,45 +29,95 @@ function Toggle({ value, onChange }) {
 }
 
 export default function PrivacySettings() {
-  const [privacy, setPrivacy] = useState({
-    shareAnalytics: true,
-    personalizeJobs: true,
-  });
+  const DEFAULT_PRIVACY = {
+    share_analytics: true,
+    personalize_jobs: true,
+  };
+  const [privacy, setPrivacy] = useState(
+    () => privacySettingsCache || DEFAULT_PRIVACY,
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleChange = (key, val) => {
-    const updated = { ...privacy, [key]: val };
-    setPrivacy(updated);
-    localStorage.setItem("resupilot_privacy", JSON.stringify(updated));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  useEffect(() => {
+    if (privacySettingsCache) {
+      setLoading(false);
+      return;
+    }
 
-  const handleExport = () => {
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(
-        JSON.stringify({
-          privacy,
-          settings_v: 1,
-          exported_at: new Date().toISOString(),
-        }),
+    const fetchPrivacySettings = async () => {
+      try {
+        setError("");
+
+        const response = await api.get("/settings/privacy", {
+          bypassCache: true,
+        });
+
+        privacySettingsCache = response.data;
+        setPrivacy(response.data);
+      } catch (err) {
+        console.error("Failed to fetch privacy settings:", err);
+
+        setError(
+          err?.response?.data?.detail || "Failed to load privacy settings.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrivacySettings();
+  }, []);
+
+  const handleChange = async (key, value) => {
+    if (saving) return;
+
+    const previousPrivacy = { ...privacy };
+
+    const updatedPrivacy = {
+      ...privacy,
+      [key]: value,
+    };
+
+    setPrivacy(updatedPrivacy);
+    setSaving(true);
+    setSaved(false);
+    setError("");
+
+    try {
+      const response = await api.put("/settings/privacy", updatedPrivacy);
+      privacySettingsCache = response.data;
+      setPrivacy(response.data);
+      setSaved(true);
+
+      setTimeout(() => {
+        setSaved(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to save privacy settings:", err);
+
+      setPrivacy(previousPrivacy);
+
+      setError(
+        err?.response?.data?.detail || "Failed to save privacy settings.",
       );
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "resupilot_settings_export.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-foreground font-bold text-sm">
-            Privacy & Preference
+          <h3 className="text-foreground font-semibold">
+            {" "}
+            <span className="border-b border-primary">
+              Privacy & Preference
+            </span>
           </h3>
           {saved && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-fade-in">
@@ -78,8 +137,9 @@ export default function PrivacySettings() {
             </p>
           </div>
           <Toggle
-            value={privacy.shareAnalytics}
-            onChange={(v) => handleChange("shareAnalytics", v)}
+            value={privacy.share_analytics}
+            onChange={(v) => handleChange("share_analytics", v)}
+            disabled={loading || saving}
           />
         </div>
 
@@ -94,28 +154,11 @@ export default function PrivacySettings() {
             </p>
           </div>
           <Toggle
-            value={privacy.personalizeJobs}
-            onChange={(v) => handleChange("personalizeJobs", v)}
+            value={privacy.personalize_jobs}
+            onChange={(v) => handleChange("personalize_jobs", v)}
+            disabled={loading || saving}
           />
         </div>
-      </div>
-
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-        <div>
-          <h3 className="text-foreground font-bold text-sm">
-            Data Portability
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Download a copy of your personal settings, resume metadata, and
-            logs.
-          </p>
-        </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-muted text-foreground text-xs font-semibold transition-all cursor-pointer"
-        >
-          <Download size={14} /> Export Settings Data
-        </button>
       </div>
 
       <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 space-y-4">

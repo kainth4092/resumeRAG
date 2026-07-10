@@ -81,7 +81,12 @@ class ResendEmailProvider(BaseEmailProvider):
             payload["attachments"] = attachments
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(
+                url,
+                json=payload,
+                headers=headers,
+                timeout=20,
+            )
             if response.status_code not in (200, 201):
                 raise Exception(
                     f"Resend HTTP API failed with status {response.status_code}: {response.text}"

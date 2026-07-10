@@ -26,6 +26,8 @@ from app.interview.services.interview_retrieval_service import (
     extract_jd_skills,
     retrieve_questions_rag,
 )
+from app.services.notification_service import create_notification
+
 
 router = APIRouter(
     prefix="/api/interview-bank",
@@ -42,19 +44,36 @@ def create_bank_question(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return create_question(
+        question = create_question(
             db=db,
             payload=payload,
             created_by=current_user.id,
             background_tasks=background_tasks,
         )
 
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            title="Question shared successfully",
+            message=(
+                f'Your interview question about '
+                f'"{payload.skill or "General"}" has been shared with the community.'
+            ),
+            notification_type="interview",
+            action_url="/interview-prep?tab=community",
+        )
+
+        return question
+
     except HTTPException:
         raise
 
     except Exception:
         logger.exception("Failed to create interview bank question")
-        raise HTTPException(status_code=500, detail="Failed to create question.")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create question.",
+        )
 
 
 @router.get("/meta")
@@ -63,6 +82,7 @@ def get_bank_meta(
     current_user: User = Depends(get_current_user),
 ):
     from app.interview.services.interview_bank_service import get_filters_meta
+
     try:
         return get_filters_meta(db, current_user.id)
     except Exception:
@@ -79,17 +99,18 @@ def generate_bank_answer(
     skill = payload.get("skill", "")
     category = payload.get("category", "")
     experience_level = payload.get("experience_level", "")
-    
+
     if not question or not question.strip():
         raise HTTPException(status_code=400, detail="Question is required.")
-        
+
     from app.services.llm_service import generate_general_answer
+
     try:
         answer = generate_general_answer(
             question=question,
             skill=skill,
             category=category,
-            experience_level=experience_level
+            experience_level=experience_level,
         )
         return {"answer": answer}
     except Exception:
@@ -128,10 +149,7 @@ def list_bank_questions(
             skip=skip,
             limit=limit,
         )
-        return {
-            "total": total,
-            "questions": items
-        }
+        return {"total": total, "questions": items}
 
     except Exception:
         logger.exception("Failed to fetch interview bank questions")

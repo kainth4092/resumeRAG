@@ -31,6 +31,9 @@ from app.api.email.routes import router as email_router
 from app.api.dashboard.routes import router as dashboard_router
 from app.api.mock_interview.routes import router as mock_interview_router
 from app.api.roadmap.routes import router as roadmap_router
+from app.api.notifications.routes import router as notifications_router
+from app.api.settings.routes import router as settings_router
+
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +174,8 @@ app.include_router(email_router)
 app.include_router(dashboard_router)
 app.include_router(mock_interview_router)
 app.include_router(roadmap_router)
+app.include_router(notifications_router)
+app.include_router(settings_router)
 
 
 @app.get("/")

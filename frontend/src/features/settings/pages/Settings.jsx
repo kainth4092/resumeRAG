@@ -4,7 +4,6 @@ import {
   Lock,
   Bell,
   Monitor,
-  Zap,
   Shield,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -12,7 +11,6 @@ import AccountSettings from "../components/AccountSettings";
 import SecuritySettings from "../components/SecuritySettings";
 import NotificationSettings from "../components/NotificationSettings";
 import AppearanceSettings from "../components/AppearanceSettings";
-import IntegrationSettings from "../components/IntegrationSettings";
 import PrivacySettings from "../components/PrivacySettings";
 
 const TABS = [
@@ -35,12 +33,7 @@ const TABS = [
     label: "Appearance",
     component: AppearanceSettings,
   },
-  {
-    id: "integrations",
-    icon: Zap,
-    label: "Integrations",
-    component: IntegrationSettings,
-  },
+
   {
     id: "data",
     icon: Shield,

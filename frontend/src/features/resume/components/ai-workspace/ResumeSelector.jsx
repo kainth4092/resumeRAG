@@ -1,10 +1,6 @@
 import { useRef } from "react";
-import {
-   UploadCloud,
-   Sparkles,
-   FileText,
-   ChevronDown,
-} from "lucide-react";
+import { UploadCloud, Sparkles, FileText } from "lucide-react";
+import Select from "../resume/dashboard/Select";
 
 export default function ResumeSelector({
   resumesList,
@@ -34,7 +30,6 @@ export default function ResumeSelector({
     <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-xs transition-all duration-300">
       <div className="flex flex-col gap-4">
         {selectedResume ? (
-          // Active Resume View
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 border border-primary/10 rounded-xl animate-in fade-in duration-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -124,30 +119,26 @@ export default function ResumeSelector({
                   Select a saved resume
                 </label>
                 <div className="relative">
-                  <select
-                    onChange={(e) => {
-                      const res = resumesList.find(
-                        (r) => String(r.id) === String(e.target.value),
-                      );
-                      if (res) onSelectResume(res);
-                    }}
+                  <Select
+                    options={resumesList.map((res) => ({
+                      value: String(res.id),
+                      label:
+                        res.title ||
+                        res.original_filename ||
+                        `Resume #${res.id}`,
+                    }))}
                     value=""
-                    className="w-full appearance-none rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs text-foreground font-bold focus:outline-hidden focus:border-primary cursor-pointer pr-10"
-                  >
-                    <option value="" disabled>
-                      Choose from saved resumes...
-                    </option>
-                    {resumesList.map((res) => (
-                      <option key={res.id} value={res.id}>
-                        {res.title ||
-                          res.original_filename ||
-                          `Resume #${res.id}`}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    size={14}
+                    onChange={(resumeId) => {
+                      const selected = resumesList.find(
+                        (resume) => String(resume.id) === String(resumeId),
+                      );
+
+                      if (selected) {
+                        onSelectResume(selected);
+                      }
+                    }}
+                    placeholder="Choose from saved resumes..."
+                    size="sm"
                   />
                 </div>
               </div>
