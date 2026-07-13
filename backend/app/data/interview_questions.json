@@ -7570,5 +7570,2556 @@
     ],
     "source": "Admin",
     "approved": true
+  },
+  {
+    "question": "What is orchestration in software development?",
+    "answer": "Orchestration is the coordination and management of multiple services, processes, or tasks so they work together as a complete system. In backend systems, orchestration often means deciding the order in which services run, how they communicate, and how failures are handled.\n\nFor example, in a microservices application, one service may authenticate the user, another may fetch data, and another may send notifications. Orchestration ensures these steps happen in the right sequence and with proper error handling. It is important in distributed systems because independent components still need to behave like one reliable product.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "orchestration",
+      "microservices",
+      "distributed-systems",
+      "workflow-management"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Docker, and why is it used in software development?",
+    "answer": "Docker is a platform for packaging applications and their dependencies into containers. A container runs the same way across different environments because it includes the application code, runtime, libraries, and configuration needed to execute the app.\n\nDocker is used to make development, testing, and deployment more consistent. It solves problems like \u201cworks on my machine\u201d by giving developers the same runtime everywhere. It is especially useful for microservices, CI/CD pipelines, and cloud deployments. In interviews, it is good to say Docker improves portability, isolation, and reproducibility.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker",
+      "containers",
+      "deployment",
+      "portability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Docker image?",
+    "answer": "A Docker image is a read-only blueprint used to create containers. It contains everything needed to run an application, including code, dependencies, environment settings, and default commands.\n\nImages are built from a Dockerfile and are stored in registries such as Docker Hub or private repositories. You can version and share images just like code. In interviews, explain that an image is static and reusable, while a container is the running instance created from that image.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker-image",
+      "blueprints",
+      "docker-hub",
+      "artifacts"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Docker container?",
+    "answer": "A Docker container is a running instance of a Docker image. It is isolated from other containers and the host system, but it shares the host operating system kernel.\n\nContainers are lightweight and start quickly because they do not need a full guest operating system like virtual machines do. They are commonly used to run web servers, APIs, databases, and background workers. In interviews, describe containers as process-level isolation with portable runtime behavior.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker-container",
+      "isolation",
+      "runtime",
+      "virtualization"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between a Docker image and a Docker container?",
+    "answer": "A Docker image is a static, read-only artifact that defines what should run. A Docker container is the live, running version of that image with its own writable layer for runtime changes.\n\nYou can create many containers from the same image, similar to creating many objects from one class definition. The image is built once, and containers are started, stopped, and removed as needed. In interviews, make it clear that images are templates and containers are executions.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker-image",
+      "docker-container",
+      "comparison",
+      "docker-fundamentals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can multiple containers be created from a single Docker image?",
+    "answer": "Multiple containers can be created by running the same Docker image multiple times. Each container gets its own isolated filesystem, process space, and runtime state, even though they all come from the same image.\n\nFor example, you can start several containers from a web app image to handle more requests or to test different environments. This is one of Docker\u2019s major strengths because the same artifact can be reused consistently. In interviews, mention that each container can also be configured with different environment variables, ports, or mounts.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker",
+      "scalability",
+      "isolation",
+      "reusability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the benefits of running multiple Docker containers?",
+    "answer": "Running multiple containers improves isolation, fault tolerance, and flexibility. Each container can run one service or component, making it easier to manage and scale independently.\n\nFor example, a frontend, backend, and database can run in separate containers so one failure does not necessarily stop the others. This modularity also supports better resource usage and easier deployment. In interviews, explain that multiple containers align well with microservices and service-oriented architecture.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "microservices",
+      "fault-tolerance",
+      "modularity",
+      "system-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do multiple containers improve application scalability?",
+    "answer": "Multiple containers improve scalability by allowing you to run more instances of the same service to handle increased traffic. Instead of scaling one large process, you can scale horizontally by adding more containers.\n\nThis approach supports load balancing and failure recovery. If one container becomes overloaded or crashes, traffic can be shifted to another healthy instance. In interviews, explain that container-based scaling works especially well in distributed systems and cloud environments.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "scalability",
+      "horizontal-scaling",
+      "load-balancing",
+      "containers"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Kubernetes?",
+    "answer": "Kubernetes is an open-source container orchestration platform used to deploy, manage, scale, and recover containerized applications. It automates many operational tasks that would otherwise be handled manually.\n\nKubernetes schedules containers across machines, restarts failed containers, balances load, and supports rolling updates. It is commonly used in production environments where reliability and scaling are important. In interviews, say that Kubernetes is the standard orchestration layer for modern containerized systems.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "kubernetes",
+      "k8s",
+      "orchestration",
+      "automation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is Kubernetes used with Docker containers?",
+    "answer": "Kubernetes is used with Docker containers to manage them at scale. Docker packages and runs containers, while Kubernetes handles deployment, scheduling, scaling, service discovery, and self-healing across many machines.\n\nDocker alone is great for creating containers, but Kubernetes is needed when you have multiple services, replicas, and production-level operational needs. In interviews, explain that Docker focuses on containerization, while Kubernetes focuses on orchestration.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "kubernetes",
+      "docker",
+      "orchestration",
+      "scalability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between Docker and Kubernetes?",
+    "answer": "Docker is mainly used to build, package, and run containers. Kubernetes is used to orchestrate those containers across a cluster of machines.\n\nDocker helps you create and run containers locally or on a single host, while Kubernetes manages many containers across nodes, handles scaling, and recovers from failures. In interviews, the simplest explanation is that Docker creates containers and Kubernetes runs them reliably at scale.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "docker-vs-kubernetes",
+      "k8s",
+      "devops-tools",
+      "containers"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Kubernetes Pod?",
+    "answer": "A Pod is the smallest deployable unit in Kubernetes. It usually contains one or more containers that share the same network namespace and storage volumes.\n\nContainers in the same Pod can communicate easily through localhost and share resources closely. Pods are ephemeral, so Kubernetes can recreate them as needed. In interviews, explain that a Pod represents a running workload, not a permanent server.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "pod",
+      "kubernetes-basics",
+      "k8s-architecture",
+      "workloads"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Kubernetes Node?",
+    "answer": "A Node is a machine, eitherphysical or virtual, that runs Kubernetes workloads. It hosts Pods and providesthe CPU, memory, and networking resources needed by those Pods.\n\nEach noderuns components that allow Kubernetes to manage containers on it. In interviews,explain that nodes are the worker machines in a Kubernetes cluster, and Pods arescheduled onto them.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "node",
+      "kubernetes-cluster",
+      "worker-nodes",
+      "infrastructure"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Kubernetes cluster?",
+    "answer": "A Kubernetes cluster is a group of machines that work together to run containerized applications. It includes a control plane that manages the system and worker nodes that run the workloads.\n\nThe cluster abstracts away individual machines and lets you deploy applications in a distributed and scalable way. In interviews, explain that Kubernetes provides a unified layer to manage containers across multiple hosts.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "cluster",
+      "kubernetes",
+      "distributed-computing",
+      "k8s-architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Kubernetes Deployment?",
+    "answer": "A Deployment is a Kubernetes resource used to manage the desired state of Pods. It defines how many replicas should run, how updates should happen, and how to recover from failures.\n\nDeployments support rolling updates and rollbacks, which makes application releases safer and more controlled. In interviews, explain that a Deployment is commonly used for stateless applications that need scaling and versioned rollout management.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "deployment",
+      "kubernetes-resources",
+      "rolling-updates",
+      "stateless-apps"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a Kubernetes Service?",
+    "answer": "A Service is a Kubernetes resource that provides stable network access to a set of Pods. Since Pods can be created and destroyed dynamically, a Service gives clients a consistent endpoint.\n\nServices can load balance traffic across Pods and support internal or external access depending on type. In interviews, explain that Services solve the problem of discovering and reaching changing Pods reliably.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "service",
+      "kubernetes-networking",
+      "load-balancing",
+      "service-discovery"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does Kubernetes provide automatic scaling and self-healing?",
+    "answer": "Kubernetes can automatically scale workloads based on demand using mechanisms like the Horizontal Pod Autoscaler. It can increase or decrease the number of Pods depending on metrics such as CPU or memory usage.\n\nFor self-healing, Kubernetes restarts failed containers, replaces unhealthy Pods, and reschedules workloads when nodes fail. In interviews, explain that Kubernetes continuously compares the actual state of the system with the desired state and acts to correct mismatches.",
+    "skill": "Backend Engineering",
+    "category": "DevOps",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "autoscaling",
+      "self-healing",
+      "kubernetes-automation",
+      "reliability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a REST API?",
+    "answer": "A REST API is an application programming interface that follows REST principles and uses standard HTTP methods to interact with resources. It is designed around resource-based URLs and stateless communication.\n\nFor example, a users resource may be accessed with GET /users or POST /users. REST APIs are popular because they are simple, scalable, and easy to understand. In interviews, mention that REST is an architectural style, not a strict protocol.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rest",
+      "api",
+      "http",
+      "web-services"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does a REST API work?",
+    "answer": "A REST API works by letting clients send HTTP requests to resource endpoints, and the server returns responses, often in JSON format. Each request includes enough information for the server to process it without relying on stored session state.\n\nFor example, a client can request a product with GET /products/10 and update it with PUT /products/10. In interviews, explain that REST APIs use HTTP semantics, resource identifiers, and standard status codes to keep communication predictable.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rest-api",
+      "http-requests",
+      "stateless",
+      "json"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the main HTTP methods used in REST APIs?",
+    "answer": "The main HTTP methods are GET, POST, PUT, PATCH, and DELETE. GET retrieves data, POST creates new resources, PUT replaces an entire resource, PATCH updates part of a resource, and DELETE removes a resource.\n\nThese methods map naturally to CRUD operations and make APIs easier to design and consume. In interviews, it is good to mention that proper method usage is part of good REST API design.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "http-methods",
+      "crud",
+      "rest-api",
+      "api-design"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between GET, POST, PUT, PATCH, and DELETE?",
+    "answer": "GET is used to read data and should not change server state. POST is used to create resources or submit actions. PUT usually replaces an entire resource, while PATCH updates only selected fields. DELETE removes a resource.\n\nThese methods also differ in idempotency: PUT and DELETE are typically idempotent, while POST usually is not. In interviews, explain that using the correct method improves API clarity and aligns with HTTP standards.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "http-methods",
+      "idempotency",
+      "rest",
+      "api-best-practices"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a SOAP API?",
+    "answer": "A SOAP API is a web service that uses the Simple Object Access Protocol. It exchanges structured messages, usually in XML, and follows a strict contract defined by a WSDL file.\n\nSOAP is often used in enterprise environments where formal contracts, security standards, and reliability requirements are important. It is more rigid than REST and usually more verbose. In interviews, explain that SOAP is protocol-based and strongly standardized.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "soap",
+      "xml",
+      "protocols",
+      "enterprise-software"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does a SOAP API work?",
+    "answer": "A SOAP API works by sending XML-based messages in a defined envelope structure over HTTP or other protocols. The client and server follow a contract, usually described by WSDL, which specifies operations, message formats, and endpoints.\n\nSOAP often includes built-in standards for security, transactions, and reliability. In interviews, explain that SOAP is suited for systems that need strict schemas and formal communication rules.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "soap",
+      "wsdl",
+      "xml-messaging",
+      "web-services"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between REST APIs and SOAP APIs?",
+    "answer": "REST is an architectural style that usually uses JSON and HTTP methods in a resource-oriented way. SOAP is a protocol that uses XML and a strict message format.\n\nREST is generally simpler, lighter, and easier to use for modern web and mobile applications. SOAP is more rigid and often used in enterprise systems with strict contracts and advanced standards. In interviews, explain that REST is more common today, while SOAP still exists in legacy and enterprise integrations.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "rest-vs-soap",
+      "api-comparison",
+      "json-vs-xml",
+      "architecture"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are Django Channels?",
+    "answer": "Django Channels is an extension that adds support for asynchronous communication and real-time features to Django. It allows Django to handle WebSockets, background tasks, and long-lived connections.\n\nBy default, Django is designed around request-response HTTP handling, but Channels expands it for real-time use cases like chat, notifications, and live updates. In interviews, explain that Channels bring event-driven and asynchronous capabilities to Django applications.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "django-channels",
+      "websockets",
+      "asynchronous",
+      "real-time"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How are Django Channels used for real-time communication?",
+    "answer": "Django Channels are used to manage WebSocket connections and other asynchronous events. Instead of the client repeatedly polling the server, the server can push updates instantly when something changes.\n\nThis is useful for chat applications, live dashboards, collaborative editing, and alerts. In interviews, explain that Channels are preferred when low-latency, bidirectional communication is needed.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "real-time-web",
+      "django-channels",
+      "websockets",
+      "event-driven"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between HTTP communication and WebSocket communication?",
+    "answer": "HTTP is request-response based: the client sends a request, and the server returns a response, after which the connection typically closes. WebSocket creates a persistent, bidirectional connection that allows both client and server to send messages at any time.\n\nHTTP is ideal for normal APIs and page loading, while WebSocket is better for real-time applications such as chat or live notifications. In interviews, explain that WebSocket is used when you need continuous two-way communication.",
+    "skill": "Backend Engineering",
+    "category": "Networking",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "http",
+      "websockets",
+      "bidirectional",
+      "communication-protocols"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is authentication?",
+    "answer": "Authentication is the process of verifying a user\u2019s identity. Itanswers the question: \u201cWho are you?\u201d\n\nCommon authentication methodsinclude passwords, tokens, biometrics, and multi-factor authentication. Ininterviews, explain that authentication happens before authorization and is acore part of security in web applications.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "authentication",
+      "identity",
+      "security-basics",
+      "access-control"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is authorization?",
+    "answer": "Authorization determines what an authenticated user is allowed to do. It answers the question: \u201cWhat can you access or perform?\u201d\n\nFor example, a user may be logged in but still not have permission to access admin pages. In interviews, explain that authorization is about permissions and access control, not identity verification.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "authorization",
+      "permissions",
+      "security-basics",
+      "rbac"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between authentication and authorization?",
+    "answer": "Authentication verifies identity, while authorization checks permissions. Authentication happens first, and authorization depends on the authenticated identity and its roles or rules.\n\nA user logs in with a password or token to authenticate, and then the system checks whether that user can view, edit, or delete a resource. In interviews, clearly separating these concepts is important because they are frequently confused.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "authentication-vs-authorization",
+      "security",
+      "iam",
+      "access-control"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the common types of authentication?",
+    "answer": "Common authentication types include password-based authentication, token-based authentication, session-based authentication, and multi-factor authentication. In some systems, biometrics or certificate-based methods are also used.\n\nThe choice depends on the application type, security requirements, and user experience. In interviews, explain that modern APIs often use token-based authentication, while traditional web apps often use sessions.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "authentication-methods",
+      "passwords",
+      "tokens",
+      "sessions"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is password-based authentication?",
+    "answer": "Password-based authentication uses a username and password to verify identity. The system checks the entered password against a securely stored hash in the database.\n\nPasswords should never be stored in plain text. Instead, secure hashing algorithms like bcrypt or Argon2 should be used. In interviews, mention that password-based authentication is common but should always be combined with strong hashing and secure password policies.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "passwords",
+      "hashing",
+      "security",
+      "bcrypt"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is token-based authentication?",
+    "answer": "Token-based authentication uses a token, usually issued after login, to identify the user in future requests. The client sends the token with each request, and the server verifies it.\n\nThis approach is common in APIs and mobile apps because it is stateless and scalable. JWT is a popular token format, but not the only one. In interviews, explain that token-based auth separates login from request handling and works well in distributed systems.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "tokens",
+      "api-authentication",
+      "stateless",
+      "scalability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is session-based authentication?",
+    "answer": "Session-based authentication stores user login state on the server. After login, the server creates a session record and gives the client a session identifier, often stored in a cookie.\n\nThe client sends the session ID on subsequent requests, and the server uses it to look up the user\u2019s session. In interviews, explain that this is common in traditional web applications and is stateful on the server side.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "sessions",
+      "cookies",
+      "stateful-auth",
+      "web-security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is multi-factor authentication?",
+    "answer": "Multi-factor authentication, or MFA, requires two or more forms of verification before granting access. These factors usually come from different categories, such as something you know, something you have, or something you are.\n\nExamples include a password plus a one-time code from a phone app. MFA improves security because stolen passwords alone are not enough to log in. In interviews, explain that MFA reduces the risk of account compromise.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "mfa",
+      "multi-factor-authentication",
+      "2fa",
+      "security-hardening"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a JWT?",
+    "answer": "JWT stands for JSON Web Token. It is a compact, URL-safe token format used to securely transmit claims between parties.\n\nJWTs are commonly used for authentication and authorization in web applications and APIs. They are signed so the receiver can verify they were not altered. In interviews, explain that JWT is popular because it is stateless and easy to pass between services.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "tokens",
+      "json-web-token",
+      "web-security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does JWT authentication work?",
+    "answer": "After a user logs in, the server creates a JWT containing claims such as user identity and expiration time, then signs it. The client stores the token and sends it with each request, usually in the Authorization header.\n\nThe server verifies the signature and checks the claims on every request. If the token is valid, the request is treated as authenticated. In interviews, explain that JWT enables stateless authentication because the server does not need to store session data.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "authentication-flow",
+      "stateless",
+      "api-security"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the three parts of a JWT?",
+    "answer": "A JWT has three parts: header, payload, and signature. The header describes the token type and signing algorithm. The payload carries claims such as user id and expiration. The signature proves the token has not been tampered with.\n\nThese parts are Base64URL encoded and separated by dots. In interviews, mention that the payload is readable and not encrypted by default, so sensitive data should not be placed inside it.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt-structure",
+      "base64",
+      "cryptography",
+      "data-integrity"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What information is stored in the JWT header, payload, and signature?",
+    "answer": "The header usually stores metadata like the token type and signing algorithm. The payload stores claims such as subject, role, issuer, audience, and expiration. The signature is generated using the header, payload, and a secret or private key.\n\nThe signature is what lets the server verify that the token is authentic and unchanged. In interviews, explain that the payload can be decoded by anyone, so it should only contain non-sensitive claims.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "metadata",
+      "claims",
+      "digital-signatures"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an access token and a refresh token?",
+    "answer": "An access token is a short-lived token used to access protected resources. A refresh token is a longer-lived token used to obtain a new access token after the old one expires.\n\nAccess tokens are usually sent frequently and should expire quickly for security. Refresh tokens are more sensitive and should be stored more securely. In interviews, explain that this design balances user convenience and security.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "access-token",
+      "refresh-token",
+      "session-management",
+      "oauth2"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is OAuth?",
+    "answer": "OAuth is an authorization framework that allows a user to grant a third-party application limited access to their resources without sharing their password.\n\nFor example, a user may allow a photo app to access their cloud storage account. OAuth focuses on delegated authorization, not direct authentication. In interviews, explain that OAuth is often used for \u201cSign in with Google\u201d style integrations, though the exact login flow may also involve OpenID Connect.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oauth",
+      "authorization",
+      "delegation",
+      "third-party-integration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an OAuth access token?",
+    "answer": "An OAuth access token is a credential issued by an authorization server that allows a client to access protected resources. It is presented to the resource server to prove that the client has permission.\n\nThe token may be opaque or JWT-based depending on the implementation. In interviews, explain that access tokens are usually short-lived and scoped to specific permissions.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oauth",
+      "access-token",
+      "permissions",
+      "scopes"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between OAuth and JWT?",
+    "answer": "OAuth is a framework for authorization, while JWT is a token format. OAuth defines how tokens are issued and used, and JWT describes how claims are represented inside a token.\n\nIn other words, OAuth answers \u201chow do I get and use access?\u201d while JWT answers \u201cwhat format can the token take?\u201d In interviews, explain that they are not competing technologies; they solve different parts of the authentication and authorization problem.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oauth",
+      "jwt",
+      "security-standards",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Is JWT an OAuth token?",
+    "answer": "Not necessarily. JWT is a format, not an authorization system. An OAuth access token can be a JWT, but it can also be an opaque string.\n\nSo JWT and OAuth are related but not the same thing. In interviews, it is important to say that a JWT may be used inside OAuth, but JWT itself does not implement OAuth flows.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "jwt",
+      "oauth",
+      "token-formats",
+      "specifications"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Can an OAuth access token use the JWT format?",
+    "answer": "Yes, an OAuth access token can use the JWT format. In that case, the token contains claims and is signed so the resource server can validate it locally.\n\nHowever, OAuth does not require JWT. Some providers issue opaque tokens instead. In interviews, explain that JWT-based access tokens are convenient for decentralized validation, while opaque tokens can be easier to revoke centrally.",
+    "skill": "Backend Engineering",
+    "category": "Security",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "oauth",
+      "jwt",
+      "access-token",
+      "validation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is AWS?",
+    "answer": "AWS stands for Amazon Web Services. It is a cloud computing platform that provides infrastructure and managed services such as computing, storage, databases, networking, monitoring, and security.\n\nAWS is widely used to build scalable and reliable applications without managing physical hardware. In interviews, explain that AWS supports everything from simple virtual machines to advanced serverless and machine learning services.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Fresher",
+    "company": "Amazon",
+    "role": null,
+    "tags": [
+      "aws",
+      "cloud-computing",
+      "paas",
+      "iaas"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the main services provided by AWS?",
+    "answer": "AWS provides compute services like EC2 and Lambda, storage services like S3, database services like RDS and DynamoDB, networking services like VPC and Route 53, and monitoring services like CloudWatch.\n\nIt also offers security, container, messaging, analytics, and AI services. In interviews, explain that AWS is broad, and teams usually combine several services to build cloud-native applications.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Junior",
+    "company": "Amazon",
+    "role": null,
+    "tags": [
+      "aws",
+      "ec2",
+      "s3",
+      "rds",
+      "lambda"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is OpenStack?",
+    "answer": "OpenStack is an open-source cloud computing platform used to build and manage private or public cloud infrastructure. It provides infrastructure services similar to public cloud providers but can be deployed and controlled by an organization.\n\nOpenStack is commonly used by enterprises, telecom companies, and organizations that need more control over their cloud environment. In interviews, explain that OpenStack helps companies create their own cloud platform on top of commodity hardware.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "openstack",
+      "private-cloud",
+      "open-source",
+      "iaas"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between AWS and OpenStack?",
+    "answer": "AWS is a managed public cloud service provided by Amazon, while OpenStack is open-source software that organizations use to build their own cloud infrastructure.\n\nWith AWS, Amazon operates the platform for you. With OpenStack, you operate and maintain the cloud stack yourself or through a vendor. In interviews, explain that AWS offers convenience and scale, while OpenStack offers control and customization.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Junior",
+    "company": "Amazon",
+    "role": null,
+    "tags": [
+      "aws",
+      "openstack",
+      "public-cloud",
+      "private-cloud"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can a FastAPI application be deployed on AWS EC2?",
+    "answer": "A FastAPI application can be deployed on AWS EC2 by provisioning an instance, installing the required runtime such as Python and dependencies, running the app with an ASGI server like Uvicorn or Gunicorn, and placing a reverse proxy like Nginx in front of it.\n\nThe app should be managed as a service so it restarts automatically on failure or reboot. Environment variables, security groups, and HTTPS should also be configured properly. In interviews, explain that EC2 deployment gives you full control over the server, but you must manage scaling, patching, and monitoring yourself.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Mid-Level",
+    "company": "Amazon",
+    "role": "Python Developer",
+    "tags": [
+      "aws",
+      "ec2",
+      "fastapi",
+      "deployment"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How is OpenStack used to create private cloud infrastructure?",
+    "answer": "OpenStack is used to build a private cloud by providing a set of services for compute, storage, networking, identity, and orchestration. An organization can deploy OpenStack on its own hardware or in its own data center to offer cloud-like infrastructure internally.\n\nTeams can then provision virtual machines, networks, and storage on demand through APIs or dashboards. In interviews, explain that OpenStack gives enterprises more control over security, compliance, and resource ownership than a public cloud model.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "openstack",
+      "private-cloud",
+      "infrastructure",
+      "iaas"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are Nova, Neutron, Cinder, Swift, and Horizon in OpenStack?",
+    "answer": "Nova is the compute service that manages virtual machine instances. Neutron provides networking services. Cinder offers block storage. Swift provides object storage. Horizon is the web-based dashboard for managing OpenStack resources.\n\nThese components work together to create a full cloud platform. In interviews, explain that each service handles a separate infrastructure concern, similar to how different AWS services specialize in different tasks.",
+    "skill": "Backend Engineering",
+    "category": "Cloud",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "openstack",
+      "nova",
+      "neutron",
+      "cloud-services"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is Alembic in FastAPI?",
+    "answer": "Alembic is a database migration tool commonly used with SQLAlchemy in FastAPI applications. It helps manage schema changes over time in a controlled and versioned way.\n\nWhen models change, Alembic can generate migration scripts to update the database. This makes it safer to evolve the schema across development, staging, and production. In interviews, explain that Alembic is not part of FastAPI itself, but it is a standard companion tool for database schema management.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "alembic",
+      "migrations",
+      "fastapi",
+      "sqlalchemy"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is Alembic used with SQLAlchemy?",
+    "answer": "Alembic is used with SQLAlchemy because SQLAlchemy defines models and database interactions, while Alembic manages schema evolution. Together they let you change application models and apply the corresponding database changes safely.\n\nWithout migrations, teams would have to modify the database manually, which is error-prone and hard to track. In interviews, explain that Alembic provides versioned, repeatable, and reversible schema changes.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "sqlalchemy",
+      "alembic",
+      "orm",
+      "database-migrations"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a database migration?",
+    "answer": "A database migration is a controlled change to the database schema or structure over time. This can include creating tables, adding columns, renaming fields, or changing constraints.\n\nMigrations help teams keep the database synchronized with application code as the schema evolves. In interviews, explain that migrations are critical in collaborative development because they make schema changes repeatable and traceable.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "database-migration",
+      "schema-design",
+      "version-control",
+      "sql"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you configure Alembic in a FastAPI application?",
+    "answer": "You configure Alembic by initializing it in the project, linking it to the SQLAlchemy database URL and metadata, and setting up the environment script to detect model changes. The Alembic configuration typically points to your models\u2019 metadata so it can generate migration scripts.\n\nAfter setup, you can create and apply migrations using Alembic commands. In interviews, explain that the important part is connecting Alembic to the same database settings and metadata used by the FastAPI application.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "alembic-setup",
+      "fastapi",
+      "sqlalchemy",
+      "configuration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you create a new database table using Alembic?",
+    "answer": "You create a new table by defining a new SQLAlchemy model and then generating a migration that includes a table creation operation. The migration script will typically use a create_table operation in the upgrade function.\n\nAfter reviewing the generated script, you apply it to the database. In interviews, explain that migrations should be reviewed carefully before being run in production.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "create-table",
+      "migrations",
+      "sql"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you add a new database column using Alembic?",
+    "answer": "You add a new column by updating the SQLAlchemy model and generating a new Alembic migration. The migration script will usually include an add_column operation in the upgrade function.\n\nYou should also consider whether the column should be nullable or have a default value, especially for existing rows. In interviews, explain that adding columns to production tables should be planned carefully to avoid breaking older data.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "add-column",
+      "schema-change",
+      "sql"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you remove a database column using Alembic?",
+    "answer": "You remove a database column by updating the model and generating a migration that drops the column in the upgrade function. The downgrade function should usually add the column back if rollback is needed.\n\nBefore dropping a column, check whether application code, indexes, or constraints still depend on it. In interviews, explain that dropping columns can be risky in production and should often be done in a staged way.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "drop-column",
+      "migrations",
+      "data-safety"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you rename a database column using Alembic?",
+    "answer": "You rename a column by writing an Alembic migration that explicitly renames the column, rather than dropping and recreating it. This preserves the data in the column during the migration.\n\nYou should also update the SQLAlchemy model to match the new name. In interviews, explain that explicit renaming is safer than recreating a column because it avoids data loss.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "rename-column",
+      "database-schema",
+      "migrations"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do you rename a database table safely using Alembic?",
+    "answer": "You rename a table with an explicit rename operation in the migration script. After renaming, you must also update any foreign keys, indexes, application models, and code references that still use the old table name.\n\nIt is important to verify that production queries and relationships continue to work. In interviews, explain that table renames should be carefully coordinated because they can affect many parts of the application.",
+    "skill": "Backend Engineering",
+    "category": "Database",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "rename-table",
+      "refactoring",
+      "database-ops"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why does Alembic not automatically detect table renaming?",
+    "answer": "Alembic compares model metadata with the database schema, but a rename looks like one table disappearing and another new one appearing. Because of that, it cannot always safely infer that the change is a rename instead of a drop-and-create.\n\nThis limitation prevents accidental data loss. In interviews, explain that some schema changes need manual migration scripts because the intent of the change cannot always be inferred automatically.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "autogenerate",
+      "renaming",
+      "tool-limitations"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the purpose of the upgrade and downgrade functions in an Alembic migration?",
+    "answer": "The upgrade function defines the changes to apply when moving the database schema forward. The downgrade function defines how to reverse those changes if a rollback is needed.\n\nTogether, they make migrations versioned and reversible. In interviews, explain that having both directions is a best practice because it supports safe deployment and rollback strategies.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "upgrade-downgrade",
+      "rollbacks",
+      "versioning"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can an Alembic migration be rolled back?",
+    "answer": "An Alembic migration can be rolled back by running a downgrade command to move to a previous revision. This applies the downgrade function of the target migration.\n\nRollback is useful when a migration causes issues in production. However, not every migration is perfectly reversible, especially if data has been deleted. In interviews, explain that rollback plans should be tested and not assumed.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "alembic",
+      "rollback",
+      "downgrade",
+      "database-safety"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an array?",
+    "answer": "An array is a data structure that stores multiple elements of the same type in contiguous memory locations. Each element can be accessed using an index.\n\nArrays are efficient for indexed access because the position of each element can be computed directly. In interviews, explain that arrays are useful when you need fast lookup and predictable memory layout.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "array",
+      "data-structures",
+      "indexing",
+      "computer-science"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does array indexing work?",
+    "answer": "Array indexing uses a zero-based position to access elements. The first element is at index 0, the second at index 1, and so on.\n\nBecause arrays store data contiguously, the system can calculate the memory address of any element quickly. This gives arrays O(1) access time by index. In interviews, explain that this is one of the main advantages of arrays.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "indexing",
+      "complexity",
+      "big-o",
+      "data-access"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an array and a Python list?",
+    "answer": "Conceptually, an array is a fixed-size, contiguous data structure, while a Python list is a dynamic, high-level container that can grow and shrink as needed.\n\nIn Python, lists are more flexible and can hold mixed types, while arrays in lower-level languages usually hold elements of the same type. In interviews, explain that Python lists behave more like dynamic arrays than traditional fixed-size arrays.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "python-list",
+      "arrays",
+      "dynamic-arrays",
+      "python-internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a linked list?",
+    "answer": "A linked list is a linear data structure made of nodes, where each node stores data and a reference to the next node. In some variants, nodes may also reference the previous node.\n\nUnlike arrays, linked lists do not require contiguous memory. They are useful when frequent insertions and deletions are needed. In interviews, explain that linked lists trade faster structural changes for slower indexed access.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "linked-list",
+      "nodes",
+      "pointers",
+      "data-structures"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an array, a Python list, and a linked list?",
+    "answer": "An array stores elements contiguously and gives fast indexed access. A Python list is a dynamic container implemented efficiently in Python, typically behaving like a resizable array. A linked list stores nodes connected by pointers, making insertions and deletions easier in the middle but access slower.\n\nIn interviews, explain that arrays and Python lists are better for random access, while linked lists are better for certain insertion-heavy patterns.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "arrays",
+      "linked-list",
+      "data-structures",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the advantages and disadvantages of arrays?",
+    "answer": "Arrays provide fast indexed access, good cache performance, and simple traversal. They are memory-efficient when size is fixed and access patterns are predictable.\n\nTheir disadvantage is that resizing can be expensive, and inserting or deleting in the middle may require shifting many elements. In interviews, explain that arrays are ideal when you need speed for lookup and iteration, but not necessarily for frequent structural changes.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "arrays",
+      "trade-offs",
+      "performance",
+      "memory-management"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the advantages and disadvantages of linked lists?",
+    "answer": "Linked lists are good for frequent insertions and deletions because they do not require shifting elements. They also do not need contiguous memory, which makes them flexible in some memory layouts.\n\nTheir disadvantages are slower access, extra memory for pointers, and poor cache locality. In interviews, explain that linked lists are useful in specific algorithms, but are often less efficient than arrays in practice for many backend workloads.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "linked-list",
+      "pointers",
+      "cache-locality",
+      "trade-offs"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a loop in programming?",
+    "answer": "A loop is a control structure that repeats a block of code while a condition is true or until a sequence is exhausted. It helps avoid writing the same logic multiple times.\n\nLoops are used for iterating over data, processing records, and performing repeated tasks. In interviews, explain that loops are foundational for almost all programming workflows.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "loops",
+      "control-flow",
+      "iteration",
+      "fundamentals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a for loop in Python?",
+    "answer": "A for loop in Python is used to iterate over an iterable such as a list, string, tuple, dictionary, or generator. It automatically fetches each item one by one.\n\nFor example, a for loop can process every element in a list of users. In interviews, explain that Python for loops are iterator-based and are commonly used for clean iteration over collections.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "for-loop",
+      "python",
+      "iteration",
+      "iterables"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a while loop in Python?",
+    "answer": "A while loop repeats as long as a condition remains true. It is useful when the number of iterations is not known in advance.\n\nFor example, you might use a while loop to keep polling until a condition changes or to process data until a queue becomes empty. In interviews, explain that while loops are best when the termination depends on runtime conditions rather than a fixed collection.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "while-loop",
+      "python",
+      "conditional-logic",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between a for loop and a while loop?",
+    "answer": "A for loop is typically used when iterating over a known sequence or iterable. A while loop is used when repetition depends on a condition rather than a collection.\n\nFor example, use a for loop to process a list of orders, and a while loop to retry an operation until success or timeout. In interviews, explain that for loops are generally clearer for collection processing, while while loops are better for condition-driven repetition.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "loops",
+      "logic",
+      "iteration",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are break and continue statements in Python?",
+    "answer": "break exits the loop immediately, while continue skips the rest of the current iteration and moves to the next one.\n\nThese statements are useful for controlling loop behavior more precisely. For example, break can stop processing when a match is found, and continue can skip invalid records. In interviews, explain that they should be used carefully to keep code readable.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "break",
+      "continue",
+      "control-flow",
+      "loop-control"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an infinite loop?",
+    "answer": "An infinite loop is a loop that never terminates because its exit condition is never reached or does not exist. This can happen with both while and for loops if the logic is incorrect.\n\nInfinite loops are usually bugs, though sometimes they are intentional in servers, workers, or event loops. In interviews, explain that production code should always have safe termination conditions or controlled shutdown logic.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "infinite-loop",
+      "bugs",
+      "termination",
+      "safety"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a generator in Python?",
+    "answer": "A generator is a special kind of iterator that yields values one at a time instead of storing them all in memory at once. It is defined using a function with the yield keyword or by generator expressions.\n\nGenerators are useful for streaming data, large datasets, and lazy computation. In interviews, explain that generators improve memory efficiency and allow processing of sequences on demand.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "generator",
+      "python",
+      "memory-efficiency",
+      "yield"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does the yield keyword work in Python?",
+    "answer": "yield pauses a generator function and returns a value to the caller, but it preserves the function\u2019s state so it can resume later from the same point.\n\nEach time the generator is advanced, execution continues from where it last yielded. This makes generators stateful and memory efficient. In interviews, explain that yield turns a function into a generator rather than returning all values immediately.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "yield",
+      "generator",
+      "execution-context",
+      "lazy-evaluation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between yield and return?",
+    "answer": "return ends a function and sends back a final value. yield pauses a function and produces a value while keeping the function alive for later continuation.\n\nA function with return runs once, while a generator with yield can produce many values over time. In interviews, explain that yield is used for lazy iteration, whereas return is used for normal function completion.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "yield",
+      "return",
+      "functions",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the benefits of using generators?",
+    "answer": "Generators use less memory because they produce values one at a time. They are also useful for processing large or infinite sequences and for building streaming pipelines.\n\nThey can make code cleaner when dealing with iterables and avoid creating intermediate lists. In interviews, explain that generators are especially useful in backend systems that handle large data streams or batched processing.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "generator",
+      "memory-efficiency",
+      "pipelines",
+      "streaming"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why are generators memory efficient?",
+    "answer": "Generators are memory efficient because they do not store the full sequence in memory. Instead, they generate each value only when needed.\n\nThis means large datasets can be processed without allocating huge lists. In interviews, explain that this lazy behavior is one of the main advantages of generators over eager data structures.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "memory-management",
+      "lazy-evaluation",
+      "generators",
+      "performance"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is lazy evaluation in Python?",
+    "answer": "Lazy evaluation means values are computed only when they are needed, rather than all at once. Generators are a common example of lazy evaluation in Python.\n\nThis reduces memory usage and can improve performance when only part of a sequence is actually consumed. In interviews, explain that lazy evaluation is useful when handling big data or expensive computations.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "lazy-evaluation",
+      "on-demand",
+      "performance-optimization",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can generator values are displayed using a for loop?",
+    "answer": "You can iterate over a generator with a for loop just like any other iterable. The loop repeatedly asks the generator for the next value until it is exhausted.\n\nThis is the most common and readable way to consume generator output. In interviews, explain that for loops work naturally with generators because they are designed to use the iteration protocol.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "generators",
+      "for-loop",
+      "iteration-protocol",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can generator values be accessed using the next function?",
+    "answer": "You can call next() on a generator to retrieve the next yielded value manually. Each call advances the generator to the next yield point.\n\nIf the generator has no more values, next() raises StopIteration. In interviews, explain that next() is useful when you need fine-grained control over iteration.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "next-function",
+      "generators",
+      "manual-iteration",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What happens when a generator is exhausted?",
+    "answer": "When a generator has yielded all its values, it is considered exhausted. Further attempts to get another value raise StopIteration.\n\nAt that point, the generator cannot be reused unless it is recreated. In interviews, explain that exhaustion is normal and expected in Python iteration.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "generators",
+      "exhaustion",
+      "stopiteration",
+      "lifecycle"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an iterable in Python?",
+    "answer": "An iterable is any Python object that can return its elements one at a time, usually through iteration in a loop. Examples include lists, tuples, strings, dictionaries, and sets.\n\nAn iterable can produce an iterator when passed to iter(). In interviews, explain that iterables are containers or collections that support iteration.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterable",
+      "collections",
+      "iteration",
+      "python-basics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an iterator in Python?",
+    "answer": "An iterator is an object that produces values one at a time and remembers its current position. It implements the iter and next methods.\n\nIterators are consumed as you move through them, so once exhausted, they usually cannot be restarted without creating a new one. In interviews, explain that an iterator is the mechanism used internally for iteration.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterator",
+      "iteration-protocol",
+      "stateful",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does the iter function work?",
+    "answer": "iter() returns an iterator from an iterable. If the object already is an iterator, iter() usually returns the object itself.\n\nThis lets Python loop over the object using the iteration protocol. In interviews, explain that iter() is the first step in converting a collection into something that can be consumed sequentially.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iter-function",
+      "iterators",
+      "built-in-functions",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does the next function work?",
+    "answer": "next() asks an iterator for its next value. Each call advances the iterator until it is exhausted.\n\nWhen there are no more values, next() raises StopIteration unless a default value is provided. In interviews, explain that next() is the low-level way to manually consume an iterator.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "next-function",
+      "iterators",
+      "stopiteration",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterable and an iterator?",
+    "answer": "An iterable can produce an iterator, while an iterator actually generates values one by one. An iterable may be reusable, but an iterator is stateful and is consumed as you iterate.\n\nFor example, a list is iterable, and iter(list) gives you an iterator. In interviews, explain that iterables are collections, while iterators are the objects that do the iteration work.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterable",
+      "iterator",
+      "python-concepts",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterator and a generator?",
+    "answer": "A generator is a special kind of iterator created using yield or generator expressions. Every generator is an iterator, but not every iterator is a generator.\n\nAn iterator may be implemented manually using iter and next. In interviews, explain that generators are a convenient, concise way to create iterators.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterator",
+      "generator",
+      "python-logic",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterable, an iterator, and a generator?",
+    "answer": "An iterable is an object you can loop over. An iterator is the object that keeps track of iteration state and returns values one by one. A generator is a special iterator built using a function with yield.\n\nA list is iterable, iter(list) gives an iterator, and a generator expression creates a generator. In interviews, explain this hierarchy clearly because it is a common Python concept.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterable",
+      "iterator",
+      "generator",
+      "hierarchy"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why is every generator an iterator?",
+    "answer": "Every generator is an iterator because it implements the iteration protocol automatically. It can produce values one at a time and remembers its state between yields.\n\nSince it supports next and can be used in loops or with next(), it fits the definition of an iterator. In interviews, explain that generators are essentially a built-in iterator pattern.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "generators",
+      "iterators",
+      "protocols",
+      "logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Is every iterator a generator? Explain why or why not.",
+    "answer": "No, not every iterator is a generator. A generator is one specific way to create an iterator using yield, but iterators can also be implemented as custom classes.\n\nFor example, a class with iter and next can be an iterator without being a generator. In interviews, explain that generators are a subset of iterators, not the other way around.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "iterator",
+      "generator",
+      "subsets",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the iter and next methods in Python?",
+    "answer": "iter returns an iterator object, usually the object itself for iterator classes. next returns the next item in the sequence and raises StopIteration when there are no more items.\n\nThese methods define Python\u2019s iteration protocol. In interviews, explain that any custom iterable or iterator must follow this protocol to work with loops and iteration tools.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "dunder-methods",
+      "iteration-protocol",
+      "python",
+      "custom-logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the StopIteration exception?",
+    "answer": "StopIteration is raised when an iterator has no more items to return. Python uses it internally to know when to stop looping over an iterator.\n\nYou normally do not handle it in a for loop because Python does that automatically. In interviews, explain that it is a normal part of iterator behavior, not an error in typical iteration.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "stopiteration",
+      "exceptions",
+      "iterators",
+      "flow-control"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does a Python for loop use iterators internally?",
+    "answer": "A Python for loop first calls iter() on the object to get an iterator. Then it repeatedly calls next() on that iterator until StopIteration is raised.\n\nThis is why any object that implements the iteration protocol can be used in a for loop. In interviews, explain that for loops are syntactic sugar over the iterator protocol.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "for-loop",
+      "internals",
+      "iterators",
+      "syntactic-sugar"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can a custom iterator be created in Python?",
+    "answer": "A custom iterator can be created by defining a class with iter and next methods. iter returns the iterator object, and next returns the next value or raises StopIteration.\n\nThis is useful when you need custom iteration logic, such as reading data in chunks or generating a sequence dynamically. In interviews, explain that this pattern gives fine control over iteration behavior.",
+    "skill": "Backend Engineering",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": "Python Developer",
+    "tags": [
+      "custom-iterator",
+      "classes",
+      "protocols",
+      "logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the practical use cases of generators and iterators in backend applications?",
+    "answer": "Generators and iterators are useful for processing large files, streaming database records, batching API responses, and building lazy pipelines. They help reduce memory usage and improve performance by avoiding loading all data at once.\n\nFor example, a backend service can stream logs line by line or process millions of records in chunks. In interviews, explain that generators and iterators are especially valuable when working with large or continuous data in scalable backend systems.",
+    "skill": "Backend Engineering",
+    "category": "Backend",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "big-data",
+      "streaming",
+      "performance"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a loop in programming, and why is it used?",
+    "answer": "A loop is a control structure that repeats a block of code multiple times. It is used to automate repetitive tasks such as processing items in a list, retrying an operation, or running logic until a condition changes.\n\nWithout loops, you would need to write the same code again and again. In backend applications, loops are commonly used for iterating over records, batches, files, and API responses.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "loops",
+      "programming-fundamentals",
+      "flow-control",
+      "automation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between a for loop and a while loop?",
+    "answer": "A for loop is typically used when you want to iterate over a sequence or when the number of iterations is known. A while loop is used when repetition depends on a condition and the exact number of iterations is not known in advance.\n\nFor example, use a for loop to process each item in a list, and a while loop to keep retrying until an operation succeeds. In interviews, a good rule is: use for when iterating over data, use while when waiting for a condition.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "for-loop",
+      "while-loop",
+      "iteration",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does a for loop work internally in Python?",
+    "answer": "Internally, Python’s for loop works by calling iter() on the object being looped over to get an iterator. Then it repeatedly calls next() on that iterator to fetch values one by one.\n\nWhen the iterator runs out of values, it raises StopIteration, and Python automatically ends the loop. This is why Python for loops can work with lists, strings, ranges, generators, and many custom objects.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "for-loop",
+      "internals",
+      "iteration-protocol",
+      "iter-function"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an array?",
+    "answer": "An array is a collection of elements stored in contiguous memory locations. Because elements are stored together, arrays support fast access by index.\n\nIn many languages, arrays usually hold elements of the same type and often have a fixed size. Arrays are useful when you need quick random access and predictable memory layout.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "arrays",
+      "data-structures",
+      "memory-management",
+      "indexing"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a list?",
+    "answer": "A list is an ordered collection of elements. In Python, a list is a dynamic, mutable sequence that can grow, shrink, and hold elements of different types.\n\nPython lists behave like resizable arrays. They are very flexible and are one of the most commonly used data structures in Python.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "lists",
+      "python-basics",
+      "data-structures",
+      "mutability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a linked list?",
+    "answer": "A linked list is a linear data structure made of nodes. Each node stores data and a reference to the next node, and in some variants, also a reference to the previous node.\n\nUnlike arrays, linked lists do not require contiguous memory. They are useful when frequent insertions and deletions are needed in the middle of a sequence.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "linked-list",
+      "data-structures",
+      "pointers",
+      "nodes"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an array, a list, and a linked list?",
+    "answer": "An array stores elements in contiguous memory and gives fast indexed access. A Python list is a dynamic structure that behaves like a resizable array. A linked list stores nodes connected by pointers rather than contiguous memory.\n\nArrays and Python lists are better for random access and iteration. Linked lists are better for insertions and deletions in the middle, but slower for index-based access.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "comparison",
+      "data-structures",
+      "linked-list",
+      "arrays"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the advantages and disadvantages of arrays?",
+    "answer": "Arrays provide fast access by index, good cache locality, and simple traversal. They are efficient when the size is known or changes rarely.\n\nTheir disadvantages are that inserting or deleting in the middle can be expensive because elements may need to be shifted. In some languages, arrays are also fixed-size, so resizing can be costly.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "arrays",
+      "performance",
+      "cache-locality",
+      "complexity"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What are the advantages and disadvantages of linked lists?",
+    "answer": "Linked lists are good for frequent insertions and deletions because elements do not need to be shifted. They also do not require contiguous memory.\n\nTheir disadvantages are slower access by index, extra memory overhead for pointers, and poor cache performance. In practice, they are useful in specific use cases, but often less efficient than arrays for general-purpose work.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "linked-list",
+      "memory-overhead",
+      "insertion",
+      "deletion"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an iterable in Python?",
+    "answer": "An iterable is any object that can return its elements one at a time, usually in a loop. Examples include lists, tuples, strings, dictionaries, sets, and generators.\n\nAn iterable can be passed to iter() to produce an iterator. In interviews, it helps to remember that an iterable is something you can loop over.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterable",
+      "collections",
+      "looping",
+      "python-basics"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is an iterator in Python?",
+    "answer": "An iterator is an object that produces values one at a time and remembers its current position. It implements the iteration protocol using iter and next.\n\nAn iterator can be consumed only once unless recreated. This makes it different from a normal collection that can be looped over repeatedly.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterator",
+      "iteration-protocol",
+      "dunder-methods",
+      "python-internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterable and an iterator?",
+    "answer": "An iterable is an object you can ask for an iterator from. An iterator is the object that actually returns values one by one.\n\nA list is iterable, but it is not itself an iterator. Calling iter(list) gives you an iterator that can be advanced with next().",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterable",
+      "iterator",
+      "comparison",
+      "python-concepts"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How do the iter() and next() functions work in Python?",
+    "answer": "iter() takes an iterable and returns an iterator. next() takes an iterator and returns the next value from it.\n\nIf there are no more values, next() raises StopIteration. In Python loops, these functions are used internally, even though you usually do not call them manually.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iter-function",
+      "next-function",
+      "built-in-functions",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What happens when an iterator has no elements left?",
+    "answer": "When an iterator has no more elements, it signals that it is exhausted. In Python, this is done by raising StopIteration.\n\nAt that point, a for loop stops automatically. If you call next() manually, you will get StopIteration unless you provide a default value.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterator",
+      "stopiteration",
+      "exception-handling",
+      "exhaustion"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the StopIteration exception?",
+    "answer": "StopIteration is a special exception used to indicate that an iterator has no more values left. It is not usually an error in normal iteration; it is part of the iteration protocol.\n\nPython for loops catch this exception internally so the loop ends cleanly. When using next() directly, you may see it if the iterator is exhausted.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "stopiteration",
+      "exceptions",
+      "iteration-protocol",
+      "control-flow"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Can an iterator be reused after it is exhausted?",
+    "answer": "Usually, no. Once an iterator is exhausted, it stays exhausted.\n\nIf you need to iterate again, you should create a new iterator from the original iterable. This is one reason lists are easier to reuse than iterators.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterator",
+      "reusability",
+      "iteration",
+      "best-practices"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is a generator in Python?",
+    "answer": "A generator is a special kind of iterator that produces values lazily, one at a time. It is typically created by a function that uses yield or by a generator expression.\n\nGenerators are memory efficient because they do not build the full result list in memory. They are especially useful for large datasets and streaming data.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "lazy-evaluation",
+      "memory-efficiency",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between a normal function and a generator function?",
+    "answer": "A normal function runs from start to finish and returns a value once using return. A generator function uses yield and can produce multiple values over time.\n\nWhen called, a normal function executes immediately, while a generator function returns a generator object without executing the full body right away. Execution starts only when you iterate over the generator.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "functions",
+      "yield",
+      "comparison"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the purpose of the yield keyword?",
+    "answer": "yield is used to produce a value from a generator function without ending the function. It pauses execution, saves the function state, and resumes later from the same point.\n\nThis allows Python to generate values lazily instead of computing everything at once. In interviews, this is the key idea behind generators.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "yield",
+      "generators",
+      "state-management",
+      "execution-context"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between yield and return?",
+    "answer": "return ends a function and gives back a final result. yield pauses a generator function and sends a value to the caller while preserving state.\n\nA function with return normally completes once. A generator with yield can continue producing more values later.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "yield",
+      "return",
+      "function-termination",
+      "generators"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How does a generator maintain its execution state?",
+    "answer": "A generator keeps track of where it paused, along with local variables and the current instruction position. When resumed, it continues from the exact point after the last yield.\n\nThis state preservation is what makes generators different from regular functions. It allows them to behave like lightweight, lazy iterators.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "state",
+      "execution-flow",
+      "stack-frames"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What happens when a generator function is called?",
+    "answer": "When a generator function is called, it does not run the whole function immediately. Instead, it returns a generator object.\n\nThe actual code executes only when you start iterating over it using a for loop, next(), or another consumer. This delayed execution is what enables lazy evaluation.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "lazy-evaluation",
+      "function-calling",
+      "objects"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can we retrieve values from a generator?",
+    "answer": "You can retrieve values from a generator by iterating over it with a for loop or by calling next() manually. Each call returns the next yielded value.\n\nA for loop is the most common and readable way. next() is useful when you need manual control over iteration.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "iteration",
+      "for-loop",
+      "next-function"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can we print all values produced by a generator?",
+    "answer": "The simplest way is to use a for loop and print each value inside the loop. You can also convert the generator to a list if the data size is small enough.\n\nFor large data, a for loop is preferred because it preserves memory efficiency. Converting everything to a list defeats the purpose of using a generator.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "printing",
+      "type-conversion",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why does printing a generator directly show a generator object instead of its values?",
+    "answer": "Because calling a generator function returns the generator object itself, not the generated values. Printing the object shows its type and memory representation.\n\nThe values are only produced when the generator is iterated over. So to see the actual values, you need to consume the generator with a loop or next().",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "objects",
+      "debugging",
+      "lazy-evaluation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is generator exhaustion?",
+    "answer": "Generator exhaustion happens when a generator has yielded all of its values. After that, it cannot produce any more items.\n\nOnce exhausted, the generator is effectively finished. To get values again, you must create a new generator object.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "exhaustion",
+      "lifecycle",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Can a generator be reused after it has been exhausted?",
+    "answer": "No, a generator cannot be reused after it is exhausted. It has already completed its execution.\n\nIf you need the values again, you must call the generator function again to create a fresh generator. This is a common interview point because generators are one-time iterables.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "reusability",
+      "one-time-iterable",
+      "common-pitfalls"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterator and a generator?",
+    "answer": "An iterator is any object that follows the iteration protocol and can produce values one by one. A generator is a specific kind of iterator created using yield or a generator expression.\n\nSo every generator is an iterator, but not every iterator is a generator. For example, a custom class implementing next is an iterator, but not necessarily a generator.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterator",
+      "generator",
+      "comparison",
+      "protocols"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between an iterable, an iterator, and a generator?",
+    "answer": "An iterable is an object that can be looped over. An iterator is the object that keeps track of the current position and produces the next value. A generator is a special type of iterator created lazily with yield.\n\nA list is iterable, iter(list) gives an iterator, and a generator function gives a generator. This hierarchy is important in Python interviews.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterable",
+      "iterator",
+      "generator",
+      "hierarchy"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Are all generators iterators?",
+    "answer": "Yes, all generators are iterators. A generator automatically implements the iterator protocol and can be used with next() or in a for loop.\n\nThat is why generators can produce values one at a time and remember their position. In Python, generators are essentially a built-in way to create iterators.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "iterators",
+      "inheritance",
+      "protocols"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Are all iterators generators?",
+    "answer": "No, not all iterators are generators. A generator is just one way to create an iterator.\n\nYou can also build custom iterators by defining iter and next in a class. So generators are a subset of iterators, not the other way around.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iterators",
+      "generators",
+      "subsets",
+      "custom-logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How are generators memory-efficient?",
+    "answer": "Generators are memory-efficient because they do not store the whole sequence in memory. They compute and return one item at a time only when requested.\n\nThis is especially useful when working with large files, streams, or huge ranges of data. Instead of allocating memory for a large list, you only keep the current value and state.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "memory-efficiency",
+      "generators",
+      "optimization",
+      "scalability"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is lazy evaluation in Python?",
+    "answer": "Lazy evaluation means computing values only when they are needed. Generators are a common example because they do not calculate everything upfront.\n\nThis saves memory and can improve performance when you only need part of the data. It is very useful in data processing pipelines and streaming workloads.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "lazy-evaluation",
+      "performance",
+      "generators",
+      "on-demand"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why are generators suitable for processing large datasets?",
+    "answer": "Generators are suitable for large datasets because they process one item at a time instead of loading everything into memory. This makes them scalable and memory efficient.\n\nFor example, reading a huge file line by line with a generator is much safer than reading the whole file at once. In backend systems, this is often the preferred approach for batch jobs and ETL-like processing.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "big-data",
+      "generators",
+      "streaming",
+      "etl"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between a list comprehension and a generator expression?",
+    "answer": "A list comprehension creates the full list immediately. A generator expression creates a generator that yields items lazily.\n\nFor small data, list comprehensions are often convenient. For large data or streaming use cases, generator expressions are more memory-efficient. For example, [x for x in range(1000000) ] builds the entire list, while (x for x in range(1000000)) creates items on demand.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "list-comprehension",
+      "generator-expression",
+      "syntax",
+      "memory"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What is the difference between [x for x in range(1000000) ] and (x for x in range(1000000))?",
+    "answer": "The first expression creates a full list of one million items in memory. The second creates a generator object that produces those values one by one when consumed.\n\nThe list version is faster to reuse but uses much more memory. The generator version is more memory efficient and better when you only need to process values lazily.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "data-structures",
+      "memory-management",
+      "generators",
+      "lists"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What will be the output of the following code?\ndef big_data():\n for i in range(1000000):\n yield i\n\ndata = big_data()\nprint(data)",
+    "answer": "It will print something similar to <generator object big_data at ...>. That is because big_data() returns a generator object, not the yielded values themselves.\n\nThe function body does not fully execute at the time of the call. The values appear only when the generator is iterated over.",
+    "skill": "Python",
+    "category": "Coding",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "code-output",
+      "generators",
+      "objects",
+      "internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why does the previous code print something similar to <generator object big_data at ...>?",
+    "answer": "Because the generator function returns a generator object immediately when called. Printing that object shows its type and memory reference, not the generated sequence.\n\nTo see values, you must consume the generator. This is one of the most common misunderstandings for beginners learning generators.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "debugging",
+      "fundamentals",
+      "lazy-evaluation"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can we print the first value generated by big_data()?",
+    "answer": "You can get the first value by calling next(data) after creating the generator object. That advances the generator to its first yield.\n\nFor example, data = big_data() and then print(next(data)) will print 0 in this case. This works because next() asks the generator for the next available item.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "next-function",
+      "generators",
+      "manual-access",
+      "python"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can we print the first ten values generated by big_data()?",
+    "answer": "You can use a loop that calls next(data) ten times, or simply iterate and stop after ten items. A clean approach is to use a for loop with a counter or slice-like logic using tools such as itertools.islice.\n\nFor interviews, the important idea is that generators are consumed incrementally. You do not need to convert the whole generator into a list just to read a few values.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "slicing",
+      "itertools",
+      "iteration"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "What happens if print(i) is placed after the loop containing yield?",
+    "answer": "That print statement runs only after the loop inside the generator has finished yielding all values. It does not run during the first call to the generator function.\n\nThe generator pauses at each yield and resumes later. Only after all yielded values are consumed does execution continue past the loop to the print statement.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "execution-order",
+      "yield",
+      "loops"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "When will the following print() statement execute?\ndef big_data():\n for i in range(1000000):\n yield i\n print(i)",
+    "answer": "The print(i) statement will execute only after the generator has yielded all values and the generator is resumed past the loop. In practice, that happens when the generator is fully consumed.\n\nIf the generator is not exhausted, the print statement will not run. This is because execution pauses at each yield and continues only when the next value is requested.",
+    "skill": "Python",
+    "category": "Coding",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "flow-control",
+      "exhaustion",
+      "logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Why does the final print(i) execute only after all generated values have been consumed?",
+    "answer": "Because yield suspends execution and returns control to the caller each time a value is produced. The code after the loop is reached only when the loop ends and the generator continues running.\n\nSo the final print statement is part of the generator’s remaining execution flow. It runs only after the last yield has been processed.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "yield",
+      "execution-context",
+      "internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How can a for loop automatically handle StopIteration?",
+    "answer": "A Python for loop internally keeps calling next() on the iterator. When StopIteration is raised, the loop catches it automatically and ends.\n\nThis is why you usually do not see StopIteration in normal loops. Python handles the iterator protocol for you behind the scenes.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "for-loop",
+      "stopiteration",
+      "iterator-protocol",
+      "python-internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Explain the internal relationship among iterable, iterator, iter(), next(), and StopIteration.",
+    "answer": "An iterable is any object you can loop over. Calling iter() on an iterable returns an iterator. The iterator produces values one by one when next() is called. When there are no more values, next() raises StopIteration.\n\nA for loop performs this process automatically: iter() first, repeated next() calls, and then StopIteration to stop. This is the core of Python iteration.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "iteration-protocol",
+      "iterators",
+      "iterables",
+      "internals"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "Give a real-world analogy for iterable, iterator, and generator.",
+    "answer": "Think of an iterable as a book, an iterator as the bookmark that remembers your current page, and a generator as a book that reveals one page only when you ask for it.\n\nThe book exists as the collection of content, the bookmark tracks your position, and the generator gives pages lazily. This analogy helps explain why generators save memory and why iterators remember state.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "analogy",
+      "iterables",
+      "iterators",
+      "generators"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you create a custom iterator class in Python?",
+    "answer": "You create a class that defines iter and next. iter returns the iterator object, and next returns the next value or raises StopIteration when done.\n\nFor example, you can store a current counter in the class and increment it on each call to next. This pattern is useful when you need custom sequence logic that cannot be expressed easily with a list or generator.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "custom-iterator",
+      "classes",
+      "dunder-methods",
+      "oop"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you create a generator that produces even numbers?",
+    "answer": "You can write a generator function using yield inside a loop that increments by 2. For example, start from 0 and keep yielding even values.\n\nThis is concise and memory efficient because values are produced one at a time. In interviews, the key idea is that the generator should not build the full sequence in memory.",
+    "skill": "Python",
+    "category": "Coding",
+    "experience_level": "Fresher",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "even-numbers",
+      "yield",
+      "logic"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "How would you create an infinite generator?",
+    "answer": "You can create an infinite generator using a while True loop and yield values continuously. For example, keep increasing a counter and yielding it forever.\n\nThis is useful for streams, event processing, or test data generation. In real code, you must combine it with a safe stopping condition at the caller side to avoid endless consumption.",
+    "skill": "Python",
+    "category": "Coding",
+    "experience_level": "Junior",
+    "company": null,
+    "role": null,
+    "tags": [
+      "infinite-generator",
+      "yield",
+      "while-true",
+      "streams"
+    ],
+    "source": "Admin",
+    "approved": true
+  },
+  {
+    "question": "When should you use a generator instead of a list?",
+    "answer": "Use a generator when you need memory efficiency, lazy evaluation, or one-pass processing of large data. Generators are ideal for large files, streaming data, and pipelines where you do not need random access.\n\nUse a list when you need to reuse the data multiple times, index into it often, or need the full collection available immediately. In interviews, the simple rule is: use a list for convenience and reuse, use a generator for scale and efficiency.",
+    "skill": "Python",
+    "category": "Technical",
+    "experience_level": "Mid-Level",
+    "company": null,
+    "role": null,
+    "tags": [
+      "generators",
+      "lists",
+      "optimization",
+      "memory-management"
+    ],
+    "source": "Admin",
+    "approved": true
   }
 ]

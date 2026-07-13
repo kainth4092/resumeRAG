@@ -79,9 +79,9 @@ export default function Professional({ resume }) {
     .map((s) => s.name)
     .join(" | ");
   const infoLine = [
-    r.years_experience ? `${r.years_experience}+ Years` : "6.5+ Years",
-    personal.title || "Lead Data Engineer",
-    topSkills || "AWS Glue | Spark/PySpark | SQL | ETL/ELT | Data Warehousing",
+    r.years_experience ? `${r.years_experience}+ Years` : "",
+    personal.title || r.headline || "",
+    topSkills || "",
   ]
     .filter(Boolean)
     .join(" | ");
@@ -110,10 +110,10 @@ export default function Professional({ resume }) {
             className="text-2xl font-bold tracking-tight"
             style={{ color: primaryColor }}
           >
-            {personal.name || "Diksha Devi"}
+            {personal.name || "Your Name"}
           </h1>
           <p className="text-sm font-semibold tracking-wide text-gray-800">
-            {personal.title || "Lead Data Engineer"}
+            {personal.title || r.headline || "Professional"}
           </p>
           <p className="text-[9px] font-medium text-gray-700 max-w-3xl mx-auto leading-normal">
             {infoLine}

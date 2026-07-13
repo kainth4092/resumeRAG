@@ -312,20 +312,7 @@ export const getTechnicalSkills = (resumeData) => {
   });
 
   if (sortedCategories.length === 0) {
-    return [
-      {
-        category: "Programming Languages",
-        skills: ["Python", "SQL"],
-      },
-      {
-        category: "Backend",
-        skills: ["FastAPI", "REST APIs"],
-      },
-      {
-        category: "Cloud",
-        skills: ["AWS", "GCP"],
-      },
-    ];
+    return [];
   }
 
   return sortedCategories;

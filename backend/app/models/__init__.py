@@ -2,6 +2,8 @@ from app.models.user import User
 from app.models.profile import Profile
 from app.models.resume import Resume
 from app.models.resume_health import ResumeHealthAnalysis
+from app.models.notification import Notification
+from app.models.user_settings import UserSettings
 
 from app.models.user_skill import UserSkill
 from app.models.user_project import UserProject
@@ -20,6 +22,8 @@ __all__ = [
     "Profile",
     "Resume",
     "ResumeHealthAnalysis",
+    "Notification",
+    "UserSettings",
     "UserSkill",
     "UserProject",
     "UserEducation",

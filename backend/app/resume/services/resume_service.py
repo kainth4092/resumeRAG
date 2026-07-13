@@ -3,17 +3,93 @@ import json
 import logging
 import tempfile
 import uuid
+import hashlib
 from pathlib import Path
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.models.resume import Resume
+from app.models.resume_health import ResumeHealthAnalysis
 from app.resume.repository.resume_repository import ResumeRepository
 from app.services.pdf_service import extract_text_from_pdf
 
 
 logger = logging.getLogger(__name__)
+
+
+def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str):
+    db = SessionLocal()
+    try:
+        resume = db.query(Resume).filter(Resume.id == resume_id).first()
+        if not resume:
+            logger.error(f"[BG_PARSING] Resume id {resume_id} not found")
+            return
+        
+        resume.parsing_status = "processing"
+        db.commit()
+
+        from app.resume.services.resume_analysis_service import parse_resume_text_to_json
+        from app.resume.services.resume_normalizer import normalize_resume
+        from app.resume.services.resume_scoring_service import calculate_scores
+
+        parsed_json = parse_resume_text_to_json(parsed_text)
+        normalized = normalize_resume(parsed_json)
+        scores = calculate_scores(normalized)
+
+        resume.resume_json = json.dumps(normalized)
+        resume.skills = ",".join(normalized.get("skills", []))
+        resume.ats_score = scores["ats_score"]
+        
+        resume.analysis_results = json.dumps({
+            "ats_score": scores["ats_score"],
+            "matched_keywords": scores["matched_keywords"],
+            "missing_keywords": scores["missing_keywords"],
+            "suggestions": [
+                "Include specific metrics (e.g. 'improved performance by 20%')",
+                "Add details about cloud deployment (AWS/GCP)",
+                "Strengthen your professional summary by aligning with target roles",
+                "List individual Docker/CI/CD tool integrations",
+                "Format project sections with clear technology listings",
+            ],
+            "heatmap": {
+                "contact_info": scores["formatting_score"],
+                "summary": scores["readability_score"],
+                "skills": scores["skills_coverage"],
+                "experience": scores["experience_quality"],
+                "projects": scores["projects_quality"],
+                "education": scores["education_quality"],
+            },
+        })
+        resume.scoring_version = "v1"
+        resume.prompt_version = "v1"
+        resume.parsing_status = "completed"
+        db.commit()
+
+        from app.models.user_experience import UserExperience
+        from app.services.profile_population_service import extract_and_populate_profile
+
+        exp_count = (
+            db.query(UserExperience)
+            .filter(UserExperience.user_id == user_id)
+            .count()
+        )
+        if exp_count == 0:
+            extract_and_populate_profile(db, user_id, parsed_text)
+
+        logger.info(f"[BG_PARSING] Successfully parsed resume id {resume_id}")
+    except Exception as e:
+        logger.exception(f"[BG_PARSING_FAILED] Failed to parse resume in background: {e}")
+        try:
+            resume = db.query(Resume).filter(Resume.id == resume_id).first()
+            if resume:
+                resume.parsing_status = "failed"
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 
 class ResumeService:
@@ -22,6 +98,7 @@ class ResumeService:
         file: UploadFile,
         db: Session,
         user_id: int,
+        background_tasks: BackgroundTasks,
     ) -> dict:
         file_ext = Path(file.filename).suffix.lower()
         allowed_content_types = [
@@ -63,7 +140,6 @@ class ResumeService:
                 parsed_text = extract_text_from_pdf(str(temp_path))
             else:
                 from app.services.docx_service import extract_text_from_docx
-
                 parsed_text = extract_text_from_docx(str(temp_path))
         except Exception:
             if temp_path and temp_path.exists():
@@ -75,23 +151,85 @@ class ResumeService:
             if temp_path and temp_path.exists():
                 temp_path.unlink()
 
-        from app.resume.services.resume_analysis_service import (
-            parse_resume_text_to_json,
+        # Generate content hash of raw extracted text
+        content_hash = hashlib.sha256(parsed_text.encode("utf-8")).hexdigest()
+
+        # Check for a duplicate resume with the same content hash that has been successfully parsed and normalized.
+        duplicate_resume = (
+            db.query(Resume)
+            .filter(
+                Resume.user_id == user_id,
+                Resume.canonical_hash == content_hash,
+                Resume.parsing_status == "completed",
+                Resume.resume_json.isnot(None),
+            )
+            .first()
         )
-        from app.resume.services.resume_normalizer import (
-            normalize_resume,
-            get_canonical_hash,
-            canonical_resume_to_text,
-        )
-        from app.resume.services.resume_scoring_service import calculate_scores
 
-        parsed_json = parse_resume_text_to_json(parsed_text)
-        normalized = normalize_resume(parsed_json)
-        canonical_hash = get_canonical_hash(normalized)
-        parsed_text = canonical_resume_to_text(normalized)
+        if duplicate_resume:
+            logger.info("Found duplicate parsed resume. Reusing data.")
+            resume = Resume(
+                user_id=user_id,
+                title=file.filename,
+                original_filename=file.filename,
+                file_path=unique_name,
+                file_content_base64=base64.b64encode(content).decode("utf-8"),
+                parsed_text=duplicate_resume.parsed_text,
+                ats_score=duplicate_resume.ats_score,
+                skills=duplicate_resume.skills,
+                analysis_results=duplicate_resume.analysis_results,
+                version=duplicate_resume.version or "v1",
+                template=duplicate_resume.template or "Professional",
+                resume_json=duplicate_resume.resume_json,
+                canonical_hash=content_hash,
+                parsing_status="completed",
+                scoring_version=duplicate_resume.scoring_version,
+                prompt_version=duplicate_resume.prompt_version,
+            )
+            ResumeRepository.create_resume(db, resume)
 
-        scores = calculate_scores(normalized)
+            # Duplicate ResumeHealthAnalysis if it exists
+            dup_health = (
+                db.query(ResumeHealthAnalysis)
+                .filter(ResumeHealthAnalysis.resume_id == duplicate_resume.id)
+                .first()
+            )
+            if dup_health:
+                new_health = ResumeHealthAnalysis(
+                    resume_id=resume.id,
+                    ats_score=dup_health.ats_score,
+                    resume_health_score=dup_health.resume_health_score,
+                    formatting_score=dup_health.formatting_score,
+                    readability_score=dup_health.readability_score,
+                    skills_coverage=dup_health.skills_coverage,
+                    experience_quality=dup_health.experience_quality,
+                    projects_quality=dup_health.projects_quality,
+                    education_quality=dup_health.education_quality,
+                    keyword_optimization=dup_health.keyword_optimization,
+                    grammar_writing=dup_health.grammar_writing,
+                    section_completeness=dup_health.section_completeness,
+                    recruiter_readiness=dup_health.recruiter_readiness,
+                    suggestions=dup_health.suggestions,
+                    missing_sections=dup_health.missing_sections,
+                    strengths=dup_health.strengths,
+                    weaknesses=dup_health.weaknesses,
+                    canonical_hash=dup_health.canonical_hash,
+                    scoring_version=dup_health.scoring_version,
+                    prompt_version=dup_health.prompt_version,
+                    analysis_type=dup_health.analysis_type,
+                    jd_hash=dup_health.jd_hash,
+                )
+                db.add(new_health)
+                db.commit()
 
+            return {
+                "message": "Resume uploaded (reused cache)",
+                "resume_id": resume.id,
+                "parsing_status": "completed",
+                "profile_extracted": False,
+            }
+
+        # Create new resume record with pending parsing status
         resume = Resume(
             user_id=user_id,
             title=file.filename,
@@ -99,69 +237,34 @@ class ResumeService:
             file_path=unique_name,
             file_content_base64=base64.b64encode(content).decode("utf-8"),
             parsed_text=parsed_text,
-            ats_score=scores["ats_score"],
-            skills=",".join(normalized.get("skills", [])),
-            analysis_results=json.dumps(
-                {
-                    "ats_score": scores["ats_score"],
-                    "matched_keywords": scores["matched_keywords"],
-                    "missing_keywords": scores["missing_keywords"],
-                    "suggestions": [
-                        "Include specific metrics (e.g. 'improved performance by 20%')",
-                        "Add details about cloud deployment (AWS/GCP)",
-                        "Strengthen your professional summary by aligning with target roles",
-                        "List individual Docker/CI/CD tool integrations",
-                        "Format project sections with clear technology listings",
-                    ],
-                    "heatmap": {
-                        "contact_info": scores["formatting_score"],
-                        "summary": scores["readability_score"],
-                        "skills": scores["skills_coverage"],
-                        "experience": scores["experience_quality"],
-                        "projects": scores["projects_quality"],
-                        "education": scores["education_quality"],
-                    },
-                }
-            ),
+            ats_score=None,
+            skills=None,
+            analysis_results=None,
             version="v1",
             template="Professional",
-            resume_json=json.dumps(normalized),
-            canonical_hash=canonical_hash,
-            scoring_version="v1",
-            prompt_version="v1",
+            resume_json=None,
+            canonical_hash=content_hash,
+            parsing_status="pending",
         )
         try:
             ResumeRepository.create_resume(db, resume)
         except SQLAlchemyError:
             db.rollback()
-            if temp_path and temp_path.exists():
-                temp_path.unlink()
             raise HTTPException(status_code=500, detail="Database error occurred.")
 
-        # Check if the user has any experience entries in the database to detect first-time/empty profile.
-        from app.models.user_experience import UserExperience
-
-        profile_extracted = False
-        try:
-            exp_count = (
-                db.query(UserExperience)
-                .filter(UserExperience.user_id == user_id)
-                .count()
-            )
-            if exp_count == 0:
-                from app.services.profile_population_service import (
-                    extract_and_populate_profile,
-                )
-
-                extract_and_populate_profile(db, user_id, parsed_text)
-                profile_extracted = True
-        except Exception as e:
-            logger.error(f"Failed to auto-populate profile on resume upload: {e}")
+        # Queue the background parsing task
+        background_tasks.add_task(
+            parse_resume_background_task,
+            resume_id=resume.id,
+            user_id=user_id,
+            parsed_text=parsed_text,
+        )
 
         return {
-            "message": "Resume uploaded",
+            "message": "Resume uploaded (parsing initiated)",
             "resume_id": resume.id,
-            "profile_extracted": profile_extracted,
+            "parsing_status": "pending",
+            "profile_extracted": False,
         }
 
     @staticmethod
@@ -212,9 +315,40 @@ class ResumeService:
                 "version": r.version or "v1",
                 "template": r.template or "Professional",
                 "resume_json": json.loads(r.resume_json) if r.resume_json else None,
+                "parsing_status": r.parsing_status or "completed",
             }
             for r in resumes
         ]
+
+    @staticmethod
+    def get_resume_by_id(
+        resume_id: int,
+        db: Session,
+        user_id: int,
+    ) -> dict:
+        resume = ResumeRepository.get_resume_by_id(db, resume_id, user_id)
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+        return {
+            "id": resume.id,
+            "title": resume.title,
+            "original_filename": resume.original_filename,
+            "is_active": resume.is_active,
+            "created_at": resume.created_at.isoformat() if resume.created_at else None,
+            "ats_score": resume.ats_score,
+            "skills": (
+                [s.strip() for s in resume.skills.split(",") if s.strip()]
+                if resume.skills
+                else []
+            ),
+            "analysis_results": (
+                json.loads(resume.analysis_results) if resume.analysis_results else None
+            ),
+            "version": resume.version or "v1",
+            "template": resume.template or "Professional",
+            "resume_json": json.loads(resume.resume_json) if resume.resume_json else None,
+            "parsing_status": resume.parsing_status or "completed",
+        }
 
     @staticmethod
     def get_active_resume(
@@ -418,6 +552,11 @@ class ResumeService:
             skills_list = payload["resume_json"].get("skills", [])
             if skills_list:
                 resume.skills = ",".join(skills_list)
+            
+            from app.resume.services.resume_normalizer import canonical_resume_to_text
+            text_rep = canonical_resume_to_text(payload["resume_json"])
+            resume.parsed_text = text_rep
+            resume.canonical_hash = hashlib.sha256(text_rep.encode("utf-8")).hexdigest()
 
         try:
             db.commit()

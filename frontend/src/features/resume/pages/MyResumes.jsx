@@ -225,6 +225,62 @@ export default function MyResumes() {
   }, [user, resumesKey, reloadTrigger]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  useEffect(() => {
+    const pendingResumes = resumes.filter(
+      (r) => r.parsing_status === "pending" || r.parsing_status === "processing"
+    );
+
+    if (pendingResumes.length === 0) return;
+
+    let active = true;
+    const intervalId = setInterval(async () => {
+      try {
+        const freshList = await getResumes();
+        if (!active) return;
+
+        if (Array.isArray(freshList)) {
+          let changed = false;
+          const updatedResumes = resumes.map((localResume) => {
+            const dbItem = freshList.find((r) => String(r.id) === String(localResume.id));
+            if (dbItem && dbItem.parsing_status !== localResume.parsing_status) {
+              changed = true;
+              return {
+                ...localResume,
+                parsing_status: dbItem.parsing_status,
+                score: dbItem.ats_score || dbItem.score || 75,
+              };
+            }
+            return localResume;
+          });
+
+          if (changed) {
+            setResumes(updatedResumes);
+            const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+            const updatedSaved = saved.map((item) => {
+              const dbItem = freshList.find((r) => String(r.id) === String(item.id));
+              if (dbItem) {
+                return {
+                  ...item,
+                  parsing_status: dbItem.parsing_status,
+                  score: dbItem.ats_score || dbItem.score || item.score,
+                };
+              }
+              return item;
+            });
+            localStorage.setItem(resumesKey, JSON.stringify(updatedSaved));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to poll resumes list status:", err);
+      }
+    }, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [resumes, resumesKey]);
+
   const filtered = resumes
     .filter((r) => {
       if (search && !r.name.toLowerCase().includes(search.toLowerCase()))

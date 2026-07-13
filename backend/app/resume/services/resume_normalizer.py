@@ -334,10 +334,11 @@ def normalize_resume(resume: dict) -> dict:
     resume = coerce_to_canonical(resume)
 
     # Normalize Contact
-    resume["contact"]["name"] = clean_text(resume["contact"]["name"]).lower()
+    # Preserve original casing for name and location (display fields)
+    resume["contact"]["name"] = clean_text(resume["contact"]["name"])
     resume["contact"]["email"] = clean_text(resume["contact"]["email"]).lower()
     resume["contact"]["phone"] = normalize_phone(resume["contact"]["phone"])
-    resume["contact"]["location"] = clean_text(resume["contact"]["location"]).lower()
+    resume["contact"]["location"] = clean_text(resume["contact"]["location"])
     resume["contact"]["linkedin"] = normalize_url(resume["contact"]["linkedin"])
     resume["contact"]["github"] = normalize_url(resume["contact"]["github"])
     resume["contact"]["portfolio"] = normalize_url(resume["contact"]["portfolio"])
@@ -346,18 +347,19 @@ def normalize_resume(resume: dict) -> dict:
     resume["headline"] = clean_text(resume["headline"])
     resume["summary"] = clean_text(resume["summary"])
 
-    # Normalize Skills
+    # Normalize Skills - preserve original casing for display, dedup case-insensitively
     skills_cleaned = []
     seen_skills = set()
     for skill in resume["skills"]:
-        cleaned = clean_text(skill).lower()
+        cleaned = clean_text(skill)
         if cleaned:
-            if cleaned not in seen_skills:
-                seen_skills.add(cleaned)
+            dedup_key = cleaned.lower()
+            if dedup_key not in seen_skills:
+                seen_skills.add(dedup_key)
                 skills_cleaned.append(cleaned)
 
-    # Sort skills alphabetically (unordered collection)
-    resume["skills"] = sorted(skills_cleaned)
+    # Sort skills alphabetically (case-insensitive)
+    resume["skills"] = sorted(skills_cleaned, key=lambda s: s.lower())
 
     # Normalize Experience
     for exp in resume["experience"]:

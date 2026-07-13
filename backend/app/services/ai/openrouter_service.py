@@ -152,6 +152,56 @@ class OpenRouterProvider(AIProvider):
     # SYNC CHAT
     # -----------------------------------------------------------------------
 
+    def _get_models_to_try(self, requested_model: str) -> list[str]:
+        models = [requested_model]
+        is_free = requested_model == "openrouter/free" or requested_model.endswith(":free")
+        if is_free:
+            fallback_pool = [
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemma-4-31b-it:free",
+                "qwen/qwen3-coder:free",
+                "meta-llama/llama-3.2-3b-instruct:free",
+                "nvidia/nemotron-3-nano-30b-a3b:free",
+                "openrouter/free",
+            ]
+            for fb in fallback_pool:
+                if fb not in models:
+                    models.append(fb)
+        return models
+
+    def _is_invalid_response(self, content: str, system_prompt: str, user_prompt: str) -> bool:
+        cleaned = content.strip()
+        if not cleaned:
+            return True
+        if "user safety:" in cleaned.lower():
+            logger.warning("[AI_RESPONSE_VALIDATION] Content safety verdict detected in response: %r", content)
+            return True
+        is_json_expected = "json" in system_prompt.lower() or "json" in user_prompt.lower() or "schema" in user_prompt.lower()
+        if is_json_expected:
+            if "{" not in cleaned or "}" not in cleaned:
+                logger.warning("[AI_RESPONSE_VALIDATION] JSON expected but response lacks curly braces: %r", content)
+                return True
+            import json
+            start = cleaned.find("{")
+            end = cleaned.rfind("}")
+            if start == -1 or end == -1 or end <= start:
+                logger.warning("[AI_RESPONSE_VALIDATION] JSON expected but braces are misaligned/missing: %r", content)
+                return True
+            try:
+                candidate = cleaned[start:end+1]
+                parsed = json.loads(candidate)
+                if not isinstance(parsed, dict):
+                    logger.warning("[AI_RESPONSE_VALIDATION] Parsed JSON is not a dictionary: %r", content)
+                    return True
+            except Exception as exc:
+                logger.warning("[AI_RESPONSE_VALIDATION] JSON validation failed: %s. Content was: %r", exc, content)
+                return True
+        return False
+
+    # -----------------------------------------------------------------------
+    # SYNC CHAT
+    # -----------------------------------------------------------------------
+
     def chat(
         self,
         system_prompt: str,
@@ -160,108 +210,107 @@ class OpenRouterProvider(AIProvider):
         timeout: float = None,
         feature: str = "unknown",
     ) -> str:
+        models_to_try = self._get_models_to_try(self.model)
+        last_exception = None
 
-        url = f"{self.base_url}/chat/completions"
+        for model in models_to_try:
+            url = f"{self.base_url}/chat/completions"
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt,
+                    },
+                ],
+                "temperature": temperature,
+                "max_tokens": 4096,
+            }
 
-        payload = {
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
-            "temperature": temperature,
-        }
-
-        prompt_size = len(system_prompt) + len(user_prompt)
-
-        started_at = time.perf_counter()
-
-        logger.info(
-            "[LLM_REQUEST_START] " "feature=%s model=%s prompt_size=%s",
-            feature,
-            self.model,
-            prompt_size,
-        )
-
-        try:
-
-            actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
-
-            response = _sync_client.post(
-                url,
-                json=payload,
-                headers=self._get_headers(),
-                timeout=actual_timeout,
-            )
-
-            if response.status_code != 200:
-                self._handle_response_error(response)
-
-            data = response.json()
-
-            choices = data.get("choices", [])
-
-            if not choices:
-                logger.error(
-                    "[LLM_EMPTY_CHOICES] feature=%s model=%s response=%s",
-                    feature,
-                    self.model,
-                    json.dumps(data, default=str)[:2000],
-                )
-
-                raise AIProviderException(
-                    "The AI provider returned an empty response. Please try again.",
-                    status_code=503,
-                )
-
-            content = choices[0].get("message", {}).get("content", "")
-
-            if not content:
-                raise AIProviderException(
-                    "OpenRouter returned empty content.",
-                    status_code=500,
-                )
-
-            duration = time.perf_counter() - started_at
-
-            usage = data.get("usage", {})
+            prompt_size = len(system_prompt) + len(user_prompt)
+            started_at = time.perf_counter()
 
             logger.info(
-                "[LLM_REQUEST_SUCCESS] "
-                "feature=%s "
-                "model=%s "
-                "duration=%.2fs "
-                "prompt_tokens=%s "
-                "completion_tokens=%s "
-                "total_tokens=%s",
+                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s",
                 feature,
-                self.model,
-                duration,
-                usage.get("prompt_tokens"),
-                usage.get("completion_tokens"),
-                usage.get("total_tokens"),
+                model,
+                prompt_size,
             )
 
-            return content
+            try:
+                actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+                response = _sync_client.post(
+                    url,
+                    json=payload,
+                    headers=self._get_headers(),
+                    timeout=actual_timeout,
+                )
 
-        except Exception as exception:
+                if response.status_code != 200:
+                    self._handle_response_error(response)
 
-            duration = time.perf_counter() - started_at
+                data = response.json()
+                choices = data.get("choices", [])
 
-            logger.exception(
-                "[LLM_REQUEST_FAILED] " "feature=%s " "model=%s " "duration=%.2fs",
-                feature,
-                self.model,
-                duration,
-            )
+                if not choices:
+                    logger.error(
+                        "[LLM_EMPTY_CHOICES] feature=%s model=%s response=%s",
+                        feature,
+                        model,
+                        json.dumps(data, default=str)[:2000],
+                    )
+                    raise AIProviderException(
+                        "The AI provider returned an empty response. Please try again.",
+                        status_code=503,
+                    )
 
-            raise self._handle_exception(exception)
+                content = choices[0].get("message", {}).get("content", "")
+                if not content:
+                    raise AIProviderException(
+                        "OpenRouter returned empty content.",
+                        status_code=500,
+                    )
+
+                if self._is_invalid_response(content, system_prompt, user_prompt):
+                    raise AIProviderException(
+                        f"Response content from model {model} failed format/safety validation.",
+                        status_code=500,
+                    )
+
+                duration = time.perf_counter() - started_at
+                usage = data.get("usage", {})
+
+                logger.info(
+                    "[LLM_REQUEST_SUCCESS] feature=%s model=%s duration=%.2fs prompt_tokens=%s completion_tokens=%s total_tokens=%s",
+                    feature,
+                    model,
+                    duration,
+                    usage.get("prompt_tokens"),
+                    usage.get("completion_tokens"),
+                    usage.get("total_tokens"),
+                )
+                return content
+
+            except Exception as exception:
+                duration = time.perf_counter() - started_at
+                logger.warning(
+                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
+                    model,
+                    exception,
+                    models_to_try[models_to_try.index(model)+1:],
+                )
+                last_exception = exception
+
+        logger.error(
+            "[LLM_ALL_MODELS_FAILED] feature=%s requested_model=%s",
+            feature,
+            self.model,
+        )
+        raise self._handle_exception(last_exception)
 
     # -----------------------------------------------------------------------
     # ASYNC CHAT
@@ -275,101 +324,101 @@ class OpenRouterProvider(AIProvider):
         timeout: float = None,
         feature: str = "unknown",
     ) -> str:
+        models_to_try = self._get_models_to_try(self.model)
+        last_exception = None
 
-        url = f"{self.base_url}/chat/completions"
-        payload = {
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt,
-                },
-            ],
-            "temperature": temperature,
-            "max_tokens": 7000,
-        }
+        for model in models_to_try:
+            url = f"{self.base_url}/chat/completions"
+            payload = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt,
+                    },
+                ],
+                "temperature": temperature,
+                "max_tokens": 2500,
+            }
 
-        prompt_size = len(system_prompt) + len(user_prompt)
-
-        started_at = time.perf_counter()
-
-        logger.info(
-            "[LLM_REQUEST_START] " "feature=%s model=%s prompt_size=%s",
-            feature,
-            self.model,
-            prompt_size,
-        )
-
-        try:
-
-            actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
-
-            response = await _async_client.post(
-                url,
-                json=payload,
-                headers=self._get_headers(),
-                timeout=actual_timeout,
-            )
-
-            if response.status_code != 200:
-                self._handle_response_error(response)
-
-            data = response.json()
-
-            choices = data.get("choices", [])
-
-            if not choices:
-                raise AIProviderException(
-                    "OpenRouter returned no response choices.",
-                    status_code=500,
-                )
-
-            content = choices[0].get("message", {}).get("content", "")
-
-            if not content:
-                raise AIProviderException(
-                    "OpenRouter returned empty content.",
-                    status_code=500,
-                )
-
-            duration = time.perf_counter() - started_at
-
-            usage = data.get("usage", {})
+            prompt_size = len(system_prompt) + len(user_prompt)
+            started_at = time.perf_counter()
 
             logger.info(
-                "[LLM_REQUEST_SUCCESS] "
-                "feature=%s "
-                "model=%s "
-                "duration=%.2fs "
-                "prompt_tokens=%s "
-                "completion_tokens=%s "
-                "total_tokens=%s",
+                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s",
                 feature,
-                self.model,
-                duration,
-                usage.get("prompt_tokens"),
-                usage.get("completion_tokens"),
-                usage.get("total_tokens"),
+                model,
+                prompt_size,
             )
 
-            return content
+            try:
+                actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+                response = await _async_client.post(
+                    url,
+                    json=payload,
+                    headers=self._get_headers(),
+                    timeout=actual_timeout,
+                )
 
-        except Exception as exception:
+                if response.status_code != 200:
+                    self._handle_response_error(response)
 
-            duration = time.perf_counter() - started_at
+                data = response.json()
+                choices = data.get("choices", [])
 
-            logger.exception(
-                "[LLM_REQUEST_FAILED] " "feature=%s " "model=%s " "duration=%.2fs",
-                feature,
-                self.model,
-                duration,
-            )
+                if not choices:
+                    raise AIProviderException(
+                        "OpenRouter returned no response choices.",
+                        status_code=500,
+                    )
 
-            raise self._handle_exception(exception)
+                content = choices[0].get("message", {}).get("content", "")
+                if not content:
+                    raise AIProviderException(
+                        "OpenRouter returned empty content.",
+                        status_code=500,
+                    )
+
+                if self._is_invalid_response(content, system_prompt, user_prompt):
+                    raise AIProviderException(
+                        f"Response content from model {model} failed format/safety validation.",
+                        status_code=500,
+                    )
+
+                duration = time.perf_counter() - started_at
+                usage = data.get("usage", {})
+
+                logger.info(
+                    "[LLM_REQUEST_SUCCESS] feature=%s model=%s duration=%.2fs prompt_tokens=%s completion_tokens=%s total_tokens=%s",
+                    feature,
+                    model,
+                    duration,
+                    usage.get("prompt_tokens"),
+                    usage.get("completion_tokens"),
+                    usage.get("total_tokens"),
+                )
+                return content
+
+            except Exception as exception:
+                duration = time.perf_counter() - started_at
+                logger.warning(
+                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
+                    model,
+                    exception,
+                    models_to_try[models_to_try.index(model)+1:],
+                )
+                last_exception = exception
+
+        logger.error(
+            "[LLM_ALL_MODELS_FAILED] feature=%s requested_model=%s",
+            feature,
+            self.model,
+        )
+        raise self._handle_exception(last_exception)
 
     # -----------------------------------------------------------------------
     # STARTUP VALIDATION

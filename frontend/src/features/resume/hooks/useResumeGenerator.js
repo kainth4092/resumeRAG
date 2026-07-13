@@ -181,15 +181,17 @@ export function useResumeGenerator() {
   };
 
   const handleAnalyze = async () => {
+    if (!resume || resume.parsing_status === "pending" || resume.parsing_status === "processing") return;
     try {
       setAnalyzing(true);
       setGeneratorError(null);
       localStorage.setItem(lastJobDescKey, jd);
-      if (resume?.resume_id) {
-        localStorage.setItem(lastResumeIdKey, resume.resume_id);
+      const resumeId = resume.resume_id || resume.id;
+      if (resumeId) {
+        localStorage.setItem(lastResumeIdKey, resumeId);
       }
       const response = await analyzeResume({
-        resume_id: resume.resume_id,
+        resume_id: resumeId,
         job_description: jd,
       });
       setAnalysis(response.data);
@@ -245,6 +247,7 @@ export function useResumeGenerator() {
   };
 
   const handleGenerate = async (templateName = "Professional") => {
+    if (!resume || resume.parsing_status === "pending" || resume.parsing_status === "processing") return;
     const resolvedTemplateName =
       typeof templateName === "string" && templateName.trim()
         ? templateName
@@ -255,15 +258,16 @@ export function useResumeGenerator() {
       setGeneratorError(null);
       setSaveMessage("");
       localStorage.setItem(lastJobDescKey, jd);
-      if (resume?.resume_id) {
-        localStorage.setItem(lastResumeIdKey, resume.resume_id);
+      const requestResumeId = resume.resume_id || resume.id;
+      if (requestResumeId) {
+        localStorage.setItem(lastResumeIdKey, requestResumeId);
       }
 
       let currentAnalysis = analysis;
       if (!currentAnalysis) {
         setAnalyzing(true);
         const analyzeResponse = await analyzeResume({
-          resume_id: resume.resume_id,
+          resume_id: requestResumeId,
           job_description: jd,
         });
         currentAnalysis = analyzeResponse.data;
@@ -272,15 +276,15 @@ export function useResumeGenerator() {
       }
 
       const response = await generateResume({
-        resume_id: resume.resume_id,
+        resume_id: requestResumeId,
         job_description: jd,
       });
       const r = {
         ...response.data.resume,
         id:
-          response.data.resume_id || resume?.resume_id || Date.now().toString(),
+          response.data.resume_id || requestResumeId || Date.now().toString(),
         resume_id:
-          response.data.resume_id || resume?.resume_id || Date.now().toString(),
+          response.data.resume_id || requestResumeId || Date.now().toString(),
       };
       setGeneratedResume(r);
       setGenerated(true);
@@ -346,7 +350,7 @@ export function useResumeGenerator() {
     const resumesKey = user?.email
       ? `saved_resumes_${user.email}`
       : "saved_resumes";
-    const resumeId = resume?.resume_id || localStorage.getItem(lastResumeIdKey);
+    const resumeId = resume?.resume_id || resume?.id || localStorage.getItem(lastResumeIdKey);
     if (!resumeId) return;
 
     const savedList = JSON.parse(localStorage.getItem(resumesKey) || "[]");

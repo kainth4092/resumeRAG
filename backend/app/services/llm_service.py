@@ -193,13 +193,31 @@ def call_llm_with_retry(
 
 
 def normalize_generate_response(result: dict) -> dict:
+    """
+    Normalize the LLM-generated resume response to the canonical frontend schema.
+
+    Bridges schema aliases:
+    - contact/personal → personal_info
+    - bullets → description/bullets
+    - github_url → github, live_url → live
+    - start_date/startYear → start_year, end_date/endYear → end_year
+    - institution aliases (school, university, college)
+    - title → headline
+    """
     if not isinstance(result, dict):
         result = {}
 
     # If the root dictionary contains the keys directly instead of under "resume"
     if "resume" not in result:
         if any(
-            k in result for k in ["personal_info", "skills", "experience", "projects"]
+            k in result
+            for k in [
+                "personal_info",
+                "contact",
+                "skills",
+                "experience",
+                "projects",
+            ]
         ):
             result = {"resume": result}
         else:
@@ -211,28 +229,74 @@ def normalize_generate_response(result: dict) -> dict:
 
     resume_data = result["resume"]
 
-    if "personal_info" not in resume_data or not isinstance(
-        resume_data["personal_info"], dict
-    ):
-        resume_data["personal_info"] = {}
+    # --- Bridge contact → personal_info ---
+    raw_pi = {}
+    for pi_key in ["personal_info", "contact", "personal"]:
+        if pi_key in resume_data and isinstance(resume_data[pi_key], dict):
+            raw_pi = resume_data[pi_key]
+            break
 
-    for field in [
-        "name",
-        "email",
-        "phone",
-        "location",
-        "linkedin",
-        "github",
-        "portfolio",
-    ]:
-        val = resume_data["personal_info"].get(field)
-        resume_data["personal_info"][field] = str(val) if val is not None else ""
+    resume_data["personal_info"] = {
+        "name": str(
+            raw_pi.get("name")
+            or raw_pi.get("full_name")
+            or raw_pi.get("fullName")
+            or resume_data.get("name")
+            or ""
+        ),
+        "email": str(raw_pi.get("email") or resume_data.get("email") or ""),
+        "phone": str(
+            raw_pi.get("phone")
+            or raw_pi.get("phone_number")
+            or resume_data.get("phone")
+            or ""
+        ),
+        "location": str(
+            raw_pi.get("location")
+            or raw_pi.get("city")
+            or raw_pi.get("address")
+            or resume_data.get("location")
+            or ""
+        ),
+        "linkedin": str(
+            raw_pi.get("linkedin")
+            or raw_pi.get("linkedin_url")
+            or resume_data.get("linkedin_url")
+            or ""
+        ),
+        "github": str(
+            raw_pi.get("github")
+            or raw_pi.get("github_url")
+            or resume_data.get("github_url")
+            or ""
+        ),
+        "portfolio": str(
+            raw_pi.get("portfolio")
+            or raw_pi.get("portfolio_url")
+            or raw_pi.get("website")
+            or raw_pi.get("website_url")
+            or resume_data.get("portfolio_url")
+            or ""
+        ),
+    }
 
-    # Normalize headline and summary
-    resume_data["headline"] = str(resume_data.get("headline") or "")
-    resume_data["summary"] = str(resume_data.get("summary") or "")
+    # Remove the original keys if they were the source to avoid confusion
+    for cleanup_key in ["contact", "personal"]:
+        resume_data.pop(cleanup_key, None)
 
-    # Normalize skills
+    # --- Normalize headline and summary ---
+    resume_data["headline"] = str(
+        resume_data.get("headline")
+        or resume_data.get("title")
+        or raw_pi.get("title")
+        or ""
+    )
+    raw_summary = resume_data.get("summary") or ""
+    if isinstance(raw_summary, dict):
+        raw_summary = raw_summary.get("text") or raw_summary.get("summary") or ""
+    resume_data["summary"] = str(raw_summary)
+
+    # --- Normalize skills ---
     if "skills" not in resume_data or not isinstance(resume_data["skills"], list):
         resume_data["skills"] = []
     else:
@@ -259,66 +323,117 @@ def normalize_generate_response(result: dict) -> dict:
         ):
             resume_data[list_field] = []
 
-    # Normalize experience
+    # --- Normalize experience ---
     cleaned_experience = []
     for exp in resume_data["experience"]:
         if not isinstance(exp, dict):
             continue
         cleaned_exp = {}
-        for field in ["company", "role", "duration"]:
-            val = exp.get(field)
-            cleaned_exp[field] = str(val) if val is not None else ""
+        cleaned_exp["company"] = str(
+            exp.get("company") or exp.get("company_name") or exp.get("employer") or ""
+        )
+        cleaned_exp["role"] = str(
+            exp.get("role") or exp.get("title") or exp.get("job_title") or ""
+        )
+        cleaned_exp["location"] = str(exp.get("location") or "")
+        cleaned_exp["currently_working"] = bool(
+            exp.get("currently_working") or exp.get("current") or False
+        )
 
-        if not cleaned_exp["duration"]:
-            s_year = exp.get("start_year") or ""
-            e_year = exp.get("end_year") or ""
-            if s_year or e_year:
-                cleaned_exp["duration"] = f"{s_year} - {e_year}"
+        # Duration
+        duration = str(exp.get("duration") or "")
+        if not duration:
+            s_date = str(exp.get("start_date") or exp.get("start_year") or "")
+            e_date = str(exp.get("end_date") or exp.get("end_year") or "")
+            if not e_date and cleaned_exp["currently_working"]:
+                e_date = "Present"
+            if s_date or e_date:
+                duration = f"{s_date} - {e_date}"
+        cleaned_exp["duration"] = duration
 
-        desc_list = exp.get("description")
+        # Start/End year
+        cleaned_exp["start_year"] = str(
+            exp.get("start_year") or exp.get("start_date") or exp.get("startYear") or ""
+        )
+        cleaned_exp["end_year"] = str(
+            exp.get("end_year") or exp.get("end_date") or exp.get("endYear") or ""
+        )
+        if not cleaned_exp["end_year"] and cleaned_exp["currently_working"]:
+            cleaned_exp["end_year"] = "Present"
+
+        # Description / bullets
+        desc_list = exp.get("description") or exp.get("bullets") or []
         if not isinstance(desc_list, list):
-            desc_list = [str(desc_list)] if desc_list is not None else []
+            if isinstance(desc_list, str) and desc_list.strip():
+                desc_list = [
+                    line.strip() for line in desc_list.split("\n") if line.strip()
+                ]
+            else:
+                desc_list = [str(desc_list)] if desc_list else []
         cleaned_exp["description"] = [
             str(d).strip() for d in desc_list if d is not None and str(d).strip()
         ]
+        cleaned_exp["bullets"] = cleaned_exp["description"]
+
         cleaned_experience.append(cleaned_exp)
     resume_data["experience"] = cleaned_experience
 
-    # Normalize projects
+    # --- Normalize projects ---
     cleaned_projects = []
     for proj in resume_data["projects"]:
         if not isinstance(proj, dict):
             continue
         cleaned_proj = {}
-        for field in ["title", "github", "live"]:
-            val = proj.get(field)
-            cleaned_proj[field] = str(val) if val is not None else ""
+        cleaned_proj["title"] = str(proj.get("title") or proj.get("name") or "")
+        cleaned_proj["github"] = str(proj.get("github") or proj.get("github_url") or "")
+        cleaned_proj["live"] = str(
+            proj.get("live") or proj.get("live_url") or proj.get("url") or ""
+        )
 
-        desc_list = proj.get("description")
-        if not isinstance(desc_list, list):
-            desc_list = [str(desc_list)] if desc_list is not None else []
+        desc_list = proj.get("description") or proj.get("desc") or []
+        if isinstance(desc_list, str):
+            desc_list = [line.strip() for line in desc_list.split("\n") if line.strip()]
+        elif not isinstance(desc_list, list):
+            desc_list = [str(desc_list)] if desc_list else []
         cleaned_proj["description"] = [
             str(d).strip() for d in desc_list if d is not None and str(d).strip()
         ]
 
-        tech_list = proj.get("technologies")
-        if not isinstance(tech_list, list):
-            tech_list = [str(tech_list)] if tech_list is not None else []
+        tech_list = (
+            proj.get("technologies") or proj.get("tech") or proj.get("tech_stack") or []
+        )
+        if isinstance(tech_list, str):
+            tech_list = [t.strip() for t in tech_list.split(",") if t.strip()]
+        elif not isinstance(tech_list, list):
+            tech_list = [str(tech_list)] if tech_list else []
         cleaned_proj["technologies"] = [
             str(t).strip() for t in tech_list if t is not None and str(t).strip()
         ]
         cleaned_projects.append(cleaned_proj)
     resume_data["projects"] = cleaned_projects
 
-    # Normalize education
+    # --- Normalize education ---
     cleaned_education = []
     for edu in resume_data["education"]:
         if not isinstance(edu, dict):
             continue
         cleaned_edu = {}
-        for field in ["institution", "degree", "start_year", "end_year"]:
-            val = edu.get(field)
-            cleaned_edu[field] = str(val) if val is not None else ""
+        cleaned_edu["institution"] = str(
+            edu.get("institution")
+            or edu.get("school")
+            or edu.get("university")
+            or edu.get("college")
+            or ""
+        )
+        cleaned_edu["degree"] = str(
+            edu.get("degree") or edu.get("qualification") or edu.get("major") or ""
+        )
+        cleaned_edu["start_year"] = str(
+            edu.get("start_year") or edu.get("start_date") or edu.get("startYear") or ""
+        )
+        cleaned_edu["end_year"] = str(
+            edu.get("end_year") or edu.get("end_date") or edu.get("endYear") or ""
+        )
         cleaned_education.append(cleaned_edu)
     resume_data["education"] = cleaned_education
 

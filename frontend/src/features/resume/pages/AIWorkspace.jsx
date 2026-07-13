@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Shield, Target, X, AlertCircle, Sparkles } from "lucide-react";
 import { useResumeAnalysis } from "../hooks/useResumeAnalysis";
 import { useResumeGenerator } from "../hooks/useResumeGenerator";
@@ -16,28 +16,49 @@ export default function AIWorkspace() {
   const { resume: genResume, setResume, setUploaded } = generatorState;
   const { selectedResume, setSelectedResume } = analysisState;
 
+  const prevSelectedResumeRef = useRef(selectedResume);
+  const prevGenResumeRef = useRef(genResume);
+
   useEffect(() => {
+    const prevSelected = prevSelectedResumeRef.current;
+    const prevGen = prevGenResumeRef.current;
+
     const aid = selectedResume?.resume_id || selectedResume?.id;
     const gid = genResume?.resume_id || genResume?.id;
     const aver = selectedResume?.version;
     const gver = genResume?.version;
 
-    if (selectedResume && (aid !== gid || aver !== gver)) {
-      setResume(selectedResume);
-      setUploaded(true);
-    }
-  }, [selectedResume, genResume, setResume, setUploaded]);
+    const prevAid = prevSelected?.resume_id || prevSelected?.id;
+    const prevGid = prevGen?.resume_id || prevGen?.id;
+    const prevAver = prevSelected?.version;
+    const prevGver = prevGen?.version;
 
-  useEffect(() => {
-    const aid = selectedResume?.resume_id || selectedResume?.id;
-    const gid = genResume?.resume_id || genResume?.id;
-    const aver = selectedResume?.version;
-    const gver = genResume?.version;
+    const selectedChanged = aid !== prevAid || aver !== prevAver || (!selectedResume !== !prevSelected);
+    const genChanged = gid !== prevGid || gver !== prevGver || (!genResume !== !prevGen);
 
-    if (genResume && (aid !== gid || aver !== gver)) {
-      setSelectedResume(genResume);
+    if (selectedChanged && !genChanged) {
+      if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+        setResume(selectedResume);
+        setUploaded(!!selectedResume);
+      }
+    } else if (genChanged && !selectedChanged) {
+      if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+        setSelectedResume(genResume);
+      }
+    } else if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+      if (selectedResume) {
+        setResume(selectedResume);
+        setUploaded(true);
+      } else {
+        setResume(null);
+        setUploaded(false);
+        setSelectedResume(null);
+      }
     }
-  }, [genResume, selectedResume, setSelectedResume]);
+
+    prevSelectedResumeRef.current = selectedResume;
+    prevGenResumeRef.current = genResume;
+  }, [selectedResume, genResume, setResume, setSelectedResume, setUploaded]);
 
   const handleResetResume = () => {
     analysisState.setSelectedResume(null);
@@ -56,6 +77,7 @@ export default function AIWorkspace() {
   const handleNavigateEditor = () => {
     const resumeId =
       generatorState.resume?.resume_id ||
+      generatorState.resume?.id ||
       analysisState.selectedResume?.resume_id ||
       analysisState.selectedResume?.id;
     generatorState.navigate("/resume/editor", {

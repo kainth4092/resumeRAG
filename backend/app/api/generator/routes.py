@@ -103,11 +103,23 @@ def generate(
                 stored_resume = json.loads(resume.resume_json)
 
                 if isinstance(stored_resume, dict) and stored_resume:
-                    source_resume_text = json.dumps(
-                        stored_resume,
-                        ensure_ascii=False,
-                        indent=2,
-                    )
+                    contact = stored_resume.get("contact", {})
+                    has_name = bool(contact.get("name", "").strip()) if isinstance(contact, dict) else False
+                    has_skills = bool(stored_resume.get("skills"))
+                    has_experience = bool(stored_resume.get("experience"))
+                    has_projects = bool(stored_resume.get("projects"))
+
+                    if has_name or has_skills or has_experience or has_projects:
+                        source_resume_text = json.dumps(
+                            stored_resume,
+                            ensure_ascii=False,
+                            indent=2,
+                        )
+                    else:
+                        logger.warning(
+                            "resume_json for resume id=%s is empty/incomplete; falling back to parsed_text.",
+                            resume.id,
+                        )
             except (TypeError, ValueError, json.JSONDecodeError):
                 logger.warning(
                     "Invalid resume_json for resume id=%s; using parsed_text.",
@@ -141,6 +153,24 @@ def generate(
                 status_code=502,
                 detail="The AI returned an invalid resume. Please try again.",
             )
+
+        # Validate the generated resume has meaningful content
+        pi = r_data.get("personal_info", {})
+        has_name = bool(pi.get("name", "").strip()) if isinstance(pi, dict) else False
+        has_skills = bool(r_data.get("skills"))
+        has_experience = bool(r_data.get("experience"))
+        if not (has_name or has_skills or has_experience):
+            logger.error(
+                "[GENERATOR_EMPTY] Generated resume has no name, skills, or experience. "
+                "resume_id=%s r_data_keys=%s",
+                resume.id,
+                list(r_data.keys()),
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The AI returned an incomplete resume. Please try again.",
+            )
+
         headline = r_data.get("headline", "Optimized Resume")
         summary = r_data.get("summary", "")
         skills_list = r_data.get("skills", [])
@@ -161,22 +191,25 @@ def generate(
         except Exception:
             new_ver = "v2"
 
-        new_ats = min(98, (resume.ats_score or 75) + 12)
+        # Calculate real ATS scores using deterministic scoring against JD
+        from app.resume.services.resume_scoring_service import calculate_scores
+        scores = calculate_scores(r_data, payload.job_description)
+        new_ats = scores.get("ats_score", 75)
 
         optimized_analysis = {
             "ats_score": new_ats,
-            "matched_keywords": skills_list[:10],
-            "missing_keywords": ["CI/CD"],
+            "matched_keywords": scores.get("matched_keywords", skills_list[:10]),
+            "missing_keywords": scores.get("missing_keywords", []),
             "suggestions": [
                 "Include specific metrics (e.g. 'improved performance by 20%')"
             ],
             "heatmap": {
-                "contact_info": 98,
-                "summary": 90,
-                "skills": 95,
-                "experience": 88,
-                "projects": 90,
-                "education": 95,
+                "contact_info": scores.get("section_completeness", 80),
+                "summary": scores.get("readability_score", 80),
+                "skills": scores.get("skills_coverage", 80),
+                "experience": scores.get("experience_quality", 80),
+                "projects": scores.get("projects_quality", 80),
+                "education": scores.get("education_quality", 80),
             },
         }
 
@@ -201,11 +234,13 @@ def generate(
         db.refresh(new_resume)
 
         return {"resume": result.get("resume", {}), "resume_id": new_resume.id}
+    except HTTPException as e:
+        raise e
     except AppException as e:
         raise e
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to generate resume")
-        raise HTTPException(status_code=500, detail="Failed to generate resume.")
+        raise HTTPException(status_code=500, detail="Failed to generate resume.") from exc
 
 
 @router.post("/analyze-health")
@@ -227,6 +262,8 @@ def analyze_health(
 
         result = analyze_resume_canonical(db, resume, None)
         return result
+    except HTTPException as e:
+        raise e
     except AppException as e:
         raise e
     except Exception:
@@ -255,6 +292,8 @@ def improve_section(
             section_content=payload.content,
         )
         return {"improved_text": improved_text}
+    except HTTPException as e:
+        raise e
     except AppException as e:
         raise e
     except Exception:

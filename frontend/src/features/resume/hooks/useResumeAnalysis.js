@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getResumes, uploadResume } from "../services/resumeService";
+import { getResumes, uploadResume, getResumeById } from "../services/resumeService";
 import {
   analyzeResumeHealth,
   improveResumeSection,
@@ -44,6 +44,69 @@ export function useResumeAnalysis() {
       }
     }
   }, [resumesList, selectedResume]);
+
+  useEffect(() => {
+    if (!selectedResume) return;
+    const resumeId = selectedResume.resume_id || selectedResume.id;
+    if (!resumeId) return;
+
+    if (
+      selectedResume.parsing_status === "pending" ||
+      selectedResume.parsing_status === "processing"
+    ) {
+      let active = true;
+      const intervalId = setInterval(async () => {
+        try {
+          const freshData = await getResumeById(resumeId);
+          if (!active) return;
+
+          if (freshData) {
+            if (
+              freshData.parsing_status !== selectedResume.parsing_status ||
+              freshData.ats_score !== selectedResume.ats_score
+            ) {
+              setSelectedResume((prev) => {
+                if (!prev || (prev.resume_id || prev.id) !== resumeId) return prev;
+                return { ...prev, ...freshData };
+              });
+
+              setResumesList((prevList) =>
+                prevList.map((item) =>
+                  String(item.id) === String(resumeId)
+                    ? { ...item, ...freshData }
+                    : item
+                )
+              );
+            }
+
+            if (
+              freshData.parsing_status === "completed" ||
+              freshData.parsing_status === "failed"
+            ) {
+              clearInterval(intervalId);
+              if (freshData.parsing_status === "completed") {
+                try {
+                  const healthRes = await getResumeHealth(resumeId);
+                  if (healthRes.data) {
+                    setAnalysisResult(healthRes.data);
+                  }
+                } catch (hErr) {
+                  console.error("Failed to load health after async parsing:", hErr);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to poll resume status:", err);
+        }
+      }, 3000);
+
+      return () => {
+        active = false;
+        clearInterval(intervalId);
+      };
+    }
+  }, [selectedResume?.parsing_status, selectedResume?.id, selectedResume?.resume_id]);
 
   useEffect(() => {
     getResumes()
@@ -143,6 +206,9 @@ export function useResumeAnalysis() {
     setUploadedFile(null);
     setError("");
     setAnalysisResult(null);
+    if (resume.parsing_status === "pending" || resume.parsing_status === "processing") {
+      return;
+    }
     try {
       const response = await getResumeHealth(resume.resume_id || resume.id);
       if (response.data) {
@@ -154,7 +220,7 @@ export function useResumeAnalysis() {
   };
 
   const runATSAnalysis = async () => {
-    if (!selectedResume) return;
+    if (!selectedResume || selectedResume.parsing_status === "pending" || selectedResume.parsing_status === "processing") return;
 
     setAnalyzing(true);
     setError("");

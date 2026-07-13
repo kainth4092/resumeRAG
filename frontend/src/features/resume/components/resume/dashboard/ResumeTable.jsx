@@ -99,14 +99,24 @@ export default function ResumeTable({
                         <FileText size={14} style={{ color: r.color }} />
                       </div>
                       <div>
-                        <button
-                          onClick={() => setPreviewResume(r)}
-                          className="font-semibold text-foreground text-sm hover:text-primary transition-colors text-left"
-                        >
-                          {r.name}
-                        </button>
+                        {r.parsing_status === "pending" || r.parsing_status === "processing" ? (
+                          <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+                            <span>{r.name}</span>
+                            <span className="w-2.5 h-2.5 border border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+                            <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-md px-1 py-0.5 animate-pulse uppercase tracking-wider font-extrabold font-mono shrink-0">
+                              Parsing...
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setPreviewResume(r)}
+                            className="font-semibold text-foreground text-sm hover:text-primary transition-colors text-left"
+                          >
+                            {r.name}
+                          </button>
+                        )}
                         <p className="text-[11px] text-muted-foreground">
-                          {r.version} · {r.pages}p
+                          {r.version} · {r.pages || 1}p
                         </p>
                       </div>
                     </div>
@@ -140,8 +150,9 @@ export default function ResumeTable({
                     <div className="flex items-center justify-end gap-3">
                       <button
                         onClick={() => handleEdit(r)}
-                        title="Edit"
-                        className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:bg-primary/10 hover:border-primary/20 text-muted-foreground hover:text-primary transition-all"
+                        disabled={r.parsing_status === "pending" || r.parsing_status === "processing"}
+                        title={r.parsing_status === "pending" || r.parsing_status === "processing" ? "Parsing in progress..." : "Edit"}
+                        className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:bg-primary/10 hover:border-primary/20 text-muted-foreground hover:text-primary transition-all disabled:opacity-30 disabled:pointer-events-none"
                       >
                         <Edit2 size={14} />
                       </button>
@@ -188,86 +199,94 @@ export default function ResumeTable({
               </button>
             </div>
             <div className="p-3 space-y-1.5">
-              <button
-                onClick={() => {
-                  const target = allResumes.find((r) => r.id === menuOpen);
-                  if (target) {
-                    handleSetActive(target.id);
-                  }
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <CheckCircle2 size={15} className="text-emerald-500" />
-                Set as Active
-              </button>
+              {(() => {
+                const target = allResumes.find((r) => r.id === menuOpen);
+                const isParsing = target?.parsing_status === "pending" || target?.parsing_status === "processing";
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (target && !isParsing) {
+                          handleSetActive(target.id);
+                        }
+                        setMenuOpen(null);
+                      }}
+                      disabled={isParsing}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <CheckCircle2 size={15} className="text-emerald-500" />
+                      Set as Active
+                    </button>
 
-              <button
-                onClick={async () => {
-                  const target = allResumes.find((r) => r.id === menuOpen);
-                  if (target) {
-                    setPreviewResume(target);
-                    // Wait for template to render in DOM
-                    await new Promise((resolve) => setTimeout(resolve, 200));
-                    const resumeData = target.resume || target;
-                    await downloadPDF(
-                      resumeData,
-                      `${target.name || "Resume"}.pdf`,
-                    );
-                    setPreviewResume(null);
-                  }
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <FileText size={15} className="text-muted-foreground" />
-                Download PDF
-              </button>
+                    <button
+                      onClick={async () => {
+                        if (target && !isParsing) {
+                          setPreviewResume(target);
+                          await new Promise((resolve) => setTimeout(resolve, 200));
+                          const resumeData = target.resume || target;
+                          await downloadPDF(
+                            resumeData,
+                            `${target.name || "Resume"}.pdf`,
+                          );
+                          setPreviewResume(null);
+                        }
+                        setMenuOpen(null);
+                      }}
+                      disabled={isParsing}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <FileText size={15} className="text-muted-foreground" />
+                      Download PDF
+                    </button>
 
-              <button
-                onClick={() => {
-                  const target = allResumes.find((r) => r.id === menuOpen);
-                  if (target) {
-                    const resumeData = target.resume || target;
-                    downloadDOCX(
-                      resumeData,
-                      `${target.name || "Resume"}.docx`,
-                      target.template || "Professional",
-                    );
-                  }
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <FileText size={15} className="text-muted-foreground" />
-                Download DOCX
-              </button>
+                    <button
+                      onClick={() => {
+                        if (target && !isParsing) {
+                          const resumeData = target.resume || target;
+                          downloadDOCX(
+                            resumeData,
+                            `${target.name || "Resume"}.docx`,
+                            target.template || "Professional",
+                          );
+                        }
+                        setMenuOpen(null);
+                      }}
+                      disabled={isParsing}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <FileText size={15} className="text-muted-foreground" />
+                      Download DOCX
+                    </button>
 
-              <button
-                onClick={() => {
-                  const target = allResumes.find((r) => r.id === menuOpen);
-                  if (target && handleGenerateInterview) {
-                    handleGenerateInterview(target);
-                  }
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <Zap size={15} className="text-primary" />
-                Generate Interview Prep
-              </button>
+                    <button
+                      onClick={() => {
+                        if (target && handleGenerateInterview && !isParsing) {
+                          handleGenerateInterview(target);
+                        }
+                        setMenuOpen(null);
+                      }}
+                      disabled={isParsing}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted rounded-2xl transition-colors cursor-pointer text-left disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <Zap size={15} className="text-primary" />
+                      Generate Interview Prep
+                    </button>
 
-              <button
-                onClick={() => {
-                  const target = allResumes.find((r) => r.id === menuOpen);
-                  setDeleteTarget(target);
-                  setMenuOpen(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 rounded-2xl transition-colors cursor-pointer text-left"
-              >
-                <Trash2 size={15} />
-                Delete Resume
-              </button>
+                    <button
+                      onClick={() => {
+                        if (target) {
+                          setDeleteTarget(target);
+                        }
+                        setMenuOpen(null);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 rounded-2xl transition-colors cursor-pointer text-left"
+                    >
+                      <Trash2 size={15} />
+                      Delete Resume
+                    </button>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

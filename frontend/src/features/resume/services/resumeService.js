@@ -28,3 +28,7 @@ export const importProfileToResume = () => {
 export const updateResume = (resumeId, data) => {
   return api.put(`/resume/${resumeId}`, data).then((res) => res.data);
 };
+
+export const getResumeById = (resumeId) => {
+  return api.get(`/resume/${resumeId}`).then((res) => res.data);
+};

@@ -20,13 +20,33 @@ SCORING_VERSION = "v1"
 PROMPT_VERSION = "v1"
 
 
+def _is_empty_canonical(data: dict) -> bool:
+    """Check if a canonical resume dict is effectively empty (no meaningful content)."""
+    if not isinstance(data, dict):
+        return True
+    contact = data.get("contact", {})
+    has_name = bool(contact.get("name", "").strip())
+    has_skills = bool(data.get("skills"))
+    has_experience = bool(data.get("experience"))
+    has_education = bool(data.get("education"))
+    has_projects = bool(data.get("projects"))
+    has_summary = bool(data.get("summary", "").strip())
+    return not (has_name or has_skills or has_experience or has_education or has_projects or has_summary)
+
+
 def parse_resume_text_to_json(resume_text: str) -> dict:
     """
     Calls the LLM to extract the canonical JSON representation from raw text.
+    Returns the parsed canonical resume dict.
+    Never returns None - always returns at least an empty canonical structure.
     """
+    if not resume_text or not resume_text.strip():
+        logger.warning("[PARSE_RESUME] Empty resume text provided, returning empty canonical.")
+        return coerce_to_canonical({})
+
     prompt = f"""
-You are an expert resume parser. Your job is to extract all information from the raw resume text and format it to match the canonical JSON schema.
-Do not invent any information. Only extract what is present in the text.
+    You are an expert resume parser. Your job is to extract all information from the raw resume text and format it to match the    canonical JSON schema.
+    Do not invent any information. Only extract what is present in the text.
 
 Canonical JSON Schema:
 {{
@@ -78,6 +98,21 @@ Canonical JSON Schema:
   "volunteer_experience": []
 }}
 
+CRITICAL OUTPUT RULES:
+- Return exactly one complete and valid JSON object.
+- Return JSON only. Do not use markdown or code fences.
+- Never repeat information.
+- Preserve the candidate's real name and contact information exactly.
+- Keep the summary under 70 words.
+- Return at most 20 relevant skills.
+- Keep at most 4 bullet points for each experience.
+- Keep at most 3 bullet points for each project.
+- Keep every bullet point under 25 words.
+- Use empty strings for missing scalar values.
+- Use empty arrays for missing list values.
+- Do not invent candidate information.
+- Prefer concise, complete JSON over detailed but truncated JSON.
+
 Here is the raw resume text:
 ---
 {resume_text}
@@ -93,9 +128,18 @@ Return ONLY a valid JSON object matching the schema. No markdown formatting (do 
             json_response=True,
         )
         parsed = extract_json(content)
-        return coerce_to_canonical(parsed)
+        result = coerce_to_canonical(parsed)
+
+        # Validate the parse result is not empty
+        if _is_empty_canonical(result):
+            logger.warning(
+                "[PARSE_RESUME] LLM returned empty/minimal canonical resume. "
+                "The parsed result has no meaningful content."
+            )
+
+        return result
     except Exception as e:
-        logger.error(f"Error parsing resume text to canonical json: {e}")
+        logger.error(f"[PARSE_RESUME_FAILED] Error parsing resume text to canonical json: {e}")
         return coerce_to_canonical({})
 
 
@@ -116,11 +160,41 @@ def analyze_resume_canonical(
         except Exception:
             pass
 
-    if not r_json:
-        logger.info(f"Parsing raw text to canonical JSON for resume id: {resume.id}")
-        r_json = parse_resume_text_to_json(resume.parsed_text)
-        resume.resume_json = json.dumps(r_json)
-        db.commit()
+    if not r_json or _is_empty_canonical(r_json):
+        if resume.parsed_text and resume.parsed_text.strip():
+            logger.info(
+                "[ANALYSIS] Parsing raw text to canonical JSON for resume id=%s "
+                "(resume_json was %s)",
+                resume.id,
+                "empty" if not r_json else "missing content",
+            )
+            new_parsed = parse_resume_text_to_json(resume.parsed_text)
+
+            # Only save if the new parse is better than what we have
+            if not _is_empty_canonical(new_parsed):
+                r_json = new_parsed
+                resume.resume_json = json.dumps(r_json)
+                db.commit()
+                logger.info("[ANALYSIS] Successfully parsed and saved canonical JSON for resume id=%s", resume.id)
+            elif r_json:
+                # Keep existing (possibly partial) data rather than overwrite with empty
+                logger.warning(
+                    "[ANALYSIS] New parse returned empty result for resume id=%s. "
+                    "Keeping existing resume_json.",
+                    resume.id,
+                )
+            else:
+                # Both are empty, save what we got
+                r_json = new_parsed
+                resume.resume_json = json.dumps(r_json)
+                db.commit()
+        else:
+            logger.warning(
+                "[ANALYSIS] No parsed_text available for resume id=%s, cannot parse.",
+                resume.id,
+            )
+            if not r_json:
+                r_json = coerce_to_canonical({})
 
     # 2. Normalize Canonical Resume
     normalized_resume = normalize_resume(r_json)
@@ -132,7 +206,10 @@ def analyze_resume_canonical(
     db.commit()
 
     # 3. Calculate Canonical Content Hash
-    canonical_hash = get_canonical_hash(normalized_resume)
+    if resume.parsed_text:
+        canonical_hash = hashlib.sha256(resume.parsed_text.encode("utf-8")).hexdigest()
+    else:
+        canonical_hash = get_canonical_hash(normalized_resume)
     resume.canonical_hash = canonical_hash
     resume.scoring_version = SCORING_VERSION
     resume.prompt_version = PROMPT_VERSION
@@ -283,7 +360,7 @@ def analyze_resume_canonical(
             temperature=0.0,
             json_response=True,
         )
-        qualitative = extract_json(raw_llm)
+        qualitative = raw_llm if isinstance(raw_llm, dict) else extract_json(raw_llm)
 
         # Merge deterministic scores and LLM qualitative results
         merged_results = {
@@ -317,7 +394,7 @@ def analyze_resume_canonical(
             temperature=0.0,
             json_response=True,
         )
-        qualitative = extract_json(raw_llm)
+        qualitative = raw_llm if isinstance(raw_llm, dict) else extract_json(raw_llm)
 
         # Merge deterministic scores and LLM qualitative results
         # Ensure suggestions is a dict with quick_fixes, etc.

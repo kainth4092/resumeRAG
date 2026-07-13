@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -11,10 +11,11 @@ router = APIRouter(prefix="/api/resume", tags=["Resume"])
 @router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await ResumeService.upload_resume(file, db, current_user.id)
+    return await ResumeService.upload_resume(file, db, current_user.id, background_tasks)
 
 
 @router.post("/{resume_id}/active")
@@ -32,6 +33,15 @@ def list_resumes(
     current_user: User = Depends(get_current_user),
 ):
     return ResumeService.list_resumes(db, current_user.id)
+
+
+@router.get("/{resume_id}")
+def get_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.get_resume_by_id(resume_id, db, current_user.id)
 
 
 from pydantic import BaseModel

@@ -17,72 +17,167 @@ TECH_KEYWORDS_LIST = [
     "smart contracts", "web3", "networks", "tcp/ip", "dns", "http", "sockets", "restful", "grpc", "soap"
 ]
 
+# Alias map: maps common variant names to their canonical keyword.
+# If a resume says "postgres" it should match "postgresql" from the JD and vice versa.
+KEYWORD_ALIASES = {
+    "postgres": "postgresql",
+    "mongo": "mongodb",
+    "k8s": "kubernetes",
+    "node.js": "node",
+    "nodejs": "node",
+    "express.js": "express",
+    "expressjs": "express",
+    "react.js": "react",
+    "reactjs": "react",
+    "vue.js": "vue",
+    "vuejs": "vue",
+    "angular.js": "angular",
+    "angularjs": "angular",
+    "nextjs": "next.js",
+    "nuxtjs": "nuxt.js",
+    "js": "javascript",
+    "ts": "typescript",
+    "py": "python",
+    "tailwindcss": "tailwind",
+    "tailwind css": "tailwind",
+    "spring boot": "spring",
+    "springboot": "spring",
+    "amazon web services": "aws",
+    "google cloud": "gcp",
+    "google cloud platform": "gcp",
+    "microsoft azure": "azure",
+    "html5": "html",
+    "css3": "css",
+    "rest api": "rest",
+    "restful api": "restful",
+    "rest apis": "rest",
+    "restful apis": "restful",
+    "graphql api": "graphql",
+    "full-stack": "full stack",
+    "fullstack": "full stack",
+    "ml": "machine learning",
+    "dl": "deep learning",
+    "ci": "ci/cd",
+    "cd": "ci/cd",
+    "continuous integration": "ci/cd",
+    "continuous deployment": "ci/cd",
+    "power bi": "powerbi",
+    "scikit learn": "scikit-learn",
+    "sklearn": "scikit-learn",
+    "react-native": "react native",
+}
+
+# Build reverse map: canonical -> set of aliases (including itself)
+_CANONICAL_TO_ALIASES = {}
+for alias, canonical in KEYWORD_ALIASES.items():
+    _CANONICAL_TO_ALIASES.setdefault(canonical, set()).add(alias)
+for kw in TECH_KEYWORDS_LIST:
+    _CANONICAL_TO_ALIASES.setdefault(kw, set()).add(kw)
+
+
+def _normalize_keyword(kw: str) -> str:
+    """Normalize a keyword to its canonical form using the alias map."""
+    return KEYWORD_ALIASES.get(kw, kw)
+
+
 def extract_keywords(text: str) -> set[str]:
     """
     Extracts tech keywords from text deterministically.
+    Returns canonical keyword forms for consistent matching.
     """
     if not text:
         return set()
     
     text_lower = text.lower()
     found = set()
-    for kw in TECH_KEYWORDS_LIST:
-        # Match word boundaries. Be careful with special characters in keywords like c++, c#, next.js, etc.
-        # We can escape the keyword and check if it's in the text.
-        pattern = r'\b' + re.escape(kw) + r'\b'
-        if kw in ["c++", "c#", "next.js", "nuxt.js", "gatsby", "ci/cd", "ui/ux"]:
-            # For special symbols, check substring/custom word boundaries
-            if kw in text_lower:
-                found.add(kw)
+
+    # Check all canonical keywords AND their aliases
+    all_terms = list(TECH_KEYWORDS_LIST) + list(KEYWORD_ALIASES.keys())
+    seen_canonical = set()
+
+    for term in all_terms:
+        canonical = _normalize_keyword(term)
+        if canonical in seen_canonical:
+            # Already found this canonical keyword, skip redundant checks
+            if canonical in found:
+                continue
+
+        # Special chars need substring match
+        special_chars = ["c++", "c#", "next.js", "nuxt.js", "ci/cd", "ui/ux"]
+        if term in special_chars:
+            if term in text_lower:
+                found.add(canonical)
+                seen_canonical.add(canonical)
         else:
+            pattern = r'\b' + re.escape(term) + r'\b'
             if re.search(pattern, text_lower):
-                found.add(kw)
+                found.add(canonical)
+                seen_canonical.add(canonical)
+
     return found
 
 def get_text_from_canonical_resume(resume: dict) -> str:
     """
     Concatenates resume fields for searching keywords.
+    Handles both canonical schema (contact/bullets) and generator schema (personal_info/description).
     """
     parts = []
-    # Contact
-    contact = resume.get("contact", {})
-    parts.append(contact.get("name", ""))
-    parts.append(contact.get("email", ""))
-    parts.append(contact.get("phone", ""))
-    parts.append(contact.get("location", ""))
-    parts.append(contact.get("linkedin", ""))
-    parts.append(contact.get("github", ""))
-    parts.append(contact.get("portfolio", ""))
+    # Contact (canonical) or personal_info (generator)
+    contact = resume.get("contact", resume.get("personal_info", {}))
+    if isinstance(contact, dict):
+        for field in ["name", "email", "phone", "location", "linkedin", "github", "portfolio"]:
+            parts.append(str(contact.get(field, "")))
     
     # Headline / Summary
-    parts.append(resume.get("headline", ""))
-    parts.append(resume.get("summary", ""))
+    parts.append(str(resume.get("headline", "")))
+    summary = resume.get("summary", "")
+    if isinstance(summary, dict):
+        summary = summary.get("text", "")
+    parts.append(str(summary))
     
     # Skills
-    parts.extend(resume.get("skills", []))
+    for s in resume.get("skills", []):
+        parts.append(str(s) if not isinstance(s, dict) else str(s.get("name", "")))
     
-    # Experience
+    # Experience - handle both "bullets" and "description" keys
     for exp in resume.get("experience", []):
-        parts.append(exp.get("company", ""))
-        parts.append(exp.get("role", ""))
-        parts.append(exp.get("location", ""))
-        parts.extend(exp.get("bullets", []))
+        if isinstance(exp, dict):
+            parts.append(str(exp.get("company", "")))
+            parts.append(str(exp.get("role", "")))
+            parts.append(str(exp.get("location", "")))
+            bullets = exp.get("bullets", exp.get("description", []))
+            if isinstance(bullets, list):
+                parts.extend(str(b) for b in bullets)
+            elif isinstance(bullets, str):
+                parts.append(bullets)
         
-    # Projects
+    # Projects - handle both structured and flat description
     for proj in resume.get("projects", []):
-        parts.append(proj.get("title", ""))
-        parts.append(proj.get("description", ""))
-        parts.extend(proj.get("technologies", []))
+        if isinstance(proj, dict):
+            parts.append(str(proj.get("title", proj.get("name", ""))))
+            desc = proj.get("description", proj.get("desc", ""))
+            if isinstance(desc, list):
+                parts.extend(str(d) for d in desc)
+            else:
+                parts.append(str(desc))
+            tech = proj.get("technologies", proj.get("tech", []))
+            if isinstance(tech, list):
+                parts.extend(str(t) for t in tech)
+            elif isinstance(tech, str):
+                parts.append(tech)
         
     # Education
     for edu in resume.get("education", []):
-        parts.append(edu.get("institution", ""))
-        parts.append(edu.get("degree", ""))
-        parts.append(edu.get("location", ""))
+        if isinstance(edu, dict):
+            parts.append(str(edu.get("institution", edu.get("school", ""))))
+            parts.append(str(edu.get("degree", "")))
+            parts.append(str(edu.get("location", "")))
 
     # Extras
     for f in ["certifications", "achievements", "languages", "publications", "volunteer_experience"]:
-        parts.extend(resume.get(f, []))
+        vals = resume.get(f, [])
+        if isinstance(vals, list):
+            parts.extend(str(v) for v in vals)
         
     return "\n".join(parts)
 
@@ -146,10 +241,14 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         has_metrics = False
         has_strong_verbs = False
         for exp in exp_list:
-            for bullet in exp.get("bullets", []):
-                if metric_pat.search(bullet):
+            bullets = exp.get("bullets", exp.get("description", []))
+            if isinstance(bullets, str):
+                bullets = [bullets]
+            for bullet in (bullets or []):
+                bullet_str = str(bullet)
+                if metric_pat.search(bullet_str):
                     has_metrics = True
-                if strong_verb_pat.search(bullet.strip()):
+                if strong_verb_pat.search(bullet_str.strip()):
                     has_strong_verbs = True
                     
         if has_metrics:
@@ -166,10 +265,13 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     if proj_list:
         proj_quality += min(30, len(proj_list) * 15)
         # Check URLs
-        has_url = any(p.get("github_url") or p.get("live_url") for p in proj_list)
+        has_url = any(
+            p.get("github_url") or p.get("github") or p.get("live_url") or p.get("live") or p.get("url")
+            for p in proj_list
+        )
         if has_url:
             proj_quality += 15
-        if any(p.get("technologies") for p in proj_list):
+        if any(p.get("technologies") or p.get("tech") for p in proj_list):
             proj_quality += 5
     else:
         proj_quality = 0
@@ -197,8 +299,10 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     long_bullets = 0
     short_bullets = 0
     for exp in exp_list:
-        bullets = exp.get("bullets", [])
-        if len(bullets) < 2:
+        bullets = exp.get("bullets", exp.get("description", []))
+        if isinstance(bullets, str):
+            bullets = [bullets]
+        if not bullets or len(bullets) < 2:
             formatting -= 5
         for bullet in bullets:
             length = len(bullet)
@@ -220,7 +324,10 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     elif summary_len < 50:
         readability -= 10
         
-    bullet_count = sum(len(exp.get("bullets", [])) for exp in exp_list)
+    bullet_count = sum(
+        len(exp.get("bullets", exp.get("description", [])) or [])
+        for exp in exp_list
+    )
     if bullet_count > 25:
         readability -= 15
     elif bullet_count < 3:
@@ -250,9 +357,12 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         resume_text = get_text_from_canonical_resume(resume)
         resume_kws = extract_keywords(resume_text)
         
-        # Add actual skills list from resume to resume keywords
+        # Add actual skills list from resume to resume keywords,
+        # normalizing through alias map for consistent matching
         for s in skills:
-            resume_kws.add(s.lower())
+            s_lower = s.lower() if isinstance(s, str) else str(s).lower()
+            canonical = _normalize_keyword(s_lower)
+            resume_kws.add(canonical)
             
         matched = jd_kws.intersection(resume_kws)
         missing = jd_kws.difference(resume_kws)
