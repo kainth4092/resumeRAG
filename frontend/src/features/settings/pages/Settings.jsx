@@ -12,6 +12,7 @@ import SecuritySettings from "../components/SecuritySettings";
 import NotificationSettings from "../components/NotificationSettings";
 import AppearanceSettings from "../components/AppearanceSettings";
 import PrivacySettings from "../components/PrivacySettings";
+import SettingsSkeleton from "../../../components/loading/SettingsSkeleton";
 
 const TABS = [
   { id: "account", icon: User, label: "Account", component: AccountSettings },
@@ -44,9 +45,14 @@ const TABS = [
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("account");
+  const [loading, setLoadind] = useState();
 
   const ActiveComponent =
     TABS.find((t) => t.id === activeTab)?.component || AccountSettings;
+
+  if (loading) {
+    return <SettingsSkeleton />;
+  }
 
   return (
     <div className="h-full overflow-y-auto">

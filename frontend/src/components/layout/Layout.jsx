@@ -12,6 +12,7 @@ import JobSkeleton from "../loading/JobSkeleton";
 import InterviewSkeleton from "../loading/InterviewSkeleton";
 import PageLoader from "../loading/PageLoader";
 import AIResumeSuiteShimmer from "../../features/resume/components/ai-workspace/AIResumeSuiteShimmer";
+import SettingsSkeleton from "../loading/SettingsSkeleton";
 
 const ActivePageSkeleton = () => {
   const location = useLocation();
@@ -42,6 +43,9 @@ const ActivePageSkeleton = () => {
   }
   if (path === "/tracker") {
     return <JobSkeleton mode="discovery" />;
+  }
+  if (path === "/settings") {
+    return <SettingsSkeleton />;
   }
   return <DashboardSkeleton />;
 };

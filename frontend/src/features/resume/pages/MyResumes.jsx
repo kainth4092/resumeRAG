@@ -16,6 +16,8 @@ import { useAuth } from "../../auth/context/AuthContext";
 import AIWorkspace from "./AIWorkspace";
 import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
+import TableSkeleton from "../../../components/common/TableSkeleton";
+import { Skeleton } from "../../../components/common/Skeleton";
 
 const getResumeDisplayName = (item, user) => {
   let nameFromResume =
@@ -124,6 +126,7 @@ export default function MyResumes() {
     : "last_job_description";
 
   const [resumes, setResumes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [starredFilter, setStarredFilter] = useState(false);
@@ -217,6 +220,7 @@ export default function MyResumes() {
 
     let active = true;
     const syncWithBackend = async () => {
+      setLoading(true);
       try {
         const dbResumes = await getResumes();
         if (!active) return;
@@ -225,7 +229,7 @@ export default function MyResumes() {
         const latestSaved = JSON.parse(
           localStorage.getItem(resumesKey) || "[]",
         );
-        
+
         // Filter out database-backed resumes (id < 100000000000) that no longer exist in the backend
         const dbIds = new Set(dbResumes.map((r) => String(r.id)));
         const filteredSaved = latestSaved.filter((item) => {
@@ -299,6 +303,10 @@ export default function MyResumes() {
         setResumes(mapSavedList(mergedList));
       } catch (err) {
         console.error("Failed to sync resumes with backend:", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
@@ -379,7 +387,7 @@ export default function MyResumes() {
       resume &&
       typeof resume === "object" &&
       (resume.resume_id || resume.id) &&
-      resume.id !== removingId
+      resume.id !== removingId,
   );
 
   const filtered = validResumes
@@ -551,7 +559,9 @@ export default function MyResumes() {
         }
 
         setError("");
-        setSuccess("Resume was already deleted from the server and has been removed locally.");
+        setSuccess(
+          "Resume was already deleted from the server and has been removed locally.",
+        );
       } else {
         setError(errMsg);
         setSuccess("");
@@ -636,6 +646,19 @@ export default function MyResumes() {
 
   if (view === "new") {
     return <AIWorkspace onBack={() => setSearchParams({})} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-52" />
+          <Skeleton className="h-3 w-80 max-w-full" />
+        </div>
+
+        <TableSkeleton rows={6} columns={5} />
+      </div>
+    );
   }
 
   return (

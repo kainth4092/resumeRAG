@@ -17,7 +17,8 @@ from app.services.ai.prompts import get_resume_health_prompt, get_ats_prompt
 logger = logging.getLogger(__name__)
 
 SCORING_VERSION = "v1"
-PROMPT_VERSION = "v1"
+ATS_PROMPT_VERSION = "ats-2026-07-v2"
+HEALTH_PROMPT_VERSION = "health-2026-07-v2"
 
 
 def _is_empty_canonical(data: dict) -> bool:
@@ -31,7 +32,14 @@ def _is_empty_canonical(data: dict) -> bool:
     has_education = bool(data.get("education"))
     has_projects = bool(data.get("projects"))
     has_summary = bool(data.get("summary", "").strip())
-    return not (has_name or has_skills or has_experience or has_education or has_projects or has_summary)
+    return not (
+        has_name
+        or has_skills
+        or has_experience
+        or has_education
+        or has_projects
+        or has_summary
+    )
 
 
 def parse_resume_text_to_json(resume_text: str) -> dict:
@@ -41,11 +49,14 @@ def parse_resume_text_to_json(resume_text: str) -> dict:
     Never returns None - always returns at least an empty canonical structure.
     """
     if not resume_text or not resume_text.strip():
-        logger.warning("[LOCAL_RESUME_PARSER] Empty resume text provided, returning empty canonical.")
+        logger.warning(
+            "[LOCAL_RESUME_PARSER] Empty resume text provided, returning empty canonical."
+        )
         return coerce_to_canonical({})
 
     try:
         from app.resume.services.local_resume_parser import parse_resume_text_locally
+
         logger.info("[LOCAL_RESUME_PARSER] Running local deterministic resume parser.")
         parsed = parse_resume_text_locally(resume_text)
         result = coerce_to_canonical(parsed)
@@ -58,7 +69,9 @@ def parse_resume_text_to_json(resume_text: str) -> dict:
 
         return result
     except Exception as e:
-        logger.error(f"[LOCAL_RESUME_PARSER_FAILED] Error parsing resume text locally: {e}")
+        logger.error(
+            f"[LOCAL_RESUME_PARSER_FAILED] Error parsing resume text locally: {e}"
+        )
         return coerce_to_canonical({})
 
 
@@ -94,7 +107,10 @@ def analyze_resume_canonical(
                 r_json = new_parsed
                 resume.resume_json = json.dumps(r_json)
                 db.commit()
-                logger.info("[ANALYSIS] Successfully parsed and saved canonical JSON for resume id=%s", resume.id)
+                logger.info(
+                    "[ANALYSIS] Successfully parsed and saved canonical JSON for resume id=%s",
+                    resume.id,
+                )
             elif r_json:
                 # Keep existing (possibly partial) data rather than overwrite with empty
                 logger.warning(
@@ -128,14 +144,16 @@ def analyze_resume_canonical(
     canonical_hash = get_canonical_hash(normalized_resume)
     resume.canonical_hash = canonical_hash
     resume.scoring_version = SCORING_VERSION
-    resume.prompt_version = PROMPT_VERSION
+    resume.prompt_version = (
+        ATS_PROMPT_VERSION if job_description else HEALTH_PROMPT_VERSION
+    )
     db.commit()
 
     # 4. Handle Job Description if provided
     normalized_jd = None
     jd_hash = None
     if job_description:
-        normalized_jd = job_description.strip()
+        normalized_jd = " ".join(job_description.split())
         jd_hash = hashlib.sha256(normalized_jd.encode("utf-8")).hexdigest()
         resume.jd_hash = jd_hash
         db.commit()
@@ -153,7 +171,7 @@ def analyze_resume_canonical(
                 Resume.canonical_hash == canonical_hash,
                 Resume.jd_hash == jd_hash,
                 Resume.scoring_version == SCORING_VERSION,
-                Resume.prompt_version == PROMPT_VERSION,
+                Resume.prompt_version == ATS_PROMPT_VERSION,
                 Resume.analysis_results.isnot(None),
                 Resume.id != resume.id,
             )
@@ -179,7 +197,7 @@ def analyze_resume_canonical(
                 ResumeHealthAnalysis.canonical_hash == canonical_hash,
                 ResumeHealthAnalysis.analysis_type == "health",
                 ResumeHealthAnalysis.scoring_version == SCORING_VERSION,
-                ResumeHealthAnalysis.prompt_version == PROMPT_VERSION,
+                ResumeHealthAnalysis.prompt_version == HEALTH_PROMPT_VERSION,
                 Resume.id != resume.id,
             )
             .first()
@@ -257,7 +275,7 @@ def analyze_resume_canonical(
             health_report.weaknesses = cached_health.weaknesses
             health_report.canonical_hash = canonical_hash
             health_report.scoring_version = SCORING_VERSION
-            health_report.prompt_version = PROMPT_VERSION
+            health_report.prompt_version = HEALTH_PROMPT_VERSION
             health_report.analysis_type = "health"
 
             resume.ats_score = scores["ats_score"]
@@ -385,7 +403,7 @@ def analyze_resume_canonical(
 
         health_report.canonical_hash = canonical_hash
         health_report.scoring_version = SCORING_VERSION
-        health_report.prompt_version = PROMPT_VERSION
+        health_report.prompt_version = HEALTH_PROMPT_VERSION
         health_report.analysis_type = "health"
         health_report.jd_hash = None
 

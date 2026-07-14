@@ -1,50 +1,8 @@
 import json
-import re
-import time
-from app.services.llm_service import client
-
-
-def call_llm_with_retry(
-    prompt: str,
-    max_retries: int = 4,
-    initial_delay: float = 2,
-):
-    delay = initial_delay
-    for attempt in range(max_retries):
-        try:
-            response = client.chat.completions.create(
-                model="google/gemma-4-31b-it:free",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a Senior Software Engineering Interviewer at Google. Always return valid JSON only.",
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    },
-                ],
-                temperature=0.1,
-            )
-            return response.choices[0].message.content
-        except Exception:
-            if attempt == max_retries - 1:
-                raise
-            time.sleep(delay)
-            delay *= 2
-
-
-def extract_json(text: str):
-    text = text.strip()
-    text = re.sub(r"^```json", "", text)
-    text = re.sub(r"^```", "", text)
-    text = re.sub(r"```$", "", text)
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1:
-        raise ValueError("LLM did not return valid json")
-    text = text[start : end + 1]
-    return json.loads(text)
+from app.services.llm_service import (
+    call_llm_with_retry,
+    extract_json,
+)
 
 
 def _to_list(value):
@@ -137,8 +95,13 @@ def generate_interview_questions(
         schema_str=schema_str,
     )
 
-    response = call_llm_with_retry(prompt)
-    payload = extract_json(response)
+    response = call_llm_with_retry(
+        prompt,
+        feature="personalized_interview_questions",
+        temperature=0.1,
+        json_response=True,
+    )
+    payload = response if isinstance(response, dict) else extract_json(response)
     return _normalize_interview_payload(payload)
 
 
@@ -165,8 +128,14 @@ def generate_question_details(
         question=question,
         schema_str=schema_str,
     )
-    response = call_llm_with_retry(prompt)
-    payload = extract_json(response)
+    response = call_llm_with_retry(
+        prompt,
+        feature="interview_question_details",
+        temperature=0.1,
+        json_response=True,
+    )
+
+    payload = response if isinstance(response, dict) else extract_json(response)
 
     return {
         "tip": payload.get(
@@ -198,8 +167,14 @@ def generate_sample_answer(
     prompt = prompts.get_sample_answer_prompt(
         resume_text=resume_text, job_description=job_description, question=question
     )
-    response = call_llm_with_retry(prompt)
-    payload = extract_json(response)
+    response = call_llm_with_retry(
+        prompt,
+        feature="interview_sample_answer",
+        temperature=0.2,
+        json_response=True,
+    )
+
+    payload = response if isinstance(response, dict) else extract_json(response)
 
     return {
         "answer": payload.get(

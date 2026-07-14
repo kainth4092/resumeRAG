@@ -9,7 +9,7 @@ import CertificationSection from "../components/CertificationSection";
 
 export function Profile() {
   const [profileSaved, setProfileSaved] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState();
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);

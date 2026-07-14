@@ -12,7 +12,6 @@ import {
   updateExperience,
 } from "../../resume/services/experienceService";
 import { MONTHS } from "../../../data/experienceData";
-
 import { useAuth } from "../../auth/context/AuthContext";
 
 export default function ExperienceSection() {

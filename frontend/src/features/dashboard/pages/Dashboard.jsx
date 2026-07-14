@@ -9,15 +9,16 @@ import AtsTrendChart from "../components/charts/ATSTrendChart";
 import ResumeRadarChart from "../components/charts/ResumeRadarChart";
 import WeeklyActivityChart from "../components/charts/WeeklyActivityChart";
 import RecruiterSimulation from "../components/RecruiterSimulation";
-import DashboardSkeleton from "../../../components/loading/DashboardSkeleton";
-import { dashboardService } from "../services/dashboardService";
 import { mapApiActivities } from "../data/dashboardData";
 import { useAuth } from "../../auth/context/AuthContext";
+import { getDashboardData } from "../services/dashboardService";
+import DashboardSkeleton from "../../../components/loading/DashboardSkeleton";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const cacheKey = user?.email ? `dashboard_data_${user.email}` : null;
 
+  const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(() => {
     if (typeof window !== "undefined" && cacheKey) {
@@ -70,35 +71,45 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (user) {
-      const load = async () => {
-        await Promise.resolve();
-        const key = `dashboard_data_${user.email}`;
-        const cached = localStorage.getItem(key);
-        if (cached) {
-          try {
-            setDashboardData(JSON.parse(cached));
-            setLoading(false);
-          } catch (err) {
-            console.error("Failed to parse cached dashboard data:", err);
-          }
+    let mounted = true;
+
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await getDashboardData();
+
+        if (mounted) {
+          setData(result);
         }
-        loadDashboardData();
-      };
-      load();
+      } catch (error) {
+        console.error("Dashboard loading failed:", error);
+
+        if (mounted) {
+          setError(
+            error?.response?.data?.detail || "Unable to load dashboard data.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+
+    loadDashboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const refresh = async () => {
     setRefreshing(true);
     await loadDashboardData(true);
     setRefreshing(false);
   };
-
-  if (loading && !refreshing) {
-    return <DashboardSkeleton />;
-  }
 
   if (error) {
     return (
@@ -144,6 +155,10 @@ export default function Dashboard() {
   };
 
   const deltaText = getImprovementDelta();
+
+  if (loading && !refreshing) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="h-full overflow-y-auto ">

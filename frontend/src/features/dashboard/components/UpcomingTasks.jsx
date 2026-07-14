@@ -3,7 +3,11 @@ import { CheckCircle2, Circle, Plus } from "lucide-react";
 
 export default function UpcomingTasks({ data }) {
   const [customTasks, setCustomTasks] = useState(() => {
-    const saved = localStorage.getItem("resupilot_dashboard_tasks");
+    const userId = data?.user_id || "current";
+
+    const taskStorageKey = `resupilot_dashboard_tasks_${userId}`;
+
+    const saved = localStorage.getItem(taskStorageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -17,7 +21,11 @@ export default function UpcomingTasks({ data }) {
   });
 
   const [doneDynamicIds, setDoneDynamicIds] = useState(() => {
-    const saved = localStorage.getItem("resupilot_dashboard_tasks");
+    const userId = data?.user_id || "current";
+
+    const taskStorageKey = `resupilot_dashboard_tasks_${userId}`;
+
+    const saved = localStorage.getItem(taskStorageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -90,25 +98,28 @@ export default function UpcomingTasks({ data }) {
 
   const saveTasksToStorage = (updatedCustom, updatedDoneDynamic) => {
     const all = [
-      ...dynamicTasks.map(dt => ({
+      ...dynamicTasks.map((dt) => ({
         ...dt,
-        done: updatedDoneDynamic.includes(dt.id)
+        done: updatedDoneDynamic.includes(dt.id),
       })),
-      ...updatedCustom
+      ...updatedCustom,
     ];
-    localStorage.setItem("resupilot_dashboard_tasks", JSON.stringify(all));
+    localStorage.setItem(taskStorageKey, JSON.stringify(all));
   };
 
   const toggleTask = (id) => {
-    const isDynamic = id.startsWith("res-") || id.startsWith("job-") || id.startsWith("int-");
+    const isDynamic =
+      id.startsWith("res-") || id.startsWith("job-") || id.startsWith("int-");
     if (isDynamic) {
       const nextDoneDynamic = doneDynamicIds.includes(id)
-        ? doneDynamicIds.filter(x => x !== id)
+        ? doneDynamicIds.filter((x) => x !== id)
         : [...doneDynamicIds, id];
       setDoneDynamicIds(nextDoneDynamic);
       saveTasksToStorage(customTasks, nextDoneDynamic);
     } else {
-      const nextCustom = customTasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      const nextCustom = customTasks.map((t) =>
+        t.id === id ? { ...t, done: !t.done } : t,
+      );
       setCustomTasks(nextCustom);
       saveTasksToStorage(nextCustom, doneDynamicIds);
     }
@@ -129,13 +140,17 @@ export default function UpcomingTasks({ data }) {
     <div className="bg-card border border-border rounded-2xl p-5 flex flex-col justify-between h-full">
       <div>
         <h3 className="text-sm font-bold text-foreground">Upcoming Tasks</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Keep track of your job search progress</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Keep track of your job search progress
+        </p>
       </div>
 
       <div className="space-y-2.5 my-4 flex-1">
         {tasks.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center py-6">
-            <p className="text-xs text-muted-foreground">All caught up! Add a custom task below.</p>
+            <p className="text-xs text-muted-foreground">
+              All caught up! Add a custom task below.
+            </p>
           </div>
         ) : (
           tasks.map((t) => (
@@ -147,7 +162,10 @@ export default function UpcomingTasks({ data }) {
               {t.done ? (
                 <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               ) : (
-                <Circle size={16} className="text-muted-foreground group-hover:text-foreground shrink-0" />
+                <Circle
+                  size={16}
+                  className="text-muted-foreground group-hover:text-foreground shrink-0"
+                />
               )}
               <span
                 className={`text-xs font-medium text-foreground ${
@@ -161,7 +179,10 @@ export default function UpcomingTasks({ data }) {
         )}
       </div>
 
-      <form onSubmit={addTask} className="flex gap-2 border-t border-border pt-4">
+      <form
+        onSubmit={addTask}
+        className="flex gap-2 border-t border-border pt-4"
+      >
         <input
           type="text"
           value={input}

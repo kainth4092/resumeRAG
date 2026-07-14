@@ -1,12 +1,24 @@
 import api from "../../../services/api";
 
+export async function getDashboardData() {
+  const localHour = new Date().getHours();
+
+  const response = await api.get("/dashboard", {
+    params: {
+      local_hour: localHour,
+      _timestamp: Date.now(),
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
+
+  return response.data;
+}
+
 export const dashboardService = {
-  getDashboardData: async (localHour, bypassCache = false) => {
-    const params = {};
-    if (localHour !== undefined && localHour !== null) {
-      params.local_hour = localHour;
-    }
-    const response = await api.get("/dashboard", { params, bypassCache });
-    return response.data;
-  },
+  getDashboardData,
 };
+
+export default dashboardService;

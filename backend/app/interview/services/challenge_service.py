@@ -34,36 +34,49 @@ class ChallengeService:
             return
 
         try:
-            from app.services.llm_service import client, extract_json
+            from app.services.llm_service import (
+                call_llm_with_retry,
+                extract_json,
+            )
             from app.services.ai import prompts
 
-            prompt = prompts.get_mcq_prompt(question=q.question, answer=q.answer, skill=q.skill)
-
-            # Call client with a timeout / try exactly once to avoid blocking the user
-            response = client.chat.completions.create(
-                model="google/gemma-4-31b-it:free",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a Senior Software Engineering Interviewer. Always return valid JSON only.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.1,
-                timeout=5.0,
+            prompt = prompts.get_mcq_prompt(
+                question=q.question,
+                answer=q.answer,
+                skill=q.skill,
             )
-            raw = response.choices[0].message.content
-            if not raw:
-                raise Exception("LLM did not return any content")
 
-            parsed = extract_json(raw)
-            q.option_a = parsed.get("option_a").strip()
-            q.option_b = parsed.get("option_b").strip()
-            q.option_c = parsed.get("option_c").strip()
-            q.option_d = parsed.get("option_d").strip()
-            q.correct_option = parsed.get("correct_option").strip().upper()
-            q.short_explanation = parsed.get("short_explanation").strip()
-            q.distractor_explanations = parsed.get("distractor_explanations")
+            response = call_llm_with_retry(
+                prompt,
+                feature="interview_challenge_mcq",
+                temperature=0.1,
+                json_response=True,
+            )
+            parsed = response if isinstance(response, dict) else extract_json(response)
+            q.option_a = str(parsed.get("option_a") or "").strip()
+            q.option_b = str(parsed.get("option_b") or "").strip()
+            q.option_c = str(parsed.get("option_c") or "").strip()
+            q.option_d = str(parsed.get("option_d") or "").strip()
+            q.correct_option = str(parsed.get("correct_option") or "").strip().upper()
+            q.short_explanation = str(parsed.get("short_explanation") or "").strip()
+            q.distractor_explanations = parsed.get("distractor_explanations") or {}
+            if not all(
+                [
+                    q.option_a,
+                    q.option_b,
+                    q.option_c,
+                    q.option_d,
+                    q.correct_option,
+                ]
+            ):
+                raise ValueError("AI returned incomplete MCQ data.")
+            if q.correct_option not in {
+                "A",
+                "B",
+                "C",
+                "D",
+            }:
+                raise ValueError("AI returned an invalid correct option.")
             db.commit()
         except Exception:
             # Rollback transaction on failure
@@ -71,17 +84,24 @@ class ChallengeService:
             # Generate high-quality local fallback options derived from the original descriptive answer
             ans_clean = q.answer.strip()
             # Split by double newline first to separate paragraphs, then replace single newlines with spaces
-            paragraphs = [p.strip().replace("\n", " ") for p in ans_clean.split("\n\n") if p.strip()]
-            first_paragraph = paragraphs[0] if paragraphs else ans_clean.replace("\n", " ")
-            
+            paragraphs = [
+                p.strip().replace("\n", " ")
+                for p in ans_clean.split("\n\n")
+                if p.strip()
+            ]
+            first_paragraph = (
+                paragraphs[0] if paragraphs else ans_clean.replace("\n", " ")
+            )
+
             # Clean up extra spaces
             first_paragraph = " ".join(first_paragraph.split())
-            
+
             if len(first_paragraph) <= 150:
                 correct_statement = first_paragraph
             else:
                 import re
-                sentences = re.split(r'[.!?](?=\s|$)', first_paragraph)
+
+                sentences = re.split(r"[.!?](?=\s|$)", first_paragraph)
                 first_sentence = sentences[0].strip()
                 if first_sentence:
                     correct_statement = first_sentence + "."
@@ -91,90 +111,270 @@ class ChallengeService:
             # Define high-quality technical distractors per skill
             skill_distractors = {
                 "react": [
-                    {"text": "It forces a synchronous re-render of all children components immediately.", "explanation": "React batches state updates and executes rendering asynchronously; it does not force immediate synchronous renders of the entire child tree."},
-                    {"text": "It compiles the components directly into web assembly for faster execution.", "explanation": "React compiles components into standard browser-compatible JavaScript/HTML/CSS, not WebAssembly."},
-                    {"text": "It bypasses the virtual DOM to write directly to the user interface.", "explanation": "React relies on the Virtual DOM to reconcile state changes before modifying the actual DOM."},
-                    {"text": "It stores component state in the local storage of the browser automatically.", "explanation": "React state is stored in memory and reset on reload; local storage persistence requires explicit custom hooks."},
-                    {"text": "It prevents any props from being passed down to child components.", "explanation": "React components naturally support passing props downward as part of unidirectional data flow."}
+                    {
+                        "text": "It forces a synchronous re-render of all children components immediately.",
+                        "explanation": "React batches state updates and executes rendering asynchronously; it does not force immediate synchronous renders of the entire child tree.",
+                    },
+                    {
+                        "text": "It compiles the components directly into web assembly for faster execution.",
+                        "explanation": "React compiles components into standard browser-compatible JavaScript/HTML/CSS, not WebAssembly.",
+                    },
+                    {
+                        "text": "It bypasses the virtual DOM to write directly to the user interface.",
+                        "explanation": "React relies on the Virtual DOM to reconcile state changes before modifying the actual DOM.",
+                    },
+                    {
+                        "text": "It stores component state in the local storage of the browser automatically.",
+                        "explanation": "React state is stored in memory and reset on reload; local storage persistence requires explicit custom hooks.",
+                    },
+                    {
+                        "text": "It prevents any props from being passed down to child components.",
+                        "explanation": "React components naturally support passing props downward as part of unidirectional data flow.",
+                    },
                 ],
                 "javascript": [
-                    {"text": "It converts all synchronous operations into separate operating system threads.", "explanation": "JavaScript is single-threaded and executes synchronous code on the main call stack, not on separate threads."},
-                    {"text": "It automatically garbage collects all variables when they go out of block scope.", "explanation": "JavaScript garbage collection is based on reachability and references, not strictly on immediate block exit."},
-                    {"text": "It compiles JS code to machine instructions before sending it to the client.", "explanation": "JavaScript is sent as plain source code to the client and compiled/interpreted by the browser's engine."},
-                    {"text": "It allows direct manipulation of physical RAM addresses for efficiency.", "explanation": "JavaScript operates in a sandboxed runtime environment and does not allow raw physical memory addressing."},
-                    {"text": "It halts execution of the main thread until all network promises resolve.", "explanation": "JavaScript's event loop handles promises asynchronously without blocking the execution of the main thread."}
+                    {
+                        "text": "It converts all synchronous operations into separate operating system threads.",
+                        "explanation": "JavaScript is single-threaded and executes synchronous code on the main call stack, not on separate threads.",
+                    },
+                    {
+                        "text": "It automatically garbage collects all variables when they go out of block scope.",
+                        "explanation": "JavaScript garbage collection is based on reachability and references, not strictly on immediate block exit.",
+                    },
+                    {
+                        "text": "It compiles JS code to machine instructions before sending it to the client.",
+                        "explanation": "JavaScript is sent as plain source code to the client and compiled/interpreted by the browser's engine.",
+                    },
+                    {
+                        "text": "It allows direct manipulation of physical RAM addresses for efficiency.",
+                        "explanation": "JavaScript operates in a sandboxed runtime environment and does not allow raw physical memory addressing.",
+                    },
+                    {
+                        "text": "It halts execution of the main thread until all network promises resolve.",
+                        "explanation": "JavaScript's event loop handles promises asynchronously without blocking the execution of the main thread.",
+                    },
                 ],
                 "html": [
-                    {"text": "It compiles layout structures into optimized CSS selectors automatically.", "explanation": "HTML defines structure and semantics; it has no mechanism to compile CSS selectors."},
-                    {"text": "It executes client-side database queries directly from tag attributes.", "explanation": "HTML is a markup language and cannot query databases directly; JavaScript or backend APIs are required."},
-                    {"text": "It establishes secure cryptographic tunnels between client and host.", "explanation": "Secure cryptographic tunnels are handled by the transport protocol (HTTPS/TLS), not by HTML elements."},
-                    {"text": "It defines the styling and presentation layer of the web application.", "explanation": "Styling and presentation are handled by CSS, whereas HTML is restricted to semantic markup."},
-                    {"text": "It stores persistent key-value session state inside the DOM elements.", "explanation": "Persistent session state is stored in cookies or web storage API, not directly in HTML elements."}
+                    {
+                        "text": "It compiles layout structures into optimized CSS selectors automatically.",
+                        "explanation": "HTML defines structure and semantics; it has no mechanism to compile CSS selectors.",
+                    },
+                    {
+                        "text": "It executes client-side database queries directly from tag attributes.",
+                        "explanation": "HTML is a markup language and cannot query databases directly; JavaScript or backend APIs are required.",
+                    },
+                    {
+                        "text": "It establishes secure cryptographic tunnels between client and host.",
+                        "explanation": "Secure cryptographic tunnels are handled by the transport protocol (HTTPS/TLS), not by HTML elements.",
+                    },
+                    {
+                        "text": "It defines the styling and presentation layer of the web application.",
+                        "explanation": "Styling and presentation are handled by CSS, whereas HTML is restricted to semantic markup.",
+                    },
+                    {
+                        "text": "It stores persistent key-value session state inside the DOM elements.",
+                        "explanation": "Persistent session state is stored in cookies or web storage API, not directly in HTML elements.",
+                    },
                 ],
                 "css": [
-                    {"text": "It parses JavaScript functions to dynamically render vector graphics.", "explanation": "CSS cannot execute or parse JavaScript; vector graphics rendering is handled by SVG or Canvas."},
-                    {"text": "It processes server-side templates before they are sent to the user browser.", "explanation": "CSS is a client-side styling language processed entirely by the user's browser, not the server."},
-                    {"text": "It handles client-side state management and database connections.", "explanation": "CSS has no capabilities for state management or network communication; JavaScript must be used instead."},
-                    {"text": "It executes HTTP requests to fetch page assets asynchronously.", "explanation": "Asset loading is initiated by HTML parser or JavaScript, not directly executed by CSS logic."},
-                    {"text": "It compiles semantic HTML layout structures into machine-readable XML.", "explanation": "CSS applies visual styles to existing document trees; it does not compile HTML into XML."}
+                    {
+                        "text": "It parses JavaScript functions to dynamically render vector graphics.",
+                        "explanation": "CSS cannot execute or parse JavaScript; vector graphics rendering is handled by SVG or Canvas.",
+                    },
+                    {
+                        "text": "It processes server-side templates before they are sent to the user browser.",
+                        "explanation": "CSS is a client-side styling language processed entirely by the user's browser, not the server.",
+                    },
+                    {
+                        "text": "It handles client-side state management and database connections.",
+                        "explanation": "CSS has no capabilities for state management or network communication; JavaScript must be used instead.",
+                    },
+                    {
+                        "text": "It executes HTTP requests to fetch page assets asynchronously.",
+                        "explanation": "Asset loading is initiated by HTML parser or JavaScript, not directly executed by CSS logic.",
+                    },
+                    {
+                        "text": "It compiles semantic HTML layout structures into machine-readable XML.",
+                        "explanation": "CSS applies visual styles to existing document trees; it does not compile HTML into XML.",
+                    },
                 ],
                 "python": [
-                    {"text": "It compiles all module functions into native C++ classes at runtime.", "explanation": "Python executes code via an interpreter or bytecode compiler, not by translating modules to C++."},
-                    {"text": "It automatically manages asynchronous task threads using the hardware scheduler.", "explanation": "Python handles concurrency via user-space event loops or the OS thread scheduler, not hardware levels."},
-                    {"text": "It bypasses the Global Interpreter Lock (GIL) for all CPU-bound operations.", "explanation": "Python's GIL restricts execution to a single thread in CPython, requiring multiprocessing to bypass."},
-                    {"text": "It executes static type analysis and rejects code with type mismatches.", "explanation": "Python is dynamically typed and executes code regardless of type annotations; type checkers are external tools."},
-                    {"text": "It stores all global variables in the browser session storage.", "explanation": "Python is a backend/general language; it does not store variables in the browser storage."}
+                    {
+                        "text": "It compiles all module functions into native C++ classes at runtime.",
+                        "explanation": "Python executes code via an interpreter or bytecode compiler, not by translating modules to C++.",
+                    },
+                    {
+                        "text": "It automatically manages asynchronous task threads using the hardware scheduler.",
+                        "explanation": "Python handles concurrency via user-space event loops or the OS thread scheduler, not hardware levels.",
+                    },
+                    {
+                        "text": "It bypasses the Global Interpreter Lock (GIL) for all CPU-bound operations.",
+                        "explanation": "Python's GIL restricts execution to a single thread in CPython, requiring multiprocessing to bypass.",
+                    },
+                    {
+                        "text": "It executes static type analysis and rejects code with type mismatches.",
+                        "explanation": "Python is dynamically typed and executes code regardless of type annotations; type checkers are external tools.",
+                    },
+                    {
+                        "text": "It stores all global variables in the browser session storage.",
+                        "explanation": "Python is a backend/general language; it does not store variables in the browser storage.",
+                    },
                 ],
                 "fastapi": [
-                    {"text": "It uses Django's template engine to render HTML views server-side.", "explanation": "FastAPI is a lightweight API framework; it does not include or rely on Django's template engine."},
-                    {"text": "It forces all endpoint requests to execute in a single synchronous process.", "explanation": "FastAPI natively supports asynchronous concurrency using async/await and standard python thread pools."},
-                    {"text": "It compiles Python decorators to native Node.js event loops.", "explanation": "FastAPI runs on Uvicorn/ASGI Python event loops, and is unrelated to Node.js."},
-                    {"text": "It manages client-side routing and state hydration automatically.", "explanation": "FastAPI is a backend API framework and does not handle client-side router hydration."},
-                    {"text": "It prevents asynchronous database calls to maintain thread safety.", "explanation": "FastAPI fully supports and encourages async database clients and async route operations."}
+                    {
+                        "text": "It uses Django's template engine to render HTML views server-side.",
+                        "explanation": "FastAPI is a lightweight API framework; it does not include or rely on Django's template engine.",
+                    },
+                    {
+                        "text": "It forces all endpoint requests to execute in a single synchronous process.",
+                        "explanation": "FastAPI natively supports asynchronous concurrency using async/await and standard python thread pools.",
+                    },
+                    {
+                        "text": "It compiles Python decorators to native Node.js event loops.",
+                        "explanation": "FastAPI runs on Uvicorn/ASGI Python event loops, and is unrelated to Node.js.",
+                    },
+                    {
+                        "text": "It manages client-side routing and state hydration automatically.",
+                        "explanation": "FastAPI is a backend API framework and does not handle client-side router hydration.",
+                    },
+                    {
+                        "text": "It prevents asynchronous database calls to maintain thread safety.",
+                        "explanation": "FastAPI fully supports and encourages async database clients and async route operations.",
+                    },
                 ],
                 "flask": [
-                    {"text": "It provides built-in client-side state management and component rendering.", "explanation": "Flask is a backend micro-framework and does not render interactive client-side components."},
-                    {"text": "It compiles Python scripts directly to browser-executable JavaScript.", "explanation": "Flask serves files to the client; it does not translate or compile Python into JavaScript."},
-                    {"text": "It automatically scales the database connection pool across multiple machines.", "explanation": "Flask does not manage distributed database clusters; database pooling is managed by SQLAlchemy."},
-                    {"text": "It is an asynchronous-first framework that requires ASGI servers.", "explanation": "Flask is historically synchronous (WSGI-based), though it has added limited async support recently."},
-                    {"text": "It implements strict static type checking for all route parameters.", "explanation": "Flask processes route parameters dynamically at runtime and does not perform static compile-time typing."}
+                    {
+                        "text": "It provides built-in client-side state management and component rendering.",
+                        "explanation": "Flask is a backend micro-framework and does not render interactive client-side components.",
+                    },
+                    {
+                        "text": "It compiles Python scripts directly to browser-executable JavaScript.",
+                        "explanation": "Flask serves files to the client; it does not translate or compile Python into JavaScript.",
+                    },
+                    {
+                        "text": "It automatically scales the database connection pool across multiple machines.",
+                        "explanation": "Flask does not manage distributed database clusters; database pooling is managed by SQLAlchemy.",
+                    },
+                    {
+                        "text": "It is an asynchronous-first framework that requires ASGI servers.",
+                        "explanation": "Flask is historically synchronous (WSGI-based), though it has added limited async support recently.",
+                    },
+                    {
+                        "text": "It implements strict static type checking for all route parameters.",
+                        "explanation": "Flask processes route parameters dynamically at runtime and does not perform static compile-time typing.",
+                    },
                 ],
                 "typescript": [
-                    {"text": "It executes type checking at runtime inside the browser environment.", "explanation": "TypeScript types are completely erased during compilation; no runtime type checking exists in the browser."},
-                    {"text": "It compiles the codebase into highly optimized binary executables.", "explanation": "TypeScript compiles down to standard JavaScript source files, not binary executables."},
-                    {"text": "It allows developers to bypass the JavaScript execution engine completely.", "explanation": "TypeScript runs on standard JavaScript engines (V8, JavaScriptCore) after compilation to JS."},
-                    {"text": "It registers global event listeners to check variable mutations.", "explanation": "TypeScript is a static analysis tool and does not register runtime variable mutation watchers."},
-                    {"text": "It forces the browser to run in a strict sandboxed memory space.", "explanation": "TypeScript compilation has no effect on the browser's native security sandboxing or memory allocation."}
+                    {
+                        "text": "It executes type checking at runtime inside the browser environment.",
+                        "explanation": "TypeScript types are completely erased during compilation; no runtime type checking exists in the browser.",
+                    },
+                    {
+                        "text": "It compiles the codebase into highly optimized binary executables.",
+                        "explanation": "TypeScript compiles down to standard JavaScript source files, not binary executables.",
+                    },
+                    {
+                        "text": "It allows developers to bypass the JavaScript execution engine completely.",
+                        "explanation": "TypeScript runs on standard JavaScript engines (V8, JavaScriptCore) after compilation to JS.",
+                    },
+                    {
+                        "text": "It registers global event listeners to check variable mutations.",
+                        "explanation": "TypeScript is a static analysis tool and does not register runtime variable mutation watchers.",
+                    },
+                    {
+                        "text": "It forces the browser to run in a strict sandboxed memory space.",
+                        "explanation": "TypeScript compilation has no effect on the browser's native security sandboxing or memory allocation.",
+                    },
                 ],
                 "docker": [
-                    {"text": "It compiles the host operating system kernel into a virtual hardware image.", "explanation": "Docker containers share the host operating system kernel instead of compiling a virtual kernel."},
-                    {"text": "It runs applications in a remote cloud environment rather than locally.", "explanation": "Docker runs containers locally on the host machine using native OS namespaces and cgroups."},
-                    {"text": "It replaces the physical CPU scheduler with a virtual container process.", "explanation": "Docker relies on the host OS kernel scheduler to allocate CPU time to container processes."},
-                    {"text": "It establishes a secure hardware sandbox using virtual machines.", "explanation": "Docker uses operating system level virtualization (cgroups and namespaces), not hardware virtual machines."},
-                    {"text": "It automatically deploys frontend source code changes to the live CDN.", "explanation": "Docker containerizes applications; it has no built-in CDN deployment functionality."}
+                    {
+                        "text": "It compiles the host operating system kernel into a virtual hardware image.",
+                        "explanation": "Docker containers share the host operating system kernel instead of compiling a virtual kernel.",
+                    },
+                    {
+                        "text": "It runs applications in a remote cloud environment rather than locally.",
+                        "explanation": "Docker runs containers locally on the host machine using native OS namespaces and cgroups.",
+                    },
+                    {
+                        "text": "It replaces the physical CPU scheduler with a virtual container process.",
+                        "explanation": "Docker relies on the host OS kernel scheduler to allocate CPU time to container processes.",
+                    },
+                    {
+                        "text": "It establishes a secure hardware sandbox using virtual machines.",
+                        "explanation": "Docker uses operating system level virtualization (cgroups and namespaces), not hardware virtual machines.",
+                    },
+                    {
+                        "text": "It automatically deploys frontend source code changes to the live CDN.",
+                        "explanation": "Docker containerizes applications; it has no built-in CDN deployment functionality.",
+                    },
                 ],
                 "postgresql": [
-                    {"text": "It caches all table indexes in the browser's indexedDB storage.", "explanation": "PostgreSQL is a server-side database; it caches indexes in its own shared buffers, not the browser."},
-                    {"text": "It executes Javascript functions directly on the client side CPU.", "explanation": "PostgreSQL queries are executed on the database server, not on the client's CPU."},
-                    {"text": "It stores all relational table rows in unstructured plain text files.", "explanation": "PostgreSQL stores data in structured binary page files, using specific layout schemas for data pages."},
-                    {"text": "It restricts all queries to single-table scans without JOIN support.", "explanation": "PostgreSQL is a relational database with robust, optimized support for complex multi-table JOINs."},
-                    {"text": "It converts all SQL queries into MongoDB document requests.", "explanation": "PostgreSQL natively compiles and executes SQL queries using its own relational engine."}
+                    {
+                        "text": "It caches all table indexes in the browser's indexedDB storage.",
+                        "explanation": "PostgreSQL is a server-side database; it caches indexes in its own shared buffers, not the browser.",
+                    },
+                    {
+                        "text": "It executes Javascript functions directly on the client side CPU.",
+                        "explanation": "PostgreSQL queries are executed on the database server, not on the client's CPU.",
+                    },
+                    {
+                        "text": "It stores all relational table rows in unstructured plain text files.",
+                        "explanation": "PostgreSQL stores data in structured binary page files, using specific layout schemas for data pages.",
+                    },
+                    {
+                        "text": "It restricts all queries to single-table scans without JOIN support.",
+                        "explanation": "PostgreSQL is a relational database with robust, optimized support for complex multi-table JOINs.",
+                    },
+                    {
+                        "text": "It converts all SQL queries into MongoDB document requests.",
+                        "explanation": "PostgreSQL natively compiles and executes SQL queries using its own relational engine.",
+                    },
                 ],
                 "git": [
-                    {"text": "It hosts the web application on a distributed cloud CDN automatically.", "explanation": "Git is a version control system and does not compile or host web applications on a CDN."},
-                    {"text": "It translates code files into browser-compatible JavaScript syntax.", "explanation": "Git tracks file changes; it does not modify or compile file contents or syntax."},
-                    {"text": "It monitors user activity and keystrokes in real-time.", "explanation": "Git only records changes when explicit commands like commit are run; it has no keystroke monitoring."},
-                    {"text": "It compiles development branches into optimized production bundles.", "explanation": "Git manages code branches and history; it does not build or bundle production assets."},
-                    {"text": "It runs automated unit tests on the user's local machine before saving.", "explanation": "Git does not run tests automatically unless pre-commit hooks are explicitly configured."}
-                ]
+                    {
+                        "text": "It hosts the web application on a distributed cloud CDN automatically.",
+                        "explanation": "Git is a version control system and does not compile or host web applications on a CDN.",
+                    },
+                    {
+                        "text": "It translates code files into browser-compatible JavaScript syntax.",
+                        "explanation": "Git tracks file changes; it does not modify or compile file contents or syntax.",
+                    },
+                    {
+                        "text": "It monitors user activity and keystrokes in real-time.",
+                        "explanation": "Git only records changes when explicit commands like commit are run; it has no keystroke monitoring.",
+                    },
+                    {
+                        "text": "It compiles development branches into optimized production bundles.",
+                        "explanation": "Git manages code branches and history; it does not build or bundle production assets.",
+                    },
+                    {
+                        "text": "It runs automated unit tests on the user's local machine before saving.",
+                        "explanation": "Git does not run tests automatically unless pre-commit hooks are explicitly configured.",
+                    },
+                ],
             }
 
             general_distractors = [
-                {"text": "It optimizes runtime performance by allocating additional physical CPU cores.", "explanation": "Software logic cannot allocate physical CPU cores; core allocation is managed by the OS kernel and hardware."},
-                {"text": "It compiles the source code modules into dynamic shared library files.", "explanation": "Web applications compile to web assets or run interpreted, not as dynamic shared libraries."},
-                {"text": "It schedules execution blocks using a custom queue scheduler.", "explanation": "Task scheduling is managed by event loops or operating systems, not by individual code features."},
-                {"text": "It handles asynchronous event propagation across the app layers.", "explanation": "This feature manages static structure or data, and does not handle runtime event propagation."},
-                {"text": "It registers event listeners to track resource mutations dynamically.", "explanation": "This feature has no mechanism to watch or listen for external resource mutations."}
+                {
+                    "text": "It optimizes runtime performance by allocating additional physical CPU cores.",
+                    "explanation": "Software logic cannot allocate physical CPU cores; core allocation is managed by the OS kernel and hardware.",
+                },
+                {
+                    "text": "It compiles the source code modules into dynamic shared library files.",
+                    "explanation": "Web applications compile to web assets or run interpreted, not as dynamic shared libraries.",
+                },
+                {
+                    "text": "It schedules execution blocks using a custom queue scheduler.",
+                    "explanation": "Task scheduling is managed by event loops or operating systems, not by individual code features.",
+                },
+                {
+                    "text": "It handles asynchronous event propagation across the app layers.",
+                    "explanation": "This feature manages static structure or data, and does not handle runtime event propagation.",
+                },
+                {
+                    "text": "It registers event listeners to track resource mutations dynamically.",
+                    "explanation": "This feature has no mechanism to watch or listen for external resource mutations.",
+                },
             ]
 
             skill_key = (q.skill or "").strip().lower()
@@ -189,7 +389,7 @@ class ChallengeService:
             correct_idx = random.randint(0, 3)
             options = [""] * 4
             options[correct_idx] = correct_statement
-            
+
             letters = ["A", "B", "C", "D"]
             dist_exps = {}
             dist_exps[letters[correct_idx]] = ""
