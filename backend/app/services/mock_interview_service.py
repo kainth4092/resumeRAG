@@ -1,11 +1,73 @@
+import json
+import random
 import logging
 from typing import List, Dict, Any, Optional
+from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from app.interview.services.matching_service import SkillMatchingService
 from app.models.interview_bank import InterviewQuestionBank
 from app.models.mock_interview import MockInterviewAnswer, MockInterviewSession
+from app.resume.repository.resume_repository import ResumeRepository
+from app.resume.services.resume_normalizer import coerce_to_canonical
+from app.services.candidate_context_service import infer_candidate_level
 
 logger = logging.getLogger(__name__)
+
+QUESTION_BANK_SKILL_ALIASES = {
+    "python": {
+        "python",
+        "scikit-learn",
+        "python data pipelines",
+    },
+    "fastapi": {
+        "fastapi",
+        "rest api",
+        "rest apis",
+    },
+    "postgresql": {
+        "postgresql",
+        "postgres",
+    },
+    "sql": {
+        "sql",
+        "spark sql",
+    },
+    "docker": {
+        "docker",
+        "containers",
+        "containerization",
+    },
+    "git": {
+        "git",
+        "github",
+        "azure devops",
+        "ci/cd",
+    },
+    "machine learning": {
+        "machine learning",
+        "ml",
+        "scikit-learn",
+        "classification",
+        "regression",
+        "clustering",
+        "feature engineering",
+        "model evaluation",
+        "hyperparameter tuning",
+        "forecasting",
+        "time series",
+    },
+    "rag": {
+        "rag",
+        "retrieval qa",
+        "retrieval augmented generation",
+    },
+    "ai": {
+        "artificial intelligence",
+        "semantic ai",
+        "applied ai",
+    },
+}
 
 SYSTEM_BEHAVIORAL_QUESTIONS = [
     {
@@ -82,6 +144,37 @@ SYSTEM_BEHAVIORAL_QUESTIONS = [
 
 
 class MockInterviewService:
+    @staticmethod
+    def _match_question_bank_skills(
+        candidate_skills,
+        available_bank_skills,
+    ):
+        candidate_text = " | ".join(
+            str(skill).strip().lower()
+            for skill in candidate_skills
+            if str(skill).strip()
+        )
+
+        matched_skills = []
+
+        for bank_skill in available_bank_skills:
+            normalized_bank_skill = str(bank_skill).strip().lower()
+
+            if not normalized_bank_skill:
+                continue
+
+            aliases = QUESTION_BANK_SKILL_ALIASES.get(
+                normalized_bank_skill,
+                {
+                    normalized_bank_skill,
+                },
+            )
+
+            if any(alias in candidate_text for alias in aliases):
+                matched_skills.append(str(bank_skill).strip())
+
+        return matched_skills
+
     def _ensure_behavioral_questions(self, db: Session):
         """
         Dynamically populates high-quality behavioral questions in database if missing.
@@ -119,40 +212,189 @@ class MockInterviewService:
         user_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Generates a balanced mock interview sequence containing 8 questions:
-        1. 1 Introduction question (typically fixed or selected from behavioral)
-        2. 1 Project-based question
-        3. 4 Skill/technical-based questions
-        4. 2 Scenario-based questions
+        Build an eight-question mock interview from the authenticated
+        user's active resume:
 
-        Ensures questions are random and change every time (except introduction)
-        by avoiding questions the user has already answered.
+        1 introduction question
+        1 active-resume project question
+        4 active-resume technical questions
+        2 candidate-level scenario questions
         """
+
+        if user_id is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication is required.",
+            )
+
         logger.info(
-            f"Retrieving balanced real voice interview questions (user_id: {user_id})"
+            "Generating active-resume mock interview "
+            "for user_id=%s interview_type=%s",
+            user_id,
+            interview_type,
         )
 
-        # Ensure database has behavioral questions seeded
         self._ensure_behavioral_questions(db)
 
-        # 1. Fetch previously answered questions to avoid duplicates
-        answered_q_ids = []
-        if user_id:
-            try:
-                answered_q_ids = [
-                    r[0]
-                    for r in db.query(MockInterviewAnswer.question_id)
-                    .join(MockInterviewSession)
-                    .filter(
-                        MockInterviewSession.user_id == user_id,
-                        MockInterviewAnswer.question_id.isnot(None),
-                    )
-                    .all()
-                ]
-            except Exception as e:
-                logger.error(f"Error fetching answered questions: {e}")
+        active_resume = ResumeRepository.get_active_resume(
+            db,
+            user_id,
+        )
 
-        # --- Phase 1: Introduction (1 question) ---
+        if not active_resume:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "No active resume found. "
+                    "Please select an active resume before "
+                    "starting a mock interview."
+                ),
+            )
+
+        canonical_resume: Dict[str, Any] = {}
+
+        if active_resume.resume_json:
+            try:
+                loaded_resume = json.loads(active_resume.resume_json)
+
+                if isinstance(loaded_resume, dict):
+                    canonical_resume = coerce_to_canonical(loaded_resume)
+
+            except (TypeError, ValueError, json.JSONDecodeError):
+                logger.warning(
+                    "Invalid resume_json for active resume ID %s. "
+                    "Using parsed-text fallback.",
+                    active_resume.id,
+                )
+
+        resume_text = active_resume.parsed_text or ""
+
+        canonical_skills = {
+            str(skill).strip()
+            for skill in canonical_resume.get(
+                "skills",
+                [],
+            )
+            if str(skill).strip()
+        }
+
+        extracted_skills = SkillMatchingService.extract_skills_from_text(resume_text)
+
+        candidate_skills = canonical_skills | extracted_skills
+
+        available_bank_skills = [
+            row[0]
+            for row in (
+                db.query(InterviewQuestionBank.skill)
+                .filter(InterviewQuestionBank.skill.isnot(None))
+                .distinct()
+                .all()
+            )
+            if row[0]
+        ]
+
+        matched_bank_skills = self._match_question_bank_skills(
+            candidate_skills=candidate_skills,
+            available_bank_skills=(available_bank_skills),
+        )
+
+        normalized_candidate_skills = {skill.lower() for skill in matched_bank_skills}
+
+        logger.info(
+            "Matched active-resume skills to " "question-bank skills: %s",
+            sorted(
+                matched_bank_skills,
+                key=str.lower,
+            ),
+        )
+
+        projects = [
+            project
+            for project in canonical_resume.get(
+                "projects",
+                [],
+            )
+            if isinstance(project, dict)
+        ]
+
+        experience_entries = [
+            experience
+            for experience in canonical_resume.get(
+                "experience",
+                [],
+            )
+            if isinstance(experience, dict)
+        ]
+
+        summary = str(
+            canonical_resume.get(
+                "summary",
+                "",
+            )
+            or ""
+        )
+
+        headline = str(
+            canonical_resume.get(
+                "headline",
+                "",
+            )
+            or ""
+        )
+
+        candidate_context = infer_candidate_level(
+            resume_text=resume_text,
+            experience_entries=experience_entries,
+            summary=summary,
+            headline=headline,
+        )
+
+        candidate_level = candidate_context["candidate_level"]
+
+        allowed_difficulties = {
+            "fresher": {"Easy", "Medium"},
+            "junior_experienced": {
+                "Easy",
+                "Medium",
+                "Hard",
+            },
+            "experienced": {
+                "Medium",
+                "Hard",
+            },
+            "senior": {
+                "Medium",
+                "Hard",
+            },
+        }.get(
+            candidate_level,
+            {"Easy", "Medium"},
+        )
+
+        logger.info(
+            "Mock interview context: "
+            "resume_id=%s candidate_level=%s skills=%s "
+            "projects=%d experience_entries=%d",
+            active_resume.id,
+            candidate_level,
+            sorted(candidate_skills),
+            len(projects),
+            len(experience_entries),
+        )
+
+        answered_q_ids = {
+            row[0]
+            for row in (
+                db.query(MockInterviewAnswer.question_id)
+                .join(MockInterviewSession)
+                .filter(
+                    MockInterviewSession.user_id == user_id,
+                    MockInterviewAnswer.question_id.isnot(None),
+                )
+                .all()
+            )
+        }
+
         intro_q = (
             db.query(InterviewQuestionBank)
             .filter(
@@ -162,250 +404,393 @@ class MockInterviewService:
             .first()
         )
 
-        if not intro_q:
-            intro_q = (
-                db.query(InterviewQuestionBank)
-                .filter(
-                    InterviewQuestionBank.category == "Behavioral",
-                    InterviewQuestionBank.question.ilike("%background%"),
-                )
-                .first()
-            )
-
-        if not intro_q:
-            intro_q_dict = {
-                "id": None,
-                "question": "Can you introduce yourself and walk me through your background?",
-                "answer": "Provide a brief 2-minute elevator pitch summarizing your education, core technical skills, key projects/achievements, and interest in this role.",
-                "skill": "HR Fundamentals",
-                "category": "Behavioral",
-                "experience_level": "Fresher",
-                "company": None,
-                "estimated_duration": "2-3 minutes",
-            }
-        else:
-            intro_q_dict = {
+        if intro_q:
+            intro_question = {
                 "id": intro_q.id,
                 "question": intro_q.question,
                 "answer": intro_q.answer,
                 "skill": intro_q.skill,
                 "category": intro_q.category,
-                "experience_level": intro_q.experience_level,
+                "difficulty": intro_q.difficulty,
+                "experience_level": candidate_level,
                 "company": intro_q.company,
                 "estimated_duration": "2-3 minutes",
             }
-
-        # --- Phase 2: Project-based (1 question) ---
-        project_q_candidates = db.query(InterviewQuestionBank).filter(
-            InterviewQuestionBank.category.in_(
-                ["Project", "Project Based", "Project\nBased"]
-            )
-        )
-
-        unseen_projects = (
-            project_q_candidates.filter(InterviewQuestionBank.id.notin_(answered_q_ids))
-            .order_by(func.random())
-            .limit(1)
-            .all()
-        )
-
-        if unseen_projects:
-            project_q = unseen_projects[0]
         else:
-            fallback_projects = (
-                project_q_candidates.order_by(func.random()).limit(1).all()
-            )
-            if fallback_projects:
-                project_q = fallback_projects[0]
-            else:
-                project_q = None
-
-        if not project_q:
-            project_q = (
-                db.query(InterviewQuestionBank)
-                .filter(
-                    InterviewQuestionBank.category == "Behavioral",
-                    InterviewQuestionBank.question.ilike("%project%"),
-                )
-                .order_by(func.random())
-                .first()
-            )
-
-        if not project_q:
-            project_q_dict = {
+            intro_question = {
                 "id": None,
-                "question": "Describe a difficult project challenge you faced and how you overcame it.",
-                "answer": "Explain the technical or team constraint, your plan of action, the implementation details, and what you successfully delivered.",
-                "skill": "Problem Solving",
-                "category": "Project Based",
-                "experience_level": "Intermediate",
+                "question": (
+                    "Can you introduce yourself and walk " "me through your background?"
+                ),
+                "answer": (
+                    "Summarize your education, relevant "
+                    "skills, actual projects or experience, "
+                    "and current career goals."
+                ),
+                "skill": "HR Fundamentals",
+                "category": "Behavioral",
+                "difficulty": "Easy",
+                "experience_level": candidate_level,
                 "company": None,
                 "estimated_duration": "2-3 minutes",
             }
-        else:
-            project_q_dict = {
-                "id": project_q.id,
-                "question": project_q.question,
-                "answer": project_q.answer,
-                "skill": project_q.skill,
-                "category": project_q.category,
-                "experience_level": project_q.experience_level,
-                "company": project_q.company,
+
+        if projects:
+            project = projects[0]
+
+            project_title = (
+                str(
+                    project.get(
+                        "title",
+                        "",
+                    )
+                    or ""
+                ).strip()
+                or "your project"
+            )
+
+            technologies = [
+                str(technology).strip()
+                for technology in project.get(
+                    "technologies",
+                    [],
+                )
+                if str(technology).strip()
+            ]
+
+            technology_context = ""
+
+            if technologies:
+                technology_context = " using " + ", ".join(technologies[:4])
+
+            project_question = {
+                "id": None,
+                "question": (
+                    f"Walk me through {project_title}"
+                    f"{technology_context}. "
+                    "What problem did it solve, what was "
+                    "your contribution, and what technical "
+                    "challenge did you handle?"
+                ),
+                "answer": (
+                    "Explain only verified project facts: "
+                    "the problem, your contribution, the "
+                    "technology choices, one challenge, "
+                    "the solution, and the result."
+                ),
+                "skill": (technologies[0] if technologies else "Project"),
+                "category": "Project Based",
+                "difficulty": ("Hard" if candidate_level == "senior" else "Medium"),
+                "experience_level": candidate_level,
+                "company": None,
                 "estimated_duration": "2-3 minutes",
             }
 
-        # --- Phase 3: Skills (4 questions) ---
-        tech_q_candidates = db.query(InterviewQuestionBank).filter(
-            InterviewQuestionBank.category == "Technical"
-        )
+        else:
+            if experience_entries:
+                project_question = {
+                    "id": None,
+                    "question": (
+                        "Choose one significant technical initiative "
+                        "from your professional experience. Walk me "
+                        "through the business problem, your specific "
+                        "contribution, the architecture or technical "
+                        "approach, the main trade-offs, and the "
+                        "measurable outcome."
+                    ),
+                    "answer": (
+                        "Use a verified initiative from your work "
+                        "experience. Explain the context, your "
+                        "ownership, technical decisions, constraints, "
+                        "implementation, measurable result, and what "
+                        "you would improve."
+                    ),
+                    "skill": "Professional Experience",
+                    "category": "Project Based",
+                    "difficulty": ("Hard" if candidate_level == "senior" else "Medium"),
+                    "experience_level": candidate_level,
+                    "company": None,
+                    "estimated_duration": "3-5 minutes",
+                }
 
-        unseen_techs = (
-            tech_q_candidates.filter(InterviewQuestionBank.id.notin_(answered_q_ids))
-            .order_by(func.random())
-            .limit(4)
-            .all()
-        )
-
-        selected_techs = list(unseen_techs)
-
-        if len(selected_techs) < 4:
-            needed = 4 - len(selected_techs)
-            answered_q_ids + [q.id for q in selected_techs]
-            extra_techs = (
-                tech_q_candidates.filter(
-                    InterviewQuestionBank.id.notin_([q.id for q in selected_techs])
-                )
-                .order_by(func.random())
-                .limit(needed)
-                .all()
-            )
-            selected_techs.extend(extra_techs)
-
-        tech_qs_list = []
-        for q in selected_techs:
-            tech_qs_list.append(
-                {
-                    "id": q.id,
-                    "question": q.question,
-                    "answer": q.answer,
-                    "skill": q.skill,
-                    "category": q.category,
-                    "experience_level": q.experience_level,
-                    "company": q.company,
+            else:
+                project_question = {
+                    "id": None,
+                    "question": (
+                        "Describe one technical project or "
+                        "practical assignment you completed. "
+                        "What did you build, what was your "
+                        "contribution, and what did you learn?"
+                    ),
+                    "answer": (
+                        "Use a real project, academic assignment, "
+                        "training exercise, or practical task. "
+                        "Do not claim work you did not complete."
+                    ),
+                    "skill": "Project",
+                    "category": "Project Based",
+                    "difficulty": "Medium",
+                    "experience_level": candidate_level,
+                    "company": None,
                     "estimated_duration": "2-3 minutes",
                 }
-            )
 
-        if not tech_qs_list:
-            default_techs = [
-                {
-                    "question": "What is a closure in JavaScript?",
-                    "answer": "A closure is the combination of a function bundled together with references to its surrounding state (the lexical environment).",
-                    "skill": "JavaScript",
-                },
-                {
-                    "question": "What is the Global Interpreter Lock (GIL) in Python?",
-                    "answer": "The GIL is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes at once.",
-                    "skill": "Python",
-                },
-                {
-                    "question": "What is the difference between SQL and NoSQL databases?",
-                    "answer": "SQL databases are relational, table-based, and have predefined schemas. NoSQL databases are non-relational, document or key-value based, and have dynamic schemas.",
-                    "skill": "Databases",
-                },
-                {
-                    "question": "What is a RESTful API and how does it work?",
-                    "answer": "A RESTful API is an architectural style for an application programming interface (API) that uses HTTP requests to GET, PUT, POST and DELETE data.",
-                    "skill": "APIs",
-                },
-            ]
-            for item in default_techs:
-                tech_qs_list.append(
-                    {
-                        "id": None,
-                        "question": item["question"],
-                        "answer": item["answer"],
-                        "skill": item["skill"],
-                        "category": "Technical",
-                        "experience_level": "Intermediate",
-                        "company": None,
-                        "estimated_duration": "2-3 minutes",
-                    }
-                )
-
-        # --- Phase 4: Scenario-based (2 questions) ---
-        scenario_q_candidates = db.query(InterviewQuestionBank).filter(
+        technical_query = db.query(InterviewQuestionBank).filter(
             InterviewQuestionBank.category.in_(
-                ["Scenario Based", "Scenario\nBased", "Scenario"]
-            )
+                [
+                    "Technical",
+                    "Coding",
+                    "Theory",
+                ]
+            ),
+            InterviewQuestionBank.difficulty.in_(allowed_difficulties),
         )
 
-        unseen_scenarios = (
-            scenario_q_candidates.filter(
+        if normalized_candidate_skills:
+            technical_query = technical_query.filter(
+                func.lower(InterviewQuestionBank.skill).in_(normalized_candidate_skills)
+            )
+
+        if answered_q_ids:
+            technical_query = technical_query.filter(
                 InterviewQuestionBank.id.notin_(answered_q_ids)
             )
-            .order_by(func.random())
-            .limit(2)
-            .all()
+
+        technical_pool = technical_query.order_by(func.random()).all()
+        questions_by_skill = {}
+
+        for question in technical_pool:
+            normalized_skill = (question.skill or "Unknown").strip().lower()
+
+            questions_by_skill.setdefault(
+                normalized_skill,
+                [],
+            ).append(question)
+
+        selected_technical = []
+        selected_ids = set()
+
+        skill_order = list(questions_by_skill.keys())
+
+        random.shuffle(skill_order)
+
+        # First pass:
+        # select one question from each distinct
+        # matched skill before repeating a skill.
+        for skill_name in skill_order:
+            skill_questions = questions_by_skill[skill_name]
+
+            if not skill_questions:
+                continue
+
+            question = skill_questions.pop()
+
+            selected_technical.append(question)
+
+            selected_ids.add(question.id)
+
+            if len(selected_technical) == 4:
+                break
+
+        # Second pass:
+        # fill remaining positions while allowing
+        # a maximum of two questions per skill.
+        if len(selected_technical) < 4:
+            selected_skill_counts = {}
+
+            for question in selected_technical:
+                skill_key = (question.skill or "Unknown").strip().lower()
+
+                selected_skill_counts[skill_key] = (
+                    selected_skill_counts.get(
+                        skill_key,
+                        0,
+                    )
+                    + 1
+                )
+
+            remaining_pool = [
+                question
+                for question in technical_pool
+                if question.id not in selected_ids
+            ]
+
+            random.shuffle(remaining_pool)
+
+            for question in remaining_pool:
+                skill_key = (question.skill or "Unknown").strip().lower()
+
+                if (
+                    selected_skill_counts.get(
+                        skill_key,
+                        0,
+                    )
+                    >= 2
+                ):
+                    continue
+
+                selected_technical.append(question)
+
+                selected_ids.add(question.id)
+
+                selected_skill_counts[skill_key] = (
+                    selected_skill_counts.get(
+                        skill_key,
+                        0,
+                    )
+                    + 1
+                )
+
+                if len(selected_technical) == 4:
+                    break
+
+        logger.info(
+            "Selected mock interview technical " "skills: %s",
+            [question.skill for question in selected_technical],
         )
 
-        selected_scenarios = list(unseen_scenarios)
+        technical_questions = [
+            {
+                "id": question.id,
+                "question": question.question,
+                "answer": question.answer,
+                "skill": question.skill,
+                "category": question.category,
+                "difficulty": question.difficulty,
+                "experience_level": (question.experience_level),
+                "company": question.company,
+                "estimated_duration": "2-3 minutes",
+            }
+            for question in selected_technical[:4]
+        ]
 
-        if len(selected_scenarios) < 2:
-            needed = 2 - len(selected_scenarios)
-            extra_scenarios = (
-                scenario_q_candidates.filter(
-                    InterviewQuestionBank.id.notin_([q.id for q in selected_scenarios])
-                )
-                .order_by(func.random())
-                .limit(needed)
-                .all()
-            )
-            selected_scenarios.extend(extra_scenarios)
-
-        scenario_qs_list = []
-        for q in selected_scenarios:
-            scenario_qs_list.append(
-                {
-                    "id": q.id,
-                    "question": q.question,
-                    "answer": q.answer,
-                    "skill": q.skill,
-                    "category": q.category,
-                    "experience_level": q.experience_level,
-                    "company": q.company,
-                    "estimated_duration": "2-3 minutes",
-                }
+        if not technical_questions:
+            logger.warning(
+                "No active-resume skill-matched technical "
+                "questions found for resume ID %s.",
+                active_resume.id,
             )
 
-        if not scenario_qs_list:
-            default_scenarios = [
+        if candidate_level == "fresher":
+            scenario_templates = [
                 {
-                    "question": "How would you handle a sudden traffic spike on your web application that causes database latency?",
-                    "answer": "Introduce caching (e.g. Redis), scale the application horizontally, optimize slow queries, or use read-replicas for the database.",
+                    "question": (
+                        "You find a bug in a project shortly "
+                        "before a deadline. How would you "
+                        "investigate, prioritize, and "
+                        "communicate the issue?"
+                    ),
+                    "answer": (
+                        "Reproduce the issue, inspect relevant "
+                        "logs or code, isolate the cause, "
+                        "prioritize impact, communicate early, "
+                        "test the fix, and document the result."
+                    ),
+                    "skill": "Problem Solving",
+                },
+                {
+                    "question": (
+                        "You are asked to use an unfamiliar "
+                        "technology in a project. How would "
+                        "you learn it and deliver the task?"
+                    ),
+                    "answer": (
+                        "Clarify the requirement, use official "
+                        "documentation, build a small proof of "
+                        "concept, ask focused questions, and "
+                        "validate the implementation."
+                    ),
+                    "skill": "Adaptability",
+                },
+            ]
+
+        elif candidate_level == "junior_experienced":
+            scenario_templates = [
+                {
+                    "question": (
+                        "A feature works locally but fails "
+                        "after deployment. How would you "
+                        "investigate and resolve it?"
+                    ),
+                    "answer": (
+                        "Compare environments, inspect logs "
+                        "and configuration, reproduce safely, "
+                        "isolate the cause, test the fix, and "
+                        "monitor after deployment."
+                    ),
+                    "skill": "Debugging",
+                },
+                {
+                    "question": (
+                        "A task estimate is likely to slip. "
+                        "How would you manage the technical "
+                        "work and stakeholder expectations?"
+                    ),
+                    "answer": (
+                        "Identify the blocker, reassess scope, "
+                        "communicate early, propose options, "
+                        "prioritize critical work, and provide "
+                        "a revised evidence-based estimate."
+                    ),
+                    "skill": "Time Management",
+                },
+            ]
+
+        else:
+            scenario_templates = [
+                {
+                    "question": (
+                        "A production service is experiencing "
+                        "higher latency. How would you "
+                        "diagnose the bottleneck and reduce "
+                        "risk while applying a fix?"
+                    ),
+                    "answer": (
+                        "Use metrics, logs, and traces to "
+                        "isolate the bottleneck, mitigate user "
+                        "impact, validate the fix, deploy "
+                        "safely, and monitor recovery."
+                    ),
                     "skill": "System Design",
                 },
                 {
-                    "question": "Your production deployment just failed and users are seeing 500 errors. What is your immediate action plan?",
-                    "answer": "Roll back to the last stable deployment immediately, check error logs, identify the root cause, and apply a hotfix after testing locally.",
-                    "skill": "DevOps",
+                    "question": (
+                        "Your team must make a significant "
+                        "technical trade-off under a delivery "
+                        "deadline. How would you evaluate and "
+                        "communicate the decision?"
+                    ),
+                    "answer": (
+                        "Define constraints, compare options, "
+                        "document trade-offs and risks, align "
+                        "stakeholders, choose a reversible "
+                        "path where possible, and define "
+                        "follow-up work."
+                    ),
+                    "skill": "Technical Leadership",
                 },
             ]
-            for item in default_scenarios:
-                scenario_qs_list.append(
-                    {
-                        "id": None,
-                        "question": item["question"],
-                        "answer": item["answer"],
-                        "skill": item["skill"],
-                        "category": "Scenario Based",
-                        "experience_level": "Advanced",
-                        "company": None,
-                        "estimated_duration": "2-3 minutes",
-                    }
-                )
 
-        return [intro_q_dict, project_q_dict] + tech_qs_list[:4] + scenario_qs_list[:2]
+        scenario_questions = [
+            {
+                "id": None,
+                "question": item["question"],
+                "answer": item["answer"],
+                "skill": item["skill"],
+                "category": "Scenario Based",
+                "difficulty": ("Hard" if candidate_level == "senior" else "Medium"),
+                "experience_level": candidate_level,
+                "company": None,
+                "estimated_duration": "2-3 minutes",
+            }
+            for item in scenario_templates
+        ]
+
+        return (
+            [intro_question, project_question]
+            + technical_questions
+            + scenario_questions
+        )
 
 
 mock_interview_service = MockInterviewService()

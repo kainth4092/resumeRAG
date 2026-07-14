@@ -5,6 +5,8 @@ from app.interview.repository.interview_repository import InterviewRepository
 from app.interview.services.generator_service import InterviewGeneratorService
 from app.interview.services.session_service import InterviewSessionService
 from app.interview.services.interview_service import generate_sample_answer
+from app.services.candidate_context_service import infer_candidate_level
+from app.interview.schemas.question import InterviewPipelineConfig
 
 
 class InterviewWorkflowService:
@@ -23,19 +25,26 @@ class InterviewWorkflowService:
                 status_code=404,
                 detail="Resume not found",
             )
-
+        candidate_context = infer_candidate_level(
+            resume_text=resume.parsed_text or "",
+        )
+        candidate_type = candidate_context["candidate_level"].upper()
+        difficulty_distribution = {
+            difficulty: percentage / 100
+            for difficulty, percentage in candidate_context[
+                "difficulty_distribution"
+            ].items()
+        }
+        pipeline_config = InterviewPipelineConfig(
+            difficulty_distribution=difficulty_distribution,
+        )
         generator_service = InterviewGeneratorService()
         questions_to_add = generator_service.generate_session_questions(
-            resume_text=resume.parsed_text, job_description=job_description, db=db
+            resume_text=resume.parsed_text or "",
+            job_description=job_description,
+            config=pipeline_config,
+            db=db,
         )
-
-        candidate_type = "FRESHER"
-        if (
-            "experienced" in resume.parsed_text.lower()
-            or "experience" in resume.parsed_text.lower()
-        ):
-            candidate_type = "EXPERIENCED"
-
         session = InterviewSessionService.create_session(
             db=db,
             user_id=current_user.id,

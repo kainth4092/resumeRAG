@@ -449,7 +449,7 @@ def parse_skills(lines: List[str]) -> List[str]:
             continue
 
         category_match = re.match(
-            r"^[A-Za-z][A-Za-z /&()+.-]{1,40}" r"\s*(?::|-)\s*(.+)$",
+            r"^[A-Za-z][A-Za-z /&()+.-]{1,40}" r"(?:\s*:\s*|\s+-\s+)" r"(.+)$",
             line,
         )
 

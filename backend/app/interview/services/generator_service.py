@@ -42,18 +42,14 @@ class InterviewGeneratorService:
             db_questions = db.query(InterviewQuestionBank).all()
             catalog = []
             for db_q in db_questions:
-                exp_lower = (db_q.experience_level or "").lower()
-                if (
-                    "fresher" in exp_lower
-                    or "junior" in exp_lower
-                    or "easy" in exp_lower
-                ):
-                    difficulty = "Easy"
-                elif (
-                    "senior" in exp_lower or "hard" in exp_lower or "lead" in exp_lower
-                ):
-                    difficulty = "Hard"
-                else:
+                difficulty = (db_q.difficulty or "Medium").strip().title()
+                if difficulty not in {"Easy", "Medium", "Hard"}:
+                    logger.warning(
+                        "Invalid difficulty '%s' for interview question id=%s. "
+                        "Using Medium fallback.",
+                        db_q.difficulty,
+                        db_q.id,
+                    )
                     difficulty = "Medium"
 
                 catalog.append(
@@ -84,9 +80,12 @@ class InterviewGeneratorService:
 
         if len(filtered_by_skills) < config.length:
             logger.info(
-                "Insufficient skill-specific questions, falling back to full catalog"
+                "Only %d skill-matched catalog questions are available for %d requested "
+                "questions. Keeping the active-resume skill pool and allowing AI "
+                "generation to fill the remaining slots.",
+                len(filtered_by_skills),
+                config.length,
             )
-            filtered_by_skills = catalog
 
         # Step 5: Difficulty & Category Filtering
         filtered_pool = filtered_by_skills

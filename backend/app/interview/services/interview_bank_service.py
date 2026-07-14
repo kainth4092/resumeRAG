@@ -20,25 +20,70 @@ def classify_difficulty(question_text: str, experience_level: str, skill: str) -
 
     # 1. Technical Depth and Complexity Keywords (Immediate Hard)
     hard_keywords = [
-        "vacuum", "garbage collection", "gil", "global interpreter lock",
-        "concurrency", "deadlock", "race condition", "internals", "under the hood",
-        "memory management", "thread safety", "semaphores", "profiler",
-        "memory leak", "metaclass", "descriptor", "event loop",
-        "query optimization", "explain analyze", "sharding", "replication",
-        "distributed", "cap theorem", "horizontal scaling", "load balancing",
-        "b-tree", "microservices orchestration", "kubernetes pod internals"
+        "vacuum",
+        "garbage collection",
+        "gil",
+        "global interpreter lock",
+        "concurrency",
+        "deadlock",
+        "race condition",
+        "internals",
+        "under the hood",
+        "memory management",
+        "thread safety",
+        "semaphores",
+        "profiler",
+        "memory leak",
+        "metaclass",
+        "descriptor",
+        "event loop",
+        "query optimization",
+        "explain analyze",
+        "sharding",
+        "replication",
+        "distributed",
+        "cap theorem",
+        "horizontal scaling",
+        "load balancing",
+        "b-tree",
+        "microservices orchestration",
+        "kubernetes pod internals",
     ]
     if any(kw in question_lower for kw in hard_keywords):
         return "Hard"
 
     # 2. Experience Level Mapping
     # Hard Indicators
-    hard_exp = ["senior", "lead", "advanced", "hard", "5+", "5-", "6+", "7+", "8+", "10+", "expert", "architect", "principal"]
+    hard_exp = [
+        "senior",
+        "lead",
+        "advanced",
+        "hard",
+        "5+",
+        "5-",
+        "6+",
+        "7+",
+        "8+",
+        "10+",
+        "expert",
+        "architect",
+        "principal",
+    ]
     if any(kw in exp_lower for kw in hard_exp):
         return "Hard"
 
     # Easy Indicators
-    easy_exp = ["fresher", "junior", "easy", "0-2", "0-1", "1-2", "entry", "basic", "beginner"]
+    easy_exp = [
+        "fresher",
+        "junior",
+        "easy",
+        "0-2",
+        "0-1",
+        "1-2",
+        "entry",
+        "basic",
+        "beginner",
+    ]
     if any(kw in exp_lower for kw in easy_exp):
         return "Easy"
 
@@ -49,9 +94,22 @@ def classify_difficulty(question_text: str, experience_level: str, skill: str) -
 
     # 3. Topic Complexity
     medium_keywords = [
-        "architecture", "decorator", "iterator", "generator", "middleware",
-        "index", "security", "jwt", "oauth", "docker", "pipeline", "cicd",
-        "testing", "mock", "transaction", "foreign key"
+        "architecture",
+        "decorator",
+        "iterator",
+        "generator",
+        "middleware",
+        "index",
+        "security",
+        "jwt",
+        "oauth",
+        "docker",
+        "pipeline",
+        "cicd",
+        "testing",
+        "mock",
+        "transaction",
+        "foreign key",
     ]
     if any(kw in question_lower for kw in medium_keywords):
         return "Medium"
@@ -80,18 +138,32 @@ def generate_and_update_answer_task(
             category=category,
             experience_level=experience_level,
         )
-        
-        question = db.query(InterviewQuestionBank).filter(InterviewQuestionBank.id == question_id).first()
+
+        question = (
+            db.query(InterviewQuestionBank)
+            .filter(InterviewQuestionBank.id == question_id)
+            .first()
+        )
         if question:
             question.answer = answer_text
             db.commit()
             db.refresh(question)
             try:
-                upsert_question(question)
+                upsert_question(
+                    question,
+                    force_update=True,
+                )
             except Exception as q_err:
-                logger.warning("Qdrant sync failed in background task: %s", q_err)
+                logger.warning(
+                    "Qdrant sync failed after generated answer "
+                    "for question ID %s: %s",
+                    question.id,
+                    q_err,
+                )
     except Exception:
-        logger.exception("Background answer generation failed for question %s", question_id)
+        logger.exception(
+            "Background answer generation failed for question %s", question_id
+        )
     finally:
         db.close()
 
@@ -100,7 +172,7 @@ def create_question(
     db: Session,
     payload: InterviewQuestionCreate,
     created_by: int | None = None,
-    background_tasks = None,
+    background_tasks=None,
 ):
     answer_text = payload.answer
     generate_in_background = False
@@ -109,7 +181,9 @@ def create_question(
         answer_text = "Generating answer..."
         generate_in_background = True
 
-    difficulty = classify_difficulty(payload.question, payload.experience_level, payload.skill)
+    difficulty = classify_difficulty(
+        payload.question, payload.experience_level, payload.skill
+    )
 
     question = InterviewQuestionBank(
         question=payload.question,
@@ -140,6 +214,7 @@ def create_question(
         else:
             # Fallback to synchronous if background_tasks is not provided (e.g. tests or admin script)
             from app.services.llm_service import generate_general_answer
+
             try:
                 ans = generate_general_answer(
                     question=saved_question.question,
@@ -186,12 +261,24 @@ def update_question(
         setattr(question, key, value)
 
     # Reclassify difficulty based on updated fields
-    question.difficulty = classify_difficulty(question.question, question.experience_level, question.skill)
+    question.difficulty = classify_difficulty(
+        question.question, question.experience_level, question.skill
+    )
 
     db.commit()
     db.refresh(question)
-
-    upsert_question(question)
+    try:
+        upsert_question(
+            question,
+            force_update=True,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Question ID %s was updated in SQL, "
+            "but Qdrant synchronization failed: %s",
+            question.id,
+            exc,
+        )
 
     return question
 
@@ -201,8 +288,19 @@ def delete_question(
     question: InterviewQuestionBank,
 ):
     question_id = question.id
-    QuestionBankRepository.delete_question(db, question)
-    delete_question_vector(question_id)
+    QuestionBankRepository.delete_question(
+        db,
+        question,
+    )
+    try:
+        delete_question_vector(question_id)
+    except Exception as exc:
+        logger.warning(
+            "Question ID %s was deleted from SQL, "
+            "but its Qdrant vector could not be deleted: %s",
+            question_id,
+            exc,
+        )
 
 
 def list_questions(
@@ -254,11 +352,8 @@ def get_filters_meta(
 
     if bookmark_only and user_id:
         query = query.join(
-            InterviewBookmark,
-            InterviewBookmark.question_id == InterviewQuestionBank.id
-        ).filter(
-            InterviewBookmark.user_id == user_id
-        )
+            InterviewBookmark, InterviewBookmark.question_id == InterviewQuestionBank.id
+        ).filter(InterviewBookmark.user_id == user_id)
 
     if source:
         query = query.filter(InterviewQuestionBank.source.ilike(source))
@@ -267,7 +362,9 @@ def get_filters_meta(
     if category:
         query = query.filter(InterviewQuestionBank.category.ilike(category))
     if experience_level:
-        query = query.filter(InterviewQuestionBank.experience_level.ilike(experience_level))
+        query = query.filter(
+            InterviewQuestionBank.experience_level.ilike(experience_level)
+        )
     if company:
         query = query.filter(InterviewQuestionBank.company.ilike(company))
     if difficulty:
@@ -282,31 +379,35 @@ def get_filters_meta(
     subquery = query.subquery()
 
     # Group by skill
-    skills_raw = db.query(
-        subquery.c.skill,
-        func.count(subquery.c.id)
-    ).group_by(subquery.c.skill).all()
+    skills_raw = (
+        db.query(subquery.c.skill, func.count(subquery.c.id))
+        .group_by(subquery.c.skill)
+        .all()
+    )
     skills = [{"name": s, "count": c} for s, c in skills_raw if s]
 
     # Group by category
-    categories_raw = db.query(
-        subquery.c.category,
-        func.count(subquery.c.id)
-    ).group_by(subquery.c.category).all()
+    categories_raw = (
+        db.query(subquery.c.category, func.count(subquery.c.id))
+        .group_by(subquery.c.category)
+        .all()
+    )
     categories = [{"name": cat, "count": c} for cat, c in categories_raw if cat]
 
     # Group by company
-    companies_raw = db.query(
-        subquery.c.company,
-        func.count(subquery.c.id)
-    ).group_by(subquery.c.company).all()
+    companies_raw = (
+        db.query(subquery.c.company, func.count(subquery.c.id))
+        .group_by(subquery.c.company)
+        .all()
+    )
     companies = [{"name": comp, "count": c} for comp, c in companies_raw if comp]
 
     # Group by difficulty
-    diff_raw = db.query(
-        subquery.c.difficulty,
-        func.count(subquery.c.id)
-    ).group_by(subquery.c.difficulty).all()
+    diff_raw = (
+        db.query(subquery.c.difficulty, func.count(subquery.c.id))
+        .group_by(subquery.c.difficulty)
+        .all()
+    )
 
     difficulties = {"Easy": 0, "Medium": 0, "Hard": 0}
     for diff_val, c in diff_raw:
@@ -317,18 +418,23 @@ def get_filters_meta(
 
     # Bookmarks count
     bookmarks_count = 0
-    if user_id:
-        bookmarks_count = db.query(func.count(subquery.c.id)).join(
-            InterviewBookmark,
-            InterviewBookmark.question_id == subquery.c.id
-        ).filter(
-            InterviewBookmark.user_id == user_id
-        ).scalar() or 0
+    bookmarks_count = 0
 
+    if user_id:
+        bookmarks_count = (
+            db.query(func.count(func.distinct(subquery.c.id)))
+            .join(
+                InterviewBookmark,
+                InterviewBookmark.question_id == subquery.c.id,
+            )
+            .filter(InterviewBookmark.user_id == user_id)
+            .scalar()
+            or 0
+        )
     return {
         "skills": skills,
         "categories": categories,
         "companies": companies,
         "difficulties": difficulties,
-        "bookmarks_count": bookmarks_count
+        "bookmarks_count": bookmarks_count,
     }

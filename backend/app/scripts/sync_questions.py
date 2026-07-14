@@ -3,7 +3,11 @@ from qdrant_client import QdrantClient
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.interview_bank import InterviewQuestionBank
-from app.services.qdrant_service import create_collection, upsert_question, COLLECTION_NAME
+from app.services.qdrant_service import (
+    create_collection,
+    upsert_question,
+    COLLECTION_NAME,
+)
 
 
 def sync_questions():
@@ -41,18 +45,29 @@ def sync_questions():
 
     inserted_count = 0
     skipped_count = 0
+    failed_ids = []
+    try:
+        for question in questions:
+            if question.id in existing_ids:
+                skipped_count += 1
+                continue
 
-    for question in questions:
-        if question.id in existing_ids:
-            skipped_count += 1
-            continue
+            try:
+                inserted = upsert_question(
+                    question,
+                    force_update=True,
+                )
 
-        # upsert_question returns True if inserted, False if skipped
-        inserted = upsert_question(question, force_update=True)
-        if inserted:
-            inserted_count += 1
-        else:
-            skipped_count += 1
+                if inserted:
+                    inserted_count += 1
+                else:
+                    skipped_count += 1
+
+            except Exception as exc:
+                failed_ids.append(question.id)
+                print(f"Failed to sync question ID " f"{question.id}: {exc}")
+    finally:
+        db.close()
 
     print("\n--- Sync Audit Report ---")
     print(f"Number of JSON questions loaded: {json_count}")
@@ -60,8 +75,20 @@ def sync_questions():
     print(f"Number of embeddings generated: {inserted_count}")
     print(f"Number of vectors inserted: {inserted_count}")
     print(f"Number of questions skipped (already in Qdrant): {skipped_count}")
+    print(f"Number of failed question vectors: {len(failed_ids)}")
+    if failed_ids:
+        print(
+            "Failed question IDs: "
+            + ", ".join(str(question_id) for question_id in failed_ids)
+        )
     print("-------------------------\n")
-    print("Sync Completed.")
+    if failed_ids:
+        print(
+            "Sync completed with failures. "
+            "Run the script again to retry missing vectors."
+        )
+    else:
+        print("Sync completed successfully.")
     db.close()
 
 

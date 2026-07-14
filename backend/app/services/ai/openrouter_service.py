@@ -43,7 +43,7 @@ class OpenRouterProvider(AIProvider):
             else "https://openrouter.ai/api/v1"
         )
 
-        self.model = settings.OPENROUTER_MODEL or "google/gemma-3-4b-it:free"
+        self.model = settings.OPENROUTER_MODEL
 
     # -----------------------------------------------------------------------
     # HEADERS
@@ -154,7 +154,9 @@ class OpenRouterProvider(AIProvider):
 
     def _get_models_to_try(self, requested_model: str) -> list[str]:
         models = [requested_model]
-        is_free = requested_model == "openrouter/free" or requested_model.endswith(":free")
+        is_free = requested_model == "openrouter/free" or requested_model.endswith(
+            ":free"
+        )
         if is_free:
             fallback_pool = [
                 "meta-llama/llama-3.3-70b-instruct:free",
@@ -169,32 +171,55 @@ class OpenRouterProvider(AIProvider):
                     models.append(fb)
         return models
 
-    def _is_invalid_response(self, content: str, system_prompt: str, user_prompt: str) -> bool:
+    def _is_invalid_response(
+        self, content: str, system_prompt: str, user_prompt: str
+    ) -> bool:
         cleaned = content.strip()
         if not cleaned:
             return True
         if "user safety:" in cleaned.lower():
-            logger.warning("[AI_RESPONSE_VALIDATION] Content safety verdict detected in response: %r", content)
+            logger.warning(
+                "[AI_RESPONSE_VALIDATION] Content safety verdict detected in response: %r",
+                content,
+            )
             return True
-        is_json_expected = "json" in system_prompt.lower() or "json" in user_prompt.lower() or "schema" in user_prompt.lower()
+        is_json_expected = (
+            "json" in system_prompt.lower()
+            or "json" in user_prompt.lower()
+            or "schema" in user_prompt.lower()
+        )
         if is_json_expected:
             if "{" not in cleaned or "}" not in cleaned:
-                logger.warning("[AI_RESPONSE_VALIDATION] JSON expected but response lacks curly braces: %r", content)
+                logger.warning(
+                    "[AI_RESPONSE_VALIDATION] JSON expected but response lacks curly braces: %r",
+                    content,
+                )
                 return True
             import json
+
             start = cleaned.find("{")
             end = cleaned.rfind("}")
             if start == -1 or end == -1 or end <= start:
-                logger.warning("[AI_RESPONSE_VALIDATION] JSON expected but braces are misaligned/missing: %r", content)
+                logger.warning(
+                    "[AI_RESPONSE_VALIDATION] JSON expected but braces are misaligned/missing: %r",
+                    content,
+                )
                 return True
             try:
-                candidate = cleaned[start:end+1]
+                candidate = cleaned[start : end + 1]
                 parsed = json.loads(candidate)
                 if not isinstance(parsed, dict):
-                    logger.warning("[AI_RESPONSE_VALIDATION] Parsed JSON is not a dictionary: %r", content)
+                    logger.warning(
+                        "[AI_RESPONSE_VALIDATION] Parsed JSON is not a dictionary: %r",
+                        content,
+                    )
                     return True
             except Exception as exc:
-                logger.warning("[AI_RESPONSE_VALIDATION] JSON validation failed: %s. Content was: %r", exc, content)
+                logger.warning(
+                    "[AI_RESPONSE_VALIDATION] JSON validation failed: %s. Content was: %r",
+                    exc,
+                    content,
+                )
                 return True
         return False
 
@@ -301,7 +326,7 @@ class OpenRouterProvider(AIProvider):
                     "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
                     model,
                     exception,
-                    models_to_try[models_to_try.index(model)+1:],
+                    models_to_try[models_to_try.index(model) + 1 :],
                 )
                 last_exception = exception
 
@@ -409,7 +434,7 @@ class OpenRouterProvider(AIProvider):
                     "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
                     model,
                     exception,
-                    models_to_try[models_to_try.index(model)+1:],
+                    models_to_try[models_to_try.index(model) + 1 :],
                 )
                 last_exception = exception
 
