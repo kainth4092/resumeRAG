@@ -24,6 +24,7 @@ export default function InterviewFilterSidebar({
   setActiveSkill,
   difficulty,
   setDifficulty,
+  difficultyCounts = {},
   selectedCategory,
   setSelectedCategory,
   categories = [],
@@ -151,23 +152,26 @@ export default function InterviewFilterSidebar({
           <label className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
             Difficulty
           </label>
-          <div className="grid grid-cols-3 gap-1.5">
-            {["Easy", "Medium", "Hard"].map((diff) => {
-              const active = difficulty === diff;
-              return (
-                <button
-                  key={diff}
-                  onClick={() => setDifficulty(active ? "" : diff)}
-                  className={`text-[11px] font-semibold py-1.5 rounded-lg border text-center transition-all cursor-pointer ${
-                    active
-                      ? "bg-primary/10 border-primary/45 text-primary font-bold"
-                      : "bg-input-background border-border text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                  }`}
-                >
-                  <p className="leading-none">{diff}</p>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-1.5">
+            {["Easy", "Medium", "Hard"]
+              .filter((diff) => (difficultyCounts[diff] || 0) > 0 || difficulty === diff)
+              .map((diff) => {
+                const active = difficulty === diff;
+                const count = difficultyCounts[diff] || 0;
+                return (
+                  <button
+                    key={diff}
+                    onClick={() => setDifficulty(active ? "" : diff)}
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      active
+                        ? "bg-primary/10 border-primary/45 text-primary font-bold"
+                        : "bg-input-background border-border text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                    }`}
+                  >
+                    {diff} ({count})
+                  </button>
+                );
+              })}
           </div>
         </div>
       )}

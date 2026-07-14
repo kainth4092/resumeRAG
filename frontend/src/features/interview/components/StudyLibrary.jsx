@@ -79,14 +79,31 @@ export default function StudyLibrary({
 
   const fetchMeta = useCallback(async () => {
     try {
-      const res = await getInterviewBankMeta();
+      const params = {
+        search: debouncedSearch || undefined,
+        skill: selectedSkill || undefined,
+        difficulty: selectedDifficulty || undefined,
+        category: selectedCategory || undefined,
+        company: selectedCompany || undefined,
+        bookmark_only: bookmarkOnly || undefined,
+        source: defaultSource || undefined,
+      };
+      const res = await getInterviewBankMeta(params);
       if (res.data) {
         setMeta(res.data);
       }
     } catch (err) {
       console.error("Failed to fetch library metadata:", err);
     }
-  }, []);
+  }, [
+    debouncedSearch,
+    selectedSkill,
+    selectedDifficulty,
+    selectedCategory,
+    selectedCompany,
+    bookmarkOnly,
+    defaultSource,
+  ]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -264,6 +281,7 @@ export default function StudyLibrary({
           setActiveSkill={setSelectedSkill}
           difficulty={selectedDifficulty}
           setDifficulty={setSelectedDifficulty}
+          difficultyCounts={meta.difficulties}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           categories={meta.categories}

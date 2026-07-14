@@ -74,27 +74,6 @@ export default function DashboardHeader({
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             {displayGreeting}
           </h1>
-          <p className="text-indigo-200 mt-1.5 text-sm max-w-md font-medium leading-relaxed">
-            {stats?.stats_summary?.ats_score > 0 ? (
-              <>
-                Your active ATS score is{" "}
-                <strong className="text-white">
-                  {stats.stats_summary.ats_score}/100
-                </strong>{" "}
-                ({stats.stats_summary.ats_trend}).
-              </>
-            ) : (
-              <>
-                Upload or generate your resume to calculate your first ATS
-                score.
-              </>
-            )}{" "}
-            You have{" "}
-            <strong className="text-white">
-              {stats?.stats_summary?.interviews_count || 0}
-            </strong>{" "}
-            interviews scheduled.
-          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -108,7 +87,7 @@ export default function DashboardHeader({
       </div>
 
       {/* Quick actions */}
-      <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+      <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
         {quickActions.map((qa) => (
           <button
             key={qa.label}

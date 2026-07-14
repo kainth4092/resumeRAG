@@ -39,3 +39,18 @@ class ResumeRepository:
             .filter(Resume.user_id == user_id, Resume.is_active)
             .first()
         )
+
+    @staticmethod
+    def delete_resume(db: Session, resume: Resume) -> None:
+        # Delete related resume health analysis
+        from app.models.resume_health import ResumeHealthAnalysis
+        from app.models.interview import InterviewSession
+
+        db.query(ResumeHealthAnalysis).filter(ResumeHealthAnalysis.resume_id == resume.id).delete()
+
+        # Delete interview sessions (associated questions will cascade delete due to delete-orphan cascade on session)
+        sessions = db.query(InterviewSession).filter(InterviewSession.resume_id == resume.id).all()
+        for session in sessions:
+            db.delete(session)
+
+        db.delete(resume)

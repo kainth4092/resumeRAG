@@ -258,7 +258,7 @@ export function useResumeEditor() {
 
       const resumeEntry = {
         id: resumeId,
-        title: personal.name ? `${personal.name}'s Resume` : "Untitled Resume",
+        title: personal.name || "Untitled Resume",
         score: state?.resume?.score || (existing ? existing.score : 85),
         status: existing
           ? existing.status || "Active"

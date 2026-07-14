@@ -6,6 +6,7 @@ import ResumeSelector from "../components/ai-workspace/ResumeSelector";
 import GeneralAudit from "../components/ai-workspace/GeneralAudit";
 import JobTailor from "../components/ai-workspace/JobTailor";
 import TailoredResult from "../components/ai-workspace/TailoredResult";
+import AIResumeSuiteShimmer from "../components/ai-workspace/AIResumeSuiteShimmer";
 
 export default function AIWorkspace() {
   const analysisState = useResumeAnalysis();
@@ -33,19 +34,21 @@ export default function AIWorkspace() {
     const prevAver = prevSelected?.version;
     const prevGver = prevGen?.version;
 
-    const selectedChanged = aid !== prevAid || aver !== prevAver || (!selectedResume !== !prevSelected);
-    const genChanged = gid !== prevGid || gver !== prevGver || (!genResume !== !prevGen);
+    const selectedChanged =
+      aid !== prevAid || aver !== prevAver || !selectedResume !== !prevSelected;
+    const genChanged =
+      gid !== prevGid || gver !== prevGver || !genResume !== !prevGen;
 
     if (selectedChanged && !genChanged) {
-      if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+      if (aid !== gid || aver !== gver || !selectedResume !== !genResume) {
         setResume(selectedResume);
         setUploaded(!!selectedResume);
       }
     } else if (genChanged && !selectedChanged) {
-      if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+      if (aid !== gid || aver !== gver || !selectedResume !== !genResume) {
         setSelectedResume(genResume);
       }
-    } else if (aid !== gid || aver !== gver || (!selectedResume !== !genResume)) {
+    } else if (aid !== gid || aver !== gver || !selectedResume !== !genResume) {
       if (selectedResume) {
         setResume(selectedResume);
         setUploaded(true);
@@ -104,6 +107,33 @@ export default function AIWorkspace() {
             onBack={() => generatorState.setGenerated(false)}
             onNavigateEditor={handleNavigateEditor}
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (generatorState.generating) {
+    return (
+      <div className="h-full overflow-y-auto bg-background text-left font-sans">
+        <div className="max-w-7xl mx-auto p-6 space-y-6 animate-in fade-in duration-200">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm shrink-0">
+                <Sparkles className="text-primary" size={20} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">
+                  AI Resume Suite
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-xl">
+                  Optimizing with AI. Rewriting bullet points, addressing skills
+                  gaps, and aligning with ATS requirements...
+                </p>
+              </div>
+            </div>
+          </div>
+          <AIResumeSuiteShimmer mode="generator" />
         </div>
       </div>
     );

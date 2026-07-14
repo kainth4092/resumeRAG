@@ -24,8 +24,8 @@ export const deleteInterviewQuestion = (id) => {
   return api.delete(`/interview-bank/${id}`);
 };
 
-export const getInterviewBankMeta = () => {
-  return api.get("/interview-bank/meta");
+export const getInterviewBankMeta = (params) => {
+  return api.get("/interview-bank/meta", { params });
 };
 
 export const generateAIAnswer = (payload) => {

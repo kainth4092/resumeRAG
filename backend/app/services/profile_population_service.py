@@ -5,7 +5,6 @@ from app.models.user_skill import UserSkill
 from app.models.user_project import UserProject
 from app.models.user_experience import UserExperience
 from app.models.user_education import UserEducation
-from app.services.llm_service import call_llm_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -18,78 +17,78 @@ def extract_and_populate_profile(db: Session, user_id: int, resume_text: str):
         logger.warning("No resume text provided for profile extraction")
         return None
 
-    prompt = f"""
-    You are an expert AI Resume Parser. Your task is to extract all professional profile information from the candidate's resume text and structure it exactly into the specified JSON format.
-    
-    Resume Text:
-    {resume_text}
-    
-    Instructions:
-    - Extract the candidate's full name, professional headline, phone, location, LinkedIn URL, GitHub URL, Portfolio/Website URL, and a brief professional summary.
-    - Extract the list of technical and professional skills as a flat list of strings.
-    - Extract the projects with title, description, tech_stack (as comma-separated string of technologies used), github_url, and live_url.
-    - Extract work experiences with company name, job role/title, description, start_month, start_year, end_month, end_year, and currently_working.
-    - Extract education details with institution, degree, start_year, and end_year.
-    - Do not invent any details. If any field or section is missing or cannot be found, leave it as null (for strings/URLs) or an empty array (for lists).
-    - Ensure start_year and end_year under experiences are integers (or null if not found), and start_year and end_year under education are strings (or null).
-    - Return ONLY valid JSON matching the schema below. Do not wrap in markdown or include extra text.
-    
-    JSON Schema:
-    {{
-      "full_name": "Full Name or null",
-      "headline": "Professional headline (e.g. Full Stack Developer) or null",
-      "phone": "Phone number or null",
-      "location": "City, State/Country or null",
-      "linkedin_url": "LinkedIn URL or null",
-      "github_url": "GitHub URL or null",
-      "portfolio_url": "Portfolio URL or null",
-      "summary": "Professional summary paragraph or null",
-      "skills": ["Skill 1", "Skill 2"],
-      "projects": [
-        {{
-          "title": "Project Title",
-          "description": "Description of the project",
-          "tech_stack": "React, Node.js, PostgreSQL",
-          "github_url": "GitHub repo URL or null",
-          "live_url": "Deployed website URL or null"
-        }}
-      ],
-      "experiences": [
-        {{
-          "company": "Company Name",
-          "role": "Job Role",
-          "description": "Job description",
-          "start_month": "Start Month or null",
-          "start_year": 2021,
-          "end_month": "End Month or null",
-          "end_year": 2023,
-          "currently_working": false
-        }}
-      ],
-      "education": [
-        {{
-          "institution": "University Name",
-          "degree": "Degree name",
-          "start_year": "2016",
-          "end_year": "2020"
-        }}
-      ]
-    }}
-    """
+    def split_date_str(date_str: str) -> tuple[str, str]:
+        if not date_str:
+            return "", ""
+        parts = date_str.strip().split()
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+        elif len(parts) == 1:
+            if parts[0].isdigit() and len(parts[0]) == 4:
+                return "", parts[0]
+            else:
+                return parts[0], ""
+        return "", ""
 
     try:
-        data = call_llm_with_retry(
-            prompt,
-            feature="profile_population",
-            temperature=0.0,
-            json_response=True,
-        )
-    except Exception as e:
-        logger.error(f"Failed to call LLM for profile extraction: {e}")
-        return None
+        from app.resume.services.local_resume_parser import parse_resume_text_locally
 
-    if not data or not isinstance(data, dict):
-        logger.warning("LLM returned invalid profile data structure")
+        parsed_local = parse_resume_text_locally(resume_text)
+
+        data = {
+            "full_name": parsed_local["contact"]["name"] or None,
+            "headline": parsed_local["headline"] or None,
+            "phone": parsed_local["contact"]["phone"] or None,
+            "location": parsed_local["contact"]["location"] or None,
+            "linkedin_url": parsed_local["contact"]["linkedin"] or None,
+            "github_url": parsed_local["contact"]["github"] or None,
+            "portfolio_url": parsed_local["contact"]["portfolio"] or None,
+            "summary": parsed_local["summary"] or None,
+            "skills": parsed_local["skills"],
+            "projects": [],
+            "experiences": [],
+            "education": [],
+        }
+
+        for proj in parsed_local.get("projects", []):
+            data["projects"].append(
+                {
+                    "title": proj.get("title") or "",
+                    "description": proj.get("description") or "",
+                    "tech_stack": ", ".join(proj.get("technologies", [])),
+                    "github_url": proj.get("github_url") or None,
+                    "live_url": proj.get("live_url") or None,
+                }
+            )
+
+        for exp in parsed_local.get("experience", []):
+            start_month, start_year = split_date_str(exp.get("start_date", ""))
+            end_month, end_year = split_date_str(exp.get("end_date", ""))
+
+            data["experiences"].append(
+                {
+                    "company": exp.get("company") or "",
+                    "role": exp.get("role") or "",
+                    "description": "\n".join(exp.get("bullets", [])),
+                    "start_month": start_month or None,
+                    "start_year": start_year or None,
+                    "end_month": end_month or None,
+                    "end_year": end_year or None,
+                    "currently_working": exp.get("currently_working", False),
+                }
+            )
+
+        for edu in parsed_local.get("education", []):
+            data["education"].append(
+                {
+                    "institution": edu.get("institution") or "",
+                    "degree": edu.get("degree") or "",
+                    "start_year": edu.get("start_date") or None,
+                    "end_year": edu.get("end_date") or None,
+                }
+            )
+    except Exception as e:
+        logger.error(f"Failed to parse locally or map profile data: {e}")
         return None
 
     try:
@@ -122,34 +121,49 @@ def extract_and_populate_profile(db: Session, user_id: int, resume_text: str):
 
         # 3. Clear & repopulate Projects
         db.query(UserProject).filter(UserProject.user_id == user_id).delete()
+        # 3. Replace projects only when valid parsed projects exist
         projects = (
             data.get("projects")
             or data.get("user_projects")
             or data.get("personal_projects")
             or []
         )
-        for p in projects:
-            title = p.get("title") or p.get("name")
-            desc = p.get("description") or p.get("desc") or ""
-            if title:
+
+        valid_projects = [
+            project
+            for project in projects
+            if isinstance(project, dict)
+            and str(project.get("title") or project.get("name") or "").strip()
+        ]
+
+        if valid_projects:
+            db.query(UserProject).filter(UserProject.user_id == user_id).delete(
+                synchronize_session=False
+            )
+
+            for project in valid_projects:
+                title = project.get("title") or project.get("name")
+
+                description = project.get("description") or project.get("desc") or ""
+
+                technologies = (
+                    project.get("tech_stack") or project.get("technologies") or ""
+                )
+
+                if isinstance(
+                    technologies,
+                    list,
+                ):
+                    technologies = ", ".join(str(item) for item in technologies if item)
+
                 db.add(
                     UserProject(
                         user_id=user_id,
-                        title=str(title)[:100],
-                        description=str(desc),
-                        tech_stack=str(
-                            p.get("tech_stack") or p.get("technologies") or ""
-                        ),
-                        github_url=(
-                            str(p.get("github_url") or "")[:500]
-                            if p.get("github_url")
-                            else None
-                        ),
-                        live_url=(
-                            str(p.get("live_url") or "")[:500]
-                            if p.get("live_url")
-                            else None
-                        ),
+                        title=str(title).strip()[:255],
+                        description=str(description).strip(),
+                        tech_stack=str(technologies).strip(),
+                        github_url=(str(project.get("github_url") or "")[:500] or None),
+                        live_url=(str(project.get("live_url") or "")[:500] or None),
                     )
                 )
 
@@ -211,30 +225,62 @@ def extract_and_populate_profile(db: Session, user_id: int, resume_text: str):
             or data.get("academic_history")
             or []
         )
-        for edu in education_list:
-            inst = (
-                edu.get("institution")
-                or edu.get("school")
-                or edu.get("university")
-                or edu.get("college")
+
+        valid_education = []
+
+        for education in education_list:
+            if not isinstance(
+                education,
+                dict,
+            ):
+                continue
+
+            institution = (
+                education.get("institution")
+                or education.get("school")
+                or education.get("university")
+                or education.get("college")
+                or ""
             )
-            deg = edu.get("degree") or edu.get("certification") or edu.get("major")
-            if inst and deg:
+
+            degree = (
+                education.get("degree")
+                or education.get("certification")
+                or education.get("major")
+                or ""
+            )
+
+            if str(institution).strip() and str(degree).strip():
+                valid_education.append(education)
+
+        if valid_education:
+            db.query(UserEducation).filter(UserEducation.user_id == user_id).delete(
+                synchronize_session=False
+            )
+
+            for education in valid_education:
+                institution = (
+                    education.get("institution")
+                    or education.get("school")
+                    or education.get("university")
+                    or education.get("college")
+                )
+
+                degree = (
+                    education.get("degree")
+                    or education.get("certification")
+                    or education.get("major")
+                )
+
                 db.add(
                     UserEducation(
                         user_id=user_id,
-                        institution=str(inst)[:255],
-                        degree=str(deg)[:100],
+                        institution=str(institution).strip()[:255],
+                        degree=str(degree).strip()[:255],
                         start_year=(
-                            str(edu.get("start_year") or "")[:20]
-                            if edu.get("start_year")
-                            else None
+                            str(education.get("start_year") or "")[:20] or None
                         ),
-                        end_year=(
-                            str(edu.get("end_year") or "")[:20]
-                            if edu.get("end_year")
-                            else None
-                        ),
+                        end_year=(str(education.get("end_year") or "")[:20] or None),
                     )
                 )
 

@@ -30,8 +30,6 @@ class DashboardService:
             greeting_type = "Afternoon"
         elif 17 <= local_hour < 22:
             greeting_type = "Evening"
-        else:
-            greeting_type = "Night"
 
         greeting = f"Good {greeting_type}, {user_name}"
 

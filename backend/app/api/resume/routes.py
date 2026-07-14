@@ -83,3 +83,12 @@ def update_resume(
         db,
         current_user.id
     )
+
+
+@router.delete("/{resume_id}")
+def delete_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.delete_resume(resume_id, db, current_user.id)

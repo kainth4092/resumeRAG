@@ -67,32 +67,7 @@ class QuestionBankRepository:
                 InterviewQuestionBank.company.ilike(company)
             )
         if difficulty:
-            difficulty_lower = difficulty.lower()
-            if difficulty_lower == "easy":
-                query = query.filter(
-                    InterviewQuestionBank.experience_level.ilike("%fresher%")
-                    | InterviewQuestionBank.experience_level.ilike("%junior%")
-                    | InterviewQuestionBank.experience_level.ilike("%easy%")
-                    | InterviewQuestionBank.experience_level.ilike("%0-%")
-                )
-            elif difficulty_lower == "hard":
-                query = query.filter(
-                    InterviewQuestionBank.experience_level.ilike("%3-5%")
-                    | InterviewQuestionBank.experience_level.ilike("%senior%")
-                    | InterviewQuestionBank.experience_level.ilike("%hard%")
-                    | InterviewQuestionBank.experience_level.ilike("%5+%")
-                )
-            elif difficulty_lower == "medium":
-                query = query.filter(
-                    ~InterviewQuestionBank.experience_level.ilike("%fresher%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%junior%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%easy%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%0-%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%3-5%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%senior%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%hard%")
-                    & ~InterviewQuestionBank.experience_level.ilike("%5+%")
-                )
+            query = query.filter(InterviewQuestionBank.difficulty.ilike(difficulty))
         if search:
             search_pattern = f"%{search}%"
             query = query.filter(
@@ -102,7 +77,16 @@ class QuestionBankRepository:
 
         total = query.count()
 
+        from sqlalchemy import case
+        difficulty_order = case(
+            (InterviewQuestionBank.difficulty.ilike("Hard"), 1),
+            (InterviewQuestionBank.difficulty.ilike("Medium"), 2),
+            (InterviewQuestionBank.difficulty.ilike("Easy"), 3),
+            else_=4
+        )
+
         items = query.order_by(
+            difficulty_order.asc(),
             InterviewQuestionBank.skill.asc(),
             InterviewQuestionBank.question.asc(),
         ).offset(skip).limit(limit).all()

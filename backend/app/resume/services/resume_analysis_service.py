@@ -36,110 +36,29 @@ def _is_empty_canonical(data: dict) -> bool:
 
 def parse_resume_text_to_json(resume_text: str) -> dict:
     """
-    Calls the LLM to extract the canonical JSON representation from raw text.
-    Returns the parsed canonical resume dict.
+    Parses the resume text using a deterministic local parser and returns
+    the parsed canonical resume dict coerced to the schema.
     Never returns None - always returns at least an empty canonical structure.
     """
     if not resume_text or not resume_text.strip():
-        logger.warning("[PARSE_RESUME] Empty resume text provided, returning empty canonical.")
+        logger.warning("[LOCAL_RESUME_PARSER] Empty resume text provided, returning empty canonical.")
         return coerce_to_canonical({})
 
-    prompt = f"""
-    You are an expert resume parser. Your job is to extract all information from the raw resume text and format it to match the    canonical JSON schema.
-    Do not invent any information. Only extract what is present in the text.
-
-Canonical JSON Schema:
-{{
-  "contact": {{
-    "name": "",
-    "email": "",
-    "phone": "",
-    "location": "",
-    "linkedin": "",
-    "github": "",
-    "portfolio": ""
-  }},
-  "headline": "",
-  "summary": "",
-  "skills": [],
-  "experience": [
-    {{
-      "company": "",
-      "role": "",
-      "start_date": "",
-      "end_date": "",
-      "currently_working": false,
-      "location": "",
-      "bullets": []
-    }}
-  ],
-  "projects": [
-    {{
-      "title": "",
-      "description": "",
-      "technologies": [],
-      "github_url": "",
-      "live_url": ""
-    }}
-  ],
-  "education": [
-    {{
-      "institution": "",
-      "degree": "",
-      "start_date": "",
-      "end_date": "",
-      "location": ""
-    }}
-  ],
-  "certifications": [],
-  "achievements": [],
-  "languages": [],
-  "publications": [],
-  "volunteer_experience": []
-}}
-
-CRITICAL OUTPUT RULES:
-- Return exactly one complete and valid JSON object.
-- Return JSON only. Do not use markdown or code fences.
-- Never repeat information.
-- Preserve the candidate's real name and contact information exactly.
-- Keep the summary under 70 words.
-- Return at most 20 relevant skills.
-- Keep at most 4 bullet points for each experience.
-- Keep at most 3 bullet points for each project.
-- Keep every bullet point under 25 words.
-- Use empty strings for missing scalar values.
-- Use empty arrays for missing list values.
-- Do not invent candidate information.
-- Prefer concise, complete JSON over detailed but truncated JSON.
-
-Here is the raw resume text:
----
-{resume_text}
----
-
-Return ONLY a valid JSON object matching the schema. No markdown formatting (do NOT wrap in ```json or ```), no explanations outside the JSON structure.
-"""
     try:
-        content = call_llm_with_retry(
-            prompt,
-            feature="resume_parsing",
-            temperature=0.0,
-            json_response=True,
-        )
-        parsed = extract_json(content)
+        from app.resume.services.local_resume_parser import parse_resume_text_locally
+        logger.info("[LOCAL_RESUME_PARSER] Running local deterministic resume parser.")
+        parsed = parse_resume_text_locally(resume_text)
         result = coerce_to_canonical(parsed)
 
         # Validate the parse result is not empty
         if _is_empty_canonical(result):
             logger.warning(
-                "[PARSE_RESUME] LLM returned empty/minimal canonical resume. "
-                "The parsed result has no meaningful content."
+                "[LOCAL_RESUME_PARSER] Local parser returned empty/minimal canonical resume."
             )
 
         return result
     except Exception as e:
-        logger.error(f"[PARSE_RESUME_FAILED] Error parsing resume text to canonical json: {e}")
+        logger.error(f"[LOCAL_RESUME_PARSER_FAILED] Error parsing resume text locally: {e}")
         return coerce_to_canonical({})
 
 
@@ -206,10 +125,7 @@ def analyze_resume_canonical(
     db.commit()
 
     # 3. Calculate Canonical Content Hash
-    if resume.parsed_text:
-        canonical_hash = hashlib.sha256(resume.parsed_text.encode("utf-8")).hexdigest()
-    else:
-        canonical_hash = get_canonical_hash(normalized_resume)
+    canonical_hash = get_canonical_hash(normalized_resume)
     resume.canonical_hash = canonical_hash
     resume.scoring_version = SCORING_VERSION
     resume.prompt_version = PROMPT_VERSION

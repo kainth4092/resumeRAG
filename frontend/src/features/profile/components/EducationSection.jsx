@@ -120,7 +120,9 @@ export default function EducationSection() {
       if (eduDraft.id) {
         const response = await updateEducation(eduDraft.id, payload);
         setEducation((prev) => {
-          const next = prev.map((item) => (item.id === eduDraft.id ? response.data : item));
+          const next = prev.map((item) =>
+            item.id === eduDraft.id ? response.data : item,
+          );
           if (educationKey) {
             localStorage.setItem(educationKey, JSON.stringify(next));
           }

@@ -13,6 +13,53 @@ from app.interview.repository.question_bank_repository import QuestionBankReposi
 logger = logging.getLogger(__name__)
 
 
+def classify_difficulty(question_text: str, experience_level: str, skill: str) -> str:
+    question_lower = question_text.lower()
+    exp_lower = experience_level.lower()
+    skill_lower = skill.lower()
+
+    # 1. Technical Depth and Complexity Keywords (Immediate Hard)
+    hard_keywords = [
+        "vacuum", "garbage collection", "gil", "global interpreter lock",
+        "concurrency", "deadlock", "race condition", "internals", "under the hood",
+        "memory management", "thread safety", "semaphores", "profiler",
+        "memory leak", "metaclass", "descriptor", "event loop",
+        "query optimization", "explain analyze", "sharding", "replication",
+        "distributed", "cap theorem", "horizontal scaling", "load balancing",
+        "b-tree", "microservices orchestration", "kubernetes pod internals"
+    ]
+    if any(kw in question_lower for kw in hard_keywords):
+        return "Hard"
+
+    # 2. Experience Level Mapping
+    # Hard Indicators
+    hard_exp = ["senior", "lead", "advanced", "hard", "5+", "5-", "6+", "7+", "8+", "10+", "expert", "architect", "principal"]
+    if any(kw in exp_lower for kw in hard_exp):
+        return "Hard"
+
+    # Easy Indicators
+    easy_exp = ["fresher", "junior", "easy", "0-2", "0-1", "1-2", "entry", "basic", "beginner"]
+    if any(kw in exp_lower for kw in easy_exp):
+        return "Easy"
+
+    # Medium Indicators
+    medium_exp = ["mid", "intermediate", "medium", "3-5", "2-3", "2-4", "3-4", "4-5"]
+    if any(kw in exp_lower for kw in medium_exp):
+        return "Medium"
+
+    # 3. Topic Complexity
+    medium_keywords = [
+        "architecture", "decorator", "iterator", "generator", "middleware",
+        "index", "security", "jwt", "oauth", "docker", "pipeline", "cicd",
+        "testing", "mock", "transaction", "foreign key"
+    ]
+    if any(kw in question_lower for kw in medium_keywords):
+        return "Medium"
+
+    # Default Fallback
+    return "Medium"
+
+
 def generate_and_update_answer_task(
     question_id: int,
     question_text: str,
@@ -62,12 +109,15 @@ def create_question(
         answer_text = "Generating answer..."
         generate_in_background = True
 
+    difficulty = classify_difficulty(payload.question, payload.experience_level, payload.skill)
+
     question = InterviewQuestionBank(
         question=payload.question,
         answer=answer_text,
         skill=payload.skill,
         category=payload.category,
         experience_level=payload.experience_level,
+        difficulty=difficulty,
         company=payload.company,
         role=payload.role,
         tags=payload.tags,
@@ -135,6 +185,9 @@ def update_question(
     for key, value in data.items():
         setattr(question, key, value)
 
+    # Reclassify difficulty based on updated fields
+    question.difficulty = classify_difficulty(question.question, question.experience_level, question.skill)
+
     db.commit()
     db.refresh(question)
 
@@ -182,70 +235,100 @@ def list_questions(
     )
 
 
-def get_filters_meta(db: Session, user_id: int | None = None):
+def get_filters_meta(
+    db: Session,
+    user_id: int | None = None,
+    skill: str | None = None,
+    category: str | None = None,
+    experience_level: str | None = None,
+    difficulty: str | None = None,
+    company: str | None = None,
+    source: str | None = None,
+    search: str | None = None,
+    bookmark_only: bool = False,
+):
     from sqlalchemy import func
-    
+    from app.models.bookmark import InterviewBookmark
+
+    query = db.query(InterviewQuestionBank)
+
+    if bookmark_only and user_id:
+        query = query.join(
+            InterviewBookmark,
+            InterviewBookmark.question_id == InterviewQuestionBank.id
+        ).filter(
+            InterviewBookmark.user_id == user_id
+        )
+
+    if source:
+        query = query.filter(InterviewQuestionBank.source.ilike(source))
+    if skill:
+        query = query.filter(InterviewQuestionBank.skill.ilike(skill))
+    if category:
+        query = query.filter(InterviewQuestionBank.category.ilike(category))
+    if experience_level:
+        query = query.filter(InterviewQuestionBank.experience_level.ilike(experience_level))
+    if company:
+        query = query.filter(InterviewQuestionBank.company.ilike(company))
+    if difficulty:
+        query = query.filter(InterviewQuestionBank.difficulty.ilike(difficulty))
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            InterviewQuestionBank.question.ilike(search_pattern)
+            | InterviewQuestionBank.answer.ilike(search_pattern)
+        )
+
+    subquery = query.subquery()
+
     # Group by skill
     skills_raw = db.query(
-        InterviewQuestionBank.skill,
-        func.count(InterviewQuestionBank.id)
-    ).group_by(InterviewQuestionBank.skill).all()
+        subquery.c.skill,
+        func.count(subquery.c.id)
+    ).group_by(subquery.c.skill).all()
     skills = [{"name": s, "count": c} for s, c in skills_raw if s]
 
     # Group by category
     categories_raw = db.query(
-        InterviewQuestionBank.category,
-        func.count(InterviewQuestionBank.id)
-    ).group_by(InterviewQuestionBank.category).all()
+        subquery.c.category,
+        func.count(subquery.c.id)
+    ).group_by(subquery.c.category).all()
     categories = [{"name": cat, "count": c} for cat, c in categories_raw if cat]
-
-    # Group by experience_level
-    exp_raw = db.query(
-        InterviewQuestionBank.experience_level,
-        func.count(InterviewQuestionBank.id)
-    ).group_by(InterviewQuestionBank.experience_level).all()
-    experience_levels = [{"name": exp, "count": c} for exp, c in exp_raw if exp]
 
     # Group by company
     companies_raw = db.query(
-        InterviewQuestionBank.company,
-        func.count(InterviewQuestionBank.id)
-    ).group_by(InterviewQuestionBank.company).all()
+        subquery.c.company,
+        func.count(subquery.c.id)
+    ).group_by(subquery.c.company).all()
     companies = [{"name": comp, "count": c} for comp, c in companies_raw if comp]
+
+    # Group by difficulty
+    diff_raw = db.query(
+        subquery.c.difficulty,
+        func.count(subquery.c.id)
+    ).group_by(subquery.c.difficulty).all()
+
+    difficulties = {"Easy": 0, "Medium": 0, "Hard": 0}
+    for diff_val, c in diff_raw:
+        if diff_val:
+            normalized = diff_val.capitalize()
+            if normalized in difficulties:
+                difficulties[normalized] = c
 
     # Bookmarks count
     bookmarks_count = 0
     if user_id:
-        from app.models.bookmark import InterviewBookmark
-        bookmarks_count = db.query(func.count(InterviewBookmark.id)).filter(
+        bookmarks_count = db.query(func.count(subquery.c.id)).join(
+            InterviewBookmark,
+            InterviewBookmark.question_id == subquery.c.id
+        ).filter(
             InterviewBookmark.user_id == user_id
         ).scalar() or 0
-
-    # Difficulty counts
-    easy_count = 0
-    medium_count = 0
-    hard_count = 0
-    for exp, c in exp_raw:
-        if not exp:
-            medium_count += c
-            continue
-        str_exp = str(exp).lower()
-        if any(x in str_exp for x in ["fresher", "junior", "easy", "0-"]):
-            easy_count += c
-        elif any(x in str_exp for x in ["3-5", "senior", "hard", "5+"]):
-            hard_count += c
-        else:
-            medium_count += c
 
     return {
         "skills": skills,
         "categories": categories,
-        "experience_levels": experience_levels,
         "companies": companies,
-        "difficulties": {
-            "Easy": easy_count,
-            "Medium": medium_count,
-            "Hard": hard_count
-        },
+        "difficulties": difficulties,
         "bookmarks_count": bookmarks_count
     }

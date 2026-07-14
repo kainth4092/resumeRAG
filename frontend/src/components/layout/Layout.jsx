@@ -11,10 +11,13 @@ import ResumeSkeleton from "../loading/ResumeSkeleton";
 import JobSkeleton from "../loading/JobSkeleton";
 import InterviewSkeleton from "../loading/InterviewSkeleton";
 import PageLoader from "../loading/PageLoader";
+import AIResumeSuiteShimmer from "../../features/resume/components/ai-workspace/AIResumeSuiteShimmer";
 
 const ActivePageSkeleton = () => {
   const location = useLocation();
   const path = location.pathname;
+  const searchParams = new URLSearchParams(location.search);
+  const view = searchParams.get("view");
 
   if (path === "/dashboard") {
     return <DashboardSkeleton />;
@@ -26,10 +29,13 @@ const ActivePageSkeleton = () => {
     return <ResumeSkeleton mode="builder" />;
   }
   if (path === "/resumes") {
+    if (view === "new") {
+      return <AIResumeSuiteShimmer />;
+    }
     return <ResumeSkeleton mode="list" />;
   }
   if (path === "/analysis") {
-    return <ResumeSkeleton mode="list" />;
+    return <AIResumeSuiteShimmer />;
   }
   if (path === "/interview") {
     return <InterviewSkeleton mode="list" />;

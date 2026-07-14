@@ -23,6 +23,7 @@ class InterviewQuestionBank(Base):
     category = Column(String(50), nullable=False)
 
     experience_level = Column(String(50), nullable=False)
+    difficulty = Column(String(20), nullable=False, default="Medium")
 
     company = Column(String(100), nullable=True)
     role = Column(String(100), nullable=True)

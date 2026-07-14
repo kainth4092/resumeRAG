@@ -37,6 +37,23 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         parsed_json = parse_resume_text_to_json(parsed_text)
         normalized = normalize_resume(parsed_json)
         scores = calculate_scores(normalized)
+        import re
+        contact_info = normalized.get("contact", {}) or {}
+        personal_info = normalized.get("personal_info", {}) or {}
+        name = contact_info.get("name", "").strip()
+        if not name and isinstance(personal_info, dict):
+            name = personal_info.get("name", "").strip()
+
+        if name:
+            resume.title = name
+        else:
+            filename = resume.original_filename or ""
+            cleaned = re.sub(r"^Optimized:\s*", "", filename, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\.(pdf|docx|doc)$", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"[_-]+", " ", cleaned)
+            cleaned = re.sub(r"\bresume\b.*$", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s+", " ", cleaned).strip()
+            resume.title = cleaned or "Untitled Resume"
 
         resume.resume_json = json.dumps(normalized)
         resume.skills = ",".join(normalized.get("skills", []))
@@ -566,3 +583,30 @@ class ResumeService:
             raise HTTPException(status_code=500, detail="Failed to update resume.")
 
         return {"message": "Resume updated successfully", "resume_id": resume.id}
+
+    @staticmethod
+    def delete_resume(
+        resume_id: int,
+        db: Session,
+        user_id: int,
+    ) -> dict:
+        resume = ResumeRepository.get_resume_by_id(db, resume_id, user_id)
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+
+        try:
+            ResumeRepository.delete_resume(db, resume)
+            db.commit()
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.exception(f"Failed to delete resume {resume_id}: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="Database error occurred while deleting resume.",
+            )
+
+        return {
+            "success": True,
+            "message": "Resume deleted successfully",
+            "resume_id": resume_id,
+        }

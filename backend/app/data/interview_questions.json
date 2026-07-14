@@ -7585,12 +7585,12 @@
       "distributed-systems",
       "workflow-management"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is Docker, and why is it used in software development?",
-    "answer": "Docker is a platform for packaging applications and their dependencies into containers. A container runs the same way across different environments because it includes the application code, runtime, libraries, and configuration needed to execute the app.\n\nDocker is used to make development, testing, and deployment more consistent. It solves problems like \u201cworks on my machine\u201d by giving developers the same runtime everywhere. It is especially useful for microservices, CI/CD pipelines, and cloud deployments. In interviews, it is good to say Docker improves portability, isolation, and reproducibility.",
+    "answer": "Docker is a platform for packaging applications and their dependencies into containers. A container runs the same way across different environments because it includes the application code, runtime, libraries, and configuration needed to execute the app.\n\nDocker is used to make development, testing, and deployment more consistent. It solves problems like “works on my machine” by giving developers the same runtime everywhere. It is especially useful for microservices, CI/CD pipelines, and cloud deployments. In interviews, it is good to say Docker improves portability, isolation, and reproducibility.",
     "skill": "Backend Engineering",
     "category": "DevOps",
     "experience_level": "Fresher",
@@ -7602,7 +7602,7 @@
       "deployment",
       "portability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7619,7 +7619,7 @@
       "docker-hub",
       "artifacts"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7636,7 +7636,7 @@
       "runtime",
       "virtualization"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7653,12 +7653,12 @@
       "comparison",
       "docker-fundamentals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "How can multiple containers be created from a single Docker image?",
-    "answer": "Multiple containers can be created by running the same Docker image multiple times. Each container gets its own isolated filesystem, process space, and runtime state, even though they all come from the same image.\n\nFor example, you can start several containers from a web app image to handle more requests or to test different environments. This is one of Docker\u2019s major strengths because the same artifact can be reused consistently. In interviews, mention that each container can also be configured with different environment variables, ports, or mounts.",
+    "answer": "Multiple containers can be created by running the same Docker image multiple times. Each container gets its own isolated filesystem, process space, and runtime state, even though they all come from the same image.\n\nFor example, you can start several containers from a web app image to handle more requests or to test different environments. This is one of Docker’s major strengths because the same artifact can be reused consistently. In interviews, mention that each container can also be configured with different environment variables, ports, or mounts.",
     "skill": "Backend Engineering",
     "category": "DevOps",
     "experience_level": "Junior",
@@ -7670,7 +7670,7 @@
       "isolation",
       "reusability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7687,7 +7687,7 @@
       "modularity",
       "system-design"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7704,7 +7704,7 @@
       "load-balancing",
       "containers"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7721,7 +7721,7 @@
       "orchestration",
       "automation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7738,7 +7738,7 @@
       "orchestration",
       "scalability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7755,7 +7755,7 @@
       "devops-tools",
       "containers"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7772,7 +7772,7 @@
       "k8s-architecture",
       "workloads"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7789,7 +7789,7 @@
       "worker-nodes",
       "infrastructure"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7806,7 +7806,7 @@
       "distributed-computing",
       "k8s-architecture"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7823,7 +7823,7 @@
       "rolling-updates",
       "stateless-apps"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7840,7 +7840,7 @@
       "load-balancing",
       "service-discovery"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7857,7 +7857,7 @@
       "kubernetes-automation",
       "reliability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7874,7 +7874,7 @@
       "http",
       "web-services"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7891,7 +7891,7 @@
       "stateless",
       "json"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7908,7 +7908,7 @@
       "rest-api",
       "api-design"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7925,7 +7925,7 @@
       "rest",
       "api-best-practices"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7942,7 +7942,7 @@
       "protocols",
       "enterprise-software"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7959,7 +7959,7 @@
       "xml-messaging",
       "web-services"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7976,7 +7976,7 @@
       "json-vs-xml",
       "architecture"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -7993,7 +7993,7 @@
       "asynchronous",
       "real-time"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8010,7 +8010,7 @@
       "websockets",
       "event-driven"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8027,12 +8027,12 @@
       "bidirectional",
       "communication-protocols"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is authentication?",
-    "answer": "Authentication is the process of verifying a user\u2019s identity. Itanswers the question: \u201cWho are you?\u201d\n\nCommon authentication methodsinclude passwords, tokens, biometrics, and multi-factor authentication. Ininterviews, explain that authentication happens before authorization and is acore part of security in web applications.",
+    "answer": "Authentication is the process of verifying a user’s identity. Itanswers the question: “Who are you?”\n\nCommon authentication methodsinclude passwords, tokens, biometrics, and multi-factor authentication. Ininterviews, explain that authentication happens before authorization and is acore part of security in web applications.",
     "skill": "Backend Engineering",
     "category": "Security",
     "experience_level": "Fresher",
@@ -8044,12 +8044,12 @@
       "security-basics",
       "access-control"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is authorization?",
-    "answer": "Authorization determines what an authenticated user is allowed to do. It answers the question: \u201cWhat can you access or perform?\u201d\n\nFor example, a user may be logged in but still not have permission to access admin pages. In interviews, explain that authorization is about permissions and access control, not identity verification.",
+    "answer": "Authorization determines what an authenticated user is allowed to do. It answers the question: “What can you access or perform?”\n\nFor example, a user may be logged in but still not have permission to access admin pages. In interviews, explain that authorization is about permissions and access control, not identity verification.",
     "skill": "Backend Engineering",
     "category": "Security",
     "experience_level": "Fresher",
@@ -8061,7 +8061,7 @@
       "security-basics",
       "rbac"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8078,7 +8078,7 @@
       "iam",
       "access-control"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8095,7 +8095,7 @@
       "tokens",
       "sessions"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8112,7 +8112,7 @@
       "security",
       "bcrypt"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8129,12 +8129,12 @@
       "stateless",
       "scalability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is session-based authentication?",
-    "answer": "Session-based authentication stores user login state on the server. After login, the server creates a session record and gives the client a session identifier, often stored in a cookie.\n\nThe client sends the session ID on subsequent requests, and the server uses it to look up the user\u2019s session. In interviews, explain that this is common in traditional web applications and is stateful on the server side.",
+    "answer": "Session-based authentication stores user login state on the server. After login, the server creates a session record and gives the client a session identifier, often stored in a cookie.\n\nThe client sends the session ID on subsequent requests, and the server uses it to look up the user’s session. In interviews, explain that this is common in traditional web applications and is stateful on the server side.",
     "skill": "Backend Engineering",
     "category": "Security",
     "experience_level": "Junior",
@@ -8146,7 +8146,7 @@
       "stateful-auth",
       "web-security"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8163,7 +8163,7 @@
       "2fa",
       "security-hardening"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8180,7 +8180,7 @@
       "json-web-token",
       "web-security"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8197,7 +8197,7 @@
       "stateless",
       "api-security"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8214,7 +8214,7 @@
       "cryptography",
       "data-integrity"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8231,7 +8231,7 @@
       "claims",
       "digital-signatures"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8248,12 +8248,12 @@
       "session-management",
       "oauth2"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is OAuth?",
-    "answer": "OAuth is an authorization framework that allows a user to grant a third-party application limited access to their resources without sharing their password.\n\nFor example, a user may allow a photo app to access their cloud storage account. OAuth focuses on delegated authorization, not direct authentication. In interviews, explain that OAuth is often used for \u201cSign in with Google\u201d style integrations, though the exact login flow may also involve OpenID Connect.",
+    "answer": "OAuth is an authorization framework that allows a user to grant a third-party application limited access to their resources without sharing their password.\n\nFor example, a user may allow a photo app to access their cloud storage account. OAuth focuses on delegated authorization, not direct authentication. In interviews, explain that OAuth is often used for “Sign in with Google” style integrations, though the exact login flow may also involve OpenID Connect.",
     "skill": "Backend Engineering",
     "category": "Security",
     "experience_level": "Junior",
@@ -8265,7 +8265,7 @@
       "delegation",
       "third-party-integration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8282,12 +8282,12 @@
       "permissions",
       "scopes"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What is the difference between OAuth and JWT?",
-    "answer": "OAuth is a framework for authorization, while JWT is a token format. OAuth defines how tokens are issued and used, and JWT describes how claims are represented inside a token.\n\nIn other words, OAuth answers \u201chow do I get and use access?\u201d while JWT answers \u201cwhat format can the token take?\u201d In interviews, explain that they are not competing technologies; they solve different parts of the authentication and authorization problem.",
+    "answer": "OAuth is a framework for authorization, while JWT is a token format. OAuth defines how tokens are issued and used, and JWT describes how claims are represented inside a token.\n\nIn other words, OAuth answers “how do I get and use access?” while JWT answers “what format can the token take?” In interviews, explain that they are not competing technologies; they solve different parts of the authentication and authorization problem.",
     "skill": "Backend Engineering",
     "category": "Security",
     "experience_level": "Junior",
@@ -8299,7 +8299,7 @@
       "security-standards",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8316,7 +8316,7 @@
       "token-formats",
       "specifications"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8333,7 +8333,7 @@
       "access-token",
       "validation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8350,7 +8350,7 @@
       "paas",
       "iaas"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8368,7 +8368,7 @@
       "rds",
       "lambda"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8385,7 +8385,7 @@
       "open-source",
       "iaas"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8402,7 +8402,7 @@
       "public-cloud",
       "private-cloud"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8419,7 +8419,7 @@
       "fastapi",
       "deployment"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8436,7 +8436,7 @@
       "infrastructure",
       "iaas"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8453,7 +8453,7 @@
       "neutron",
       "cloud-services"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8470,7 +8470,7 @@
       "fastapi",
       "sqlalchemy"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8487,7 +8487,7 @@
       "orm",
       "database-migrations"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8504,12 +8504,12 @@
       "version-control",
       "sql"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "How do you configure Alembic in a FastAPI application?",
-    "answer": "You configure Alembic by initializing it in the project, linking it to the SQLAlchemy database URL and metadata, and setting up the environment script to detect model changes. The Alembic configuration typically points to your models\u2019 metadata so it can generate migration scripts.\n\nAfter setup, you can create and apply migrations using Alembic commands. In interviews, explain that the important part is connecting Alembic to the same database settings and metadata used by the FastAPI application.",
+    "answer": "You configure Alembic by initializing it in the project, linking it to the SQLAlchemy database URL and metadata, and setting up the environment script to detect model changes. The Alembic configuration typically points to your models’ metadata so it can generate migration scripts.\n\nAfter setup, you can create and apply migrations using Alembic commands. In interviews, explain that the important part is connecting Alembic to the same database settings and metadata used by the FastAPI application.",
     "skill": "Backend Engineering",
     "category": "Backend",
     "experience_level": "Junior",
@@ -8521,7 +8521,7 @@
       "sqlalchemy",
       "configuration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8538,7 +8538,7 @@
       "migrations",
       "sql"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8555,7 +8555,7 @@
       "schema-change",
       "sql"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8572,7 +8572,7 @@
       "migrations",
       "data-safety"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8589,7 +8589,7 @@
       "database-schema",
       "migrations"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8606,7 +8606,7 @@
       "refactoring",
       "database-ops"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8623,7 +8623,7 @@
       "renaming",
       "tool-limitations"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8640,7 +8640,7 @@
       "rollbacks",
       "versioning"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8657,7 +8657,7 @@
       "downgrade",
       "database-safety"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8674,7 +8674,7 @@
       "indexing",
       "computer-science"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8691,7 +8691,7 @@
       "big-o",
       "data-access"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8708,7 +8708,7 @@
       "dynamic-arrays",
       "python-internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8725,7 +8725,7 @@
       "pointers",
       "data-structures"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8742,7 +8742,7 @@
       "data-structures",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8759,7 +8759,7 @@
       "performance",
       "memory-management"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8776,7 +8776,7 @@
       "cache-locality",
       "trade-offs"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8793,7 +8793,7 @@
       "iteration",
       "fundamentals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8810,7 +8810,7 @@
       "iteration",
       "iterables"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8827,7 +8827,7 @@
       "conditional-logic",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8844,7 +8844,7 @@
       "iteration",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8861,7 +8861,7 @@
       "control-flow",
       "loop-control"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8878,7 +8878,7 @@
       "termination",
       "safety"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8895,12 +8895,12 @@
       "memory-efficiency",
       "yield"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "How does the yield keyword work in Python?",
-    "answer": "yield pauses a generator function and returns a value to the caller, but it preserves the function\u2019s state so it can resume later from the same point.\n\nEach time the generator is advanced, execution continues from where it last yielded. This makes generators stateful and memory efficient. In interviews, explain that yield turns a function into a generator rather than returning all values immediately.",
+    "answer": "yield pauses a generator function and returns a value to the caller, but it preserves the function’s state so it can resume later from the same point.\n\nEach time the generator is advanced, execution continues from where it last yielded. This makes generators stateful and memory efficient. In interviews, explain that yield turns a function into a generator rather than returning all values immediately.",
     "skill": "Backend Engineering",
     "category": "Technical",
     "experience_level": "Junior",
@@ -8912,7 +8912,7 @@
       "execution-context",
       "lazy-evaluation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8929,7 +8929,7 @@
       "functions",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8946,7 +8946,7 @@
       "pipelines",
       "streaming"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8963,7 +8963,7 @@
       "generators",
       "performance"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8980,7 +8980,7 @@
       "performance-optimization",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -8997,7 +8997,7 @@
       "iteration-protocol",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9014,7 +9014,7 @@
       "manual-iteration",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9031,7 +9031,7 @@
       "stopiteration",
       "lifecycle"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9048,7 +9048,7 @@
       "iteration",
       "python-basics"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9065,7 +9065,7 @@
       "stateful",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9082,7 +9082,7 @@
       "built-in-functions",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9099,7 +9099,7 @@
       "stopiteration",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9116,7 +9116,7 @@
       "python-concepts",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9133,7 +9133,7 @@
       "python-logic",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9150,7 +9150,7 @@
       "generator",
       "hierarchy"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9167,7 +9167,7 @@
       "protocols",
       "logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9184,12 +9184,12 @@
       "subsets",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
     "question": "What are the iter and next methods in Python?",
-    "answer": "iter returns an iterator object, usually the object itself for iterator classes. next returns the next item in the sequence and raises StopIteration when there are no more items.\n\nThese methods define Python\u2019s iteration protocol. In interviews, explain that any custom iterable or iterator must follow this protocol to work with loops and iteration tools.",
+    "answer": "iter returns an iterator object, usually the object itself for iterator classes. next returns the next item in the sequence and raises StopIteration when there are no more items.\n\nThese methods define Python’s iteration protocol. In interviews, explain that any custom iterable or iterator must follow this protocol to work with loops and iteration tools.",
     "skill": "Backend Engineering",
     "category": "Technical",
     "experience_level": "Junior",
@@ -9201,7 +9201,7 @@
       "python",
       "custom-logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9218,7 +9218,7 @@
       "iterators",
       "flow-control"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9235,7 +9235,7 @@
       "iterators",
       "syntactic-sugar"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9252,7 +9252,7 @@
       "protocols",
       "logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9269,7 +9269,7 @@
       "streaming",
       "performance"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9286,7 +9286,7 @@
       "flow-control",
       "automation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9303,7 +9303,7 @@
       "iteration",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9320,7 +9320,7 @@
       "iteration-protocol",
       "iter-function"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9337,7 +9337,7 @@
       "memory-management",
       "indexing"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9354,7 +9354,7 @@
       "data-structures",
       "mutability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9371,7 +9371,7 @@
       "pointers",
       "nodes"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9388,7 +9388,7 @@
       "linked-list",
       "arrays"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9405,7 +9405,7 @@
       "cache-locality",
       "complexity"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9422,7 +9422,7 @@
       "insertion",
       "deletion"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9439,7 +9439,7 @@
       "looping",
       "python-basics"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9456,7 +9456,7 @@
       "dunder-methods",
       "python-internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9473,7 +9473,7 @@
       "comparison",
       "python-concepts"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9490,7 +9490,7 @@
       "built-in-functions",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9507,7 +9507,7 @@
       "exception-handling",
       "exhaustion"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9524,7 +9524,7 @@
       "iteration-protocol",
       "control-flow"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9541,7 +9541,7 @@
       "iteration",
       "best-practices"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9558,7 +9558,7 @@
       "memory-efficiency",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9575,7 +9575,7 @@
       "yield",
       "comparison"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9592,7 +9592,7 @@
       "state-management",
       "execution-context"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9609,7 +9609,7 @@
       "function-termination",
       "generators"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9626,7 +9626,7 @@
       "execution-flow",
       "stack-frames"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9643,7 +9643,7 @@
       "function-calling",
       "objects"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9660,7 +9660,7 @@
       "for-loop",
       "next-function"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9677,7 +9677,7 @@
       "type-conversion",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9694,7 +9694,7 @@
       "debugging",
       "lazy-evaluation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9711,7 +9711,7 @@
       "lifecycle",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9728,7 +9728,7 @@
       "one-time-iterable",
       "common-pitfalls"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9745,7 +9745,7 @@
       "comparison",
       "protocols"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9762,7 +9762,7 @@
       "generator",
       "hierarchy"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9779,7 +9779,7 @@
       "inheritance",
       "protocols"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9796,7 +9796,7 @@
       "subsets",
       "custom-logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9813,7 +9813,7 @@
       "optimization",
       "scalability"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9830,7 +9830,7 @@
       "generators",
       "on-demand"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9847,7 +9847,7 @@
       "streaming",
       "etl"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9864,7 +9864,7 @@
       "syntax",
       "memory"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9881,7 +9881,7 @@
       "generators",
       "lists"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9898,7 +9898,7 @@
       "objects",
       "internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9915,7 +9915,7 @@
       "fundamentals",
       "lazy-evaluation"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9932,7 +9932,7 @@
       "manual-access",
       "python"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9949,7 +9949,7 @@
       "itertools",
       "iteration"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9966,7 +9966,7 @@
       "yield",
       "loops"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -9983,7 +9983,7 @@
       "exhaustion",
       "logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10000,7 +10000,7 @@
       "execution-context",
       "internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10017,7 +10017,7 @@
       "iterator-protocol",
       "python-internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10034,7 +10034,7 @@
       "iterables",
       "internals"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10051,7 +10051,7 @@
       "iterators",
       "generators"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10068,7 +10068,7 @@
       "dunder-methods",
       "oop"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10085,7 +10085,7 @@
       "yield",
       "logic"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10102,7 +10102,7 @@
       "while-true",
       "streams"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   },
   {
@@ -10119,7 +10119,7 @@
       "optimization",
       "memory-management"
     ],
-    "source": "Admin",
+    "source": "community",
     "approved": true
   }
 ]

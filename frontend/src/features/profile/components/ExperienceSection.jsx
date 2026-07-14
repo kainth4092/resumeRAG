@@ -17,7 +17,9 @@ import { useAuth } from "../../auth/context/AuthContext";
 
 export default function ExperienceSection() {
   const { user } = useAuth();
-  const experiencesKey = user?.email ? `profile_experience_${user.email}` : null;
+  const experiencesKey = user?.email
+    ? `profile_experience_${user.email}`
+    : null;
 
   const [experiences, setExperiences] = useState(() => {
     if (typeof window !== "undefined" && experiencesKey) {
@@ -144,7 +146,9 @@ export default function ExperienceSection() {
       if (expDraft.id) {
         const response = await updateExperience(expDraft.id, payload);
         setExperiences((prev) => {
-          const next = prev.map((item) => (item.id === expDraft.id ? response.data : item));
+          const next = prev.map((item) =>
+            item.id === expDraft.id ? response.data : item,
+          );
           if (experiencesKey) {
             localStorage.setItem(experiencesKey, JSON.stringify(next));
           }
@@ -190,12 +194,16 @@ export default function ExperienceSection() {
   };
 
   const formatPeriod = (exp) => {
-    const startMonth = exp.start_month ? exp.start_month.slice(0, 3) : "";
-    const start = `${startMonth} ${exp.start_year || ""}`.trim();
-    const endMonth = exp.end_month ? exp.end_month.slice(0, 3) : "";
+    const format = (month, year) => {
+      if (!month && !year) return "";
+      const monthStr = month ? month : "";
+      const yearStr = year ? year : "";
+      return `${monthStr} ${yearStr}`.trim();
+    };
+    const start = format(exp.start_month, exp.start_year);
     const end = exp.currently_working
       ? "Present"
-      : `${endMonth} ${exp.end_year || ""}`.trim();
+      : format(exp.end_month, exp.end_year);
     if (!start && !end) return "";
     return `${start} – ${end}`;
   };
@@ -285,7 +293,9 @@ export default function ExperienceSection() {
               <Select
                 options={monthOptions}
                 value={expDraft.start_month}
-                onChange={(val) => setExpDraft((prev) => ({ ...prev, start_month: val }))}
+                onChange={(val) =>
+                  setExpDraft((prev) => ({ ...prev, start_month: val }))
+                }
                 placeholder="Select Month"
                 size="sm"
               />
@@ -337,7 +347,9 @@ export default function ExperienceSection() {
                 <Select
                   options={monthOptions}
                   value={expDraft.end_month}
-                  onChange={(val) => setExpDraft((prev) => ({ ...prev, end_month: val }))}
+                  onChange={(val) =>
+                    setExpDraft((prev) => ({ ...prev, end_month: val }))
+                  }
                   placeholder="Select Month"
                   size="sm"
                 />

@@ -433,8 +433,18 @@ def get_canonical_hash(resume: dict) -> str:
     """
     Serializes a normalized canonical resume dict into a stable, deterministic JSON and hashes it.
     """
+    def make_hashable(val):
+        if isinstance(val, dict):
+            return {k: make_hashable(v) for k, v in val.items()}
+        elif isinstance(val, list):
+            return [make_hashable(v) for v in val]
+        elif isinstance(val, str):
+            return val.lower().strip()
+        return val
+
+    hashable_resume = make_hashable(resume)
     serialized = json.dumps(
-        resume, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        hashable_resume, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 

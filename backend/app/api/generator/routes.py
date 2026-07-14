@@ -171,7 +171,48 @@ def generate(
                 detail="The AI returned an incomplete resume. Please try again.",
             )
 
-        headline = r_data.get("headline", "Optimized Resume")
+        # Get clean name from r_data
+        pi = r_data.get("personal_info", {}) or {}
+        contact = r_data.get("contact", {}) or {}
+        name = ""
+        if isinstance(pi, dict):
+            name = pi.get("name", "").strip()
+        if not name and isinstance(contact, dict):
+            name = contact.get("name", "").strip()
+        
+        if not name:
+            name = (current_user.full_name or "").strip() or resume.title
+        
+        # Clean title using standard cleaning
+        cleaned_title = name
+        if cleaned_title:
+            cleaned_title = re.sub(r"^Optimized:\s*", "", cleaned_title, flags=re.IGNORECASE)
+            cleaned_title = re.sub(r"\.(pdf|docx|doc)$", "", cleaned_title, flags=re.IGNORECASE)
+            cleaned_title = re.sub(r"[_-]+", " ", cleaned_title)
+            cleaned_title = re.sub(r"\bresume\b.*$", "", cleaned_title, flags=re.IGNORECASE)
+            cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
+        
+        new_title = cleaned_title or "Untitled Resume"
+
+        # Ensure headline is preserved if generated one is empty
+        gen_headline = r_data.get("headline", "").strip()
+        if not gen_headline:
+            orig_headline = ""
+            if resume.resume_json:
+                try:
+                    orig_json = json.loads(resume.resume_json)
+                    orig_headline = (orig_json.get("headline") or orig_json.get("personal_info", {}).get("headline") or "").strip()
+                except Exception:
+                    pass
+            if orig_headline:
+                r_data["headline"] = orig_headline
+                headline = orig_headline
+            else:
+                r_data["headline"] = "Optimized Resume"
+                headline = "Optimized Resume"
+        else:
+            headline = gen_headline
+
         summary = r_data.get("summary", "")
         skills_list = r_data.get("skills", [])
 
@@ -215,7 +256,7 @@ def generate(
 
         new_resume = Resume(
             user_id=current_user.id,
-            title=f"Optimized: {resume.title}",
+            title=new_title,
             original_filename=resume.original_filename,
             file_path=resume.file_path,
             parsed_text=optimized_text,

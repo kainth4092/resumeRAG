@@ -24,6 +24,7 @@ import { useResumeGenerator } from "../hooks/useResumeGenerator";
 import Select from "../components/resume/dashboard/Select";
 import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
 import { MOCK_RESUME } from "./templatesData";
+import ResumeSkeleton from "../../../components/loading/ResumeSkeleton";
 
 export function ResumeGenerator({ onBack }) {
   const {
@@ -271,7 +272,9 @@ export function ResumeGenerator({ onBack }) {
           </div>
         )}
 
-        {!generated ? (
+        {generating ? (
+          <ResumeSkeleton mode="generator" />
+        ) : !generated ? (
           <div className="space-y-6 animate-in fade-in-0 duration-300">
             {/* Step 1 & 2 Inputs Side-by-Side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

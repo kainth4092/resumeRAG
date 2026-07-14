@@ -299,9 +299,7 @@ export function useResumeGenerator() {
 
       const resumeEntry = {
         id: parseInt(resumeId, 10) || resumeId,
-        title: r.personal_info?.name
-          ? `${r.personal_info.name}'s Resume`
-          : "Optimized Resume",
+        title: r.personal_info?.name || "Untitled Resume",
         score: currentAnalysis?.ats_score || 85,
         status: "Active",
         updatedAt: new Date().toLocaleDateString("en-US", {

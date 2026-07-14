@@ -7,11 +7,105 @@ import SearchFilter from "../components/resume/dashboard/SearchFilter";
 import ResumeTable from "../components/resume/dashboard/ResumeTable";
 import ResumePreviewModal from "../components/resume/dashboard/ResumePreviewModal";
 import DeleteDialog from "../components/resume/dashboard/DeleteDialog";
-import { setActiveResume, getResumes } from "../services/resumeService";
+import {
+  setActiveResume,
+  getResumes,
+  deleteResume,
+} from "../services/resumeService";
 import { useAuth } from "../../auth/context/AuthContext";
 import AIWorkspace from "./AIWorkspace";
 import { interviewService } from "../../interview/services/interviewService";
 import { estimatePageCount } from "../../../utils/resumeUtils";
+
+const getResumeDisplayName = (item, user) => {
+  let nameFromResume =
+    item?.resume?.personal_info?.name ||
+    item?.resume?.contact?.name ||
+    item?.resume?.contact_info?.name ||
+    item?.resume_json?.personal_info?.name ||
+    item?.resume_json?.contact?.name ||
+    item?.resume_json?.contact_info?.name ||
+    item?.parsed_data?.personal_info?.name ||
+    item?.parsed_data?.contact?.name ||
+    item?.personal_info?.name ||
+    item?.contact?.name ||
+    item?.contact_info?.name;
+
+  if (
+    nameFromResume &&
+    typeof nameFromResume === "string" &&
+    nameFromResume.trim()
+  ) {
+    nameFromResume = nameFromResume.trim();
+    const storedTitle = item?.title || item?.name || "";
+    if (
+      typeof storedTitle === "string" &&
+      storedTitle.toLowerCase().includes("(copy)")
+    ) {
+      nameFromResume = `${nameFromResume} (Copy)`;
+    }
+    return nameFromResume;
+  }
+
+  const userFullName = user?.full_name || user?.name || "";
+  if (userFullName && typeof userFullName === "string" && userFullName.trim()) {
+    let resolved = userFullName.trim();
+    const storedTitle = item?.title || item?.name || "";
+    if (
+      typeof storedTitle === "string" &&
+      storedTitle.toLowerCase().includes("(copy)")
+    ) {
+      resolved = `${resolved} (Copy)`;
+    }
+    return resolved;
+  }
+
+  const filename =
+    item?.original_filename ||
+    item?.title ||
+    item?.name ||
+    item?.filename ||
+    "";
+
+  if (filename && typeof filename === "string") {
+    let cleaned = filename
+      .replace(/^Optimized:\s*/i, "")
+      .replace(/\.(pdf|doc|docx)$/i, "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\bresume\b.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (cleaned) {
+      if (filename.toLowerCase().includes("(copy)")) {
+        cleaned = `${cleaned} (Copy)`;
+      }
+      return cleaned;
+    }
+  }
+
+  return "Untitled Resume";
+};
+
+const getResumeHeadline = (item) => {
+  const headline =
+    item?.resume?.headline ||
+    item?.resume?.personal_info?.title ||
+    item?.resume?.personal_info?.headline ||
+    item?.resume?.contact?.headline ||
+    item?.resume_json?.headline ||
+    item?.resume_json?.personal_info?.title ||
+    item?.resume_json?.contact?.headline ||
+    item?.parsed_data?.headline ||
+    item?.generated_resume?.headline ||
+    item?.headline ||
+    "";
+
+  if (headline && typeof headline === "string" && headline.trim()) {
+    return headline.trim();
+  }
+  return "Not specified";
+};
 
 export default function MyResumes() {
   const navigate = useNavigate();
@@ -84,21 +178,6 @@ export default function MyResumes() {
           ) {
             return false;
           }
-          const lowerName = name.toLowerCase();
-          const lowerOrig = origName.toLowerCase();
-          if (
-            lowerName.endsWith(".pdf") ||
-            lowerName.endsWith(".docx") ||
-            lowerName.endsWith(".doc") ||
-            lowerOrig.endsWith(".pdf") ||
-            lowerOrig.endsWith(".docx") ||
-            lowerOrig.endsWith(".doc")
-          ) {
-            if (lowerName.startsWith("optimized:")) {
-              return true;
-            }
-            return false;
-          }
           return true;
         })
         .map((item) => {
@@ -113,14 +192,11 @@ export default function MyResumes() {
           }
           return {
             id: item.id,
-            name: item.title || item.name || "Untitled Resume",
-            role:
-              item.resume?.headline ||
-              item.resume?.personal_info?.title ||
-              item.resume?.personal_info?.headline ||
-              item.resume_json?.headline ||
-              item.headline ||
-              "Not specified",
+            name: getResumeDisplayName(item, user),
+            role: getResumeHeadline(item),
+            originalTitle: item.title || item.name || "",
+            originalFilename:
+              item.original_filename || item.resume?.original_filename || "",
             company: item.resume?.work_experience?.[0]?.company || "",
             score: score,
             status: item.status || "Active",
@@ -149,7 +225,16 @@ export default function MyResumes() {
         const latestSaved = JSON.parse(
           localStorage.getItem(resumesKey) || "[]",
         );
-        const mergedList = [...latestSaved];
+        
+        // Filter out database-backed resumes (id < 100000000000) that no longer exist in the backend
+        const dbIds = new Set(dbResumes.map((r) => String(r.id)));
+        const filteredSaved = latestSaved.filter((item) => {
+          const isLocalOnly = Number(item.id) > 100000000000;
+          if (isLocalOnly) return true;
+          return dbIds.has(String(item.id));
+        });
+
+        const mergedList = [...filteredSaved];
 
         dbResumes.forEach((dbItem) => {
           const idx = mergedList.findIndex(
@@ -227,7 +312,8 @@ export default function MyResumes() {
 
   useEffect(() => {
     const pendingResumes = resumes.filter(
-      (r) => r.parsing_status === "pending" || r.parsing_status === "processing"
+      (r) =>
+        r.parsing_status === "pending" || r.parsing_status === "processing",
     );
 
     if (pendingResumes.length === 0) return;
@@ -241,8 +327,13 @@ export default function MyResumes() {
         if (Array.isArray(freshList)) {
           let changed = false;
           const updatedResumes = resumes.map((localResume) => {
-            const dbItem = freshList.find((r) => String(r.id) === String(localResume.id));
-            if (dbItem && dbItem.parsing_status !== localResume.parsing_status) {
+            const dbItem = freshList.find(
+              (r) => String(r.id) === String(localResume.id),
+            );
+            if (
+              dbItem &&
+              dbItem.parsing_status !== localResume.parsing_status
+            ) {
               changed = true;
               return {
                 ...localResume,
@@ -257,7 +348,9 @@ export default function MyResumes() {
             setResumes(updatedResumes);
             const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
             const updatedSaved = saved.map((item) => {
-              const dbItem = freshList.find((r) => String(r.id) === String(item.id));
+              const dbItem = freshList.find(
+                (r) => String(r.id) === String(item.id),
+              );
               if (dbItem) {
                 return {
                   ...item,
@@ -281,10 +374,29 @@ export default function MyResumes() {
     };
   }, [resumes, resumesKey]);
 
-  const filtered = resumes
+  const validResumes = resumes.filter(
+    (resume) =>
+      resume &&
+      typeof resume === "object" &&
+      (resume.resume_id || resume.id) &&
+      resume.id !== removingId
+  );
+
+  const filtered = validResumes
     .filter((r) => {
-      if (search && !r.name.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      if (search) {
+        const query = search.toLowerCase();
+        const nameMatches = r.name?.toLowerCase().includes(query);
+        const roleMatches = r.role?.toLowerCase().includes(query);
+        const titleMatches = r.originalTitle?.toLowerCase().includes(query);
+        const filenameMatches = r.originalFilename
+          ?.toLowerCase()
+          .includes(query);
+
+        if (!nameMatches && !roleMatches && !titleMatches && !filenameMatches) {
+          return false;
+        }
+      }
       if (statusFilter !== "All" && r.status !== statusFilter) return false;
       if (starredFilter && !r.starred) return false;
       return true;
@@ -364,16 +476,89 @@ export default function MyResumes() {
     const id = deleteTarget.id;
     setDeleteTarget(null);
     setRemovingId(id);
-    await new Promise((r) => setTimeout(r, 350));
 
-    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
-    const updated = saved.filter((r) => String(r.id) !== String(id));
-    localStorage.setItem(resumesKey, JSON.stringify(updated));
+    try {
+      const numericId = parseInt(id, 10);
+      if (!isNaN(numericId)) {
+        await deleteResume(numericId);
+      }
 
-    setResumes((prev) => prev.filter((r) => String(r.id) !== String(id)));
-    setRemovingId(null);
-    if (previewResume && String(previewResume.id) === String(id))
-      setPreviewResume(null);
+      // Synchronize localStorage
+      const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+      const updated = saved.filter((r) => String(r.id) !== String(id));
+      localStorage.setItem(resumesKey, JSON.stringify(updated));
+
+      // Remove from React state
+      setResumes((prev) => prev.filter((r) => String(r.id) !== String(id)));
+
+      // If we are currently previewing this resume, close it
+      if (previewResume && String(previewResume.id) === String(id)) {
+        setPreviewResume(null);
+      }
+
+      // If the deleted resume was stored under lastResumeIdKey, remove it
+      if (localStorage.getItem(lastResumeIdKey) === String(id)) {
+        localStorage.removeItem(lastResumeIdKey);
+      }
+
+      // If the deleted resume was stored under editingResumeIdKey, remove it
+      const editingResumeIdKey = user?.email
+        ? `editing_resume_id_${user.email}`
+        : "editing_resume_id";
+      if (localStorage.getItem(editingResumeIdKey) === String(id)) {
+        localStorage.removeItem(editingResumeIdKey);
+      }
+
+      setError("");
+      setSuccess("Resume deleted successfully!");
+    } catch (err) {
+      console.error("Failed to delete resume:", err);
+      let errMsg = "Failed to delete resume. Please try again.";
+      let alreadyDeleted = false;
+
+      if (err.response?.status === 401) {
+        errMsg = "Your session has expired. Please sign in again.";
+      } else if (err.response?.status === 403) {
+        errMsg = "You do not have permission to delete this resume.";
+      } else if (err.response?.status === 404) {
+        errMsg = "This resume has already been deleted or does not exist.";
+        alreadyDeleted = true;
+      } else if (err.response?.status === 409) {
+        errMsg =
+          "This resume could not be deleted because it is currently referenced by another record.";
+      } else if (err.response?.data?.detail) {
+        errMsg = err.response.data.detail;
+      }
+
+      if (alreadyDeleted) {
+        // Clean up from state and storage anyway so it disappears from UI
+        const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+        const updated = saved.filter((r) => String(r.id) !== String(id));
+        localStorage.setItem(resumesKey, JSON.stringify(updated));
+        setResumes((prev) => prev.filter((r) => String(r.id) !== String(id)));
+
+        if (previewResume && String(previewResume.id) === String(id)) {
+          setPreviewResume(null);
+        }
+        if (localStorage.getItem(lastResumeIdKey) === String(id)) {
+          localStorage.removeItem(lastResumeIdKey);
+        }
+        const editingResumeIdKey = user?.email
+          ? `editing_resume_id_${user.email}`
+          : "editing_resume_id";
+        if (localStorage.getItem(editingResumeIdKey) === String(id)) {
+          localStorage.removeItem(editingResumeIdKey);
+        }
+
+        setError("");
+        setSuccess("Resume was already deleted from the server and has been removed locally.");
+      } else {
+        setError(errMsg);
+        setSuccess("");
+      }
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   const handleEdit = (r) => {

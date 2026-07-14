@@ -78,13 +78,32 @@ def create_bank_question(
 
 @router.get("/meta")
 def get_bank_meta(
+    skill: str | None = None,
+    category: str | None = None,
+    experience: str | None = None,
+    difficulty: str | None = None,
+    company: str | None = None,
+    source: str | None = None,
+    search: str | None = None,
+    bookmark_only: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     from app.interview.services.interview_bank_service import get_filters_meta
 
     try:
-        return get_filters_meta(db, current_user.id)
+        return get_filters_meta(
+            db,
+            user_id=current_user.id,
+            skill=skill,
+            category=category,
+            experience_level=experience,
+            difficulty=difficulty,
+            company=company,
+            source=source,
+            search=search,
+            bookmark_only=bookmark_only,
+        )
     except Exception:
         logger.exception("Failed to fetch interview bank metadata")
         raise HTTPException(status_code=500, detail="Failed to fetch metadata.")

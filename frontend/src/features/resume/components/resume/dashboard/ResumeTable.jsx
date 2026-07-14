@@ -70,12 +70,7 @@ export default function ResumeTable({
               filtered.map((r) => (
                 <tr
                   key={r.id}
-                  className={[
-                    "border-b border-border last:border-0 transition-all duration-300 group",
-                    removingId === r.id
-                      ? "opacity-0 scale-y-0 max-h-0 overflow-hidden"
-                      : "hover:bg-muted/30 opacity-100",
-                  ].join(" ")}
+                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-all duration-200 group opacity-100"
                 >
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -99,7 +94,8 @@ export default function ResumeTable({
                         <FileText size={14} style={{ color: r.color }} />
                       </div>
                       <div>
-                        {r.parsing_status === "pending" || r.parsing_status === "processing" ? (
+                        {r.parsing_status === "pending" ||
+                        r.parsing_status === "processing" ? (
                           <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
                             <span>{r.name}</span>
                             <span className="w-2.5 h-2.5 border border-primary border-t-transparent rounded-full animate-spin shrink-0" />
@@ -150,8 +146,16 @@ export default function ResumeTable({
                     <div className="flex items-center justify-end gap-3">
                       <button
                         onClick={() => handleEdit(r)}
-                        disabled={r.parsing_status === "pending" || r.parsing_status === "processing"}
-                        title={r.parsing_status === "pending" || r.parsing_status === "processing" ? "Parsing in progress..." : "Edit"}
+                        disabled={
+                          r.parsing_status === "pending" ||
+                          r.parsing_status === "processing"
+                        }
+                        title={
+                          r.parsing_status === "pending" ||
+                          r.parsing_status === "processing"
+                            ? "Parsing in progress..."
+                            : "Edit"
+                        }
                         className="w-8 h-8 flex items-center justify-center rounded-xl border border-transparent hover:bg-primary/10 hover:border-primary/20 text-muted-foreground hover:text-primary transition-all disabled:opacity-30 disabled:pointer-events-none"
                       >
                         <Edit2 size={14} />
@@ -201,7 +205,9 @@ export default function ResumeTable({
             <div className="p-3 space-y-1.5">
               {(() => {
                 const target = allResumes.find((r) => r.id === menuOpen);
-                const isParsing = target?.parsing_status === "pending" || target?.parsing_status === "processing";
+                const isParsing =
+                  target?.parsing_status === "pending" ||
+                  target?.parsing_status === "processing";
                 return (
                   <>
                     <button
@@ -222,7 +228,9 @@ export default function ResumeTable({
                       onClick={async () => {
                         if (target && !isParsing) {
                           setPreviewResume(target);
-                          await new Promise((resolve) => setTimeout(resolve, 200));
+                          await new Promise((resolve) =>
+                            setTimeout(resolve, 200),
+                          );
                           const resumeData = target.resume || target;
                           await downloadPDF(
                             resumeData,
