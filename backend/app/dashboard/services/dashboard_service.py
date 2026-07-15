@@ -1,5 +1,8 @@
 import json
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 
 from sqlalchemy.orm import Session
 
@@ -79,11 +82,6 @@ class DashboardService:
             greeting_period = "Night"
 
         resumes = DashboardRepository.get_user_resumes(
-            db,
-            user_id,
-        )
-
-        health_records = DashboardRepository.get_user_resume_health(
             db,
             user_id,
         )
@@ -290,9 +288,30 @@ class DashboardService:
                     "type": "job",
                     "title": "Job tracked",
                     "description": (
-                        getattr(job, "role", None)
-                        or getattr(job, "title", None)
-                        or "Job application"
+                        (
+                            f"{job.job_title} at "
+                            f"{job.company_name}"
+                        )
+                        if (
+                            getattr(
+                                job,
+                                "job_title",
+                                None,
+                            )
+                            and getattr(
+                                job,
+                                "company_name",
+                                None,
+                            )
+                        )
+                        else (
+                            getattr(
+                                job,
+                                "job_title",
+                                None,
+                            )
+                            or "Job application"
+                        )
                     ),
                     "created_at": (
                         DashboardService._format_date(
@@ -414,5 +433,9 @@ class DashboardService:
                 "no_jobs": len(jobs) == 0,
                 "no_interviews": (len(interviews) == 0 and len(mock_interviews) == 0),
             },
-            "generated_at": (datetime.utcnow().isoformat()),
+            "generated_at": (
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
+            ),
         }

@@ -100,10 +100,33 @@ def retrieve_questions_rag(
         query,
     )
 
-    question_ids = search_question_ids(
-        query=query,
-        limit=max(limit * 3, limit),
-    )
+    try:
+        question_ids = search_question_ids(
+            query=query,
+            limit=max(
+                limit * 3,
+                limit,
+            ),
+        )
+
+        if not isinstance(
+            question_ids,
+            list,
+        ):
+            logger.warning(
+                "Qdrant returned an unexpected "
+                "question ID result type. "
+                "Using SQL fallback."
+            )
+            question_ids = []
+
+    except Exception:
+        logger.warning(
+            "Qdrant question retrieval failed. "
+            "Using SQL skill-matched fallback.",
+            exc_info=True,
+        )
+        question_ids = []
 
     logger.info(
         "Number of retrieved question IDs: %d",
@@ -146,8 +169,7 @@ def retrieve_questions_rag(
 
         fallback_questions = (
             fallback_query.order_by(
-                InterviewQuestionBank.difficulty.asc(),
-                InterviewQuestionBank.id.asc(),
+                InterviewQuestionBank.id.desc(),
             )
             .limit(remaining_needed)
             .all()

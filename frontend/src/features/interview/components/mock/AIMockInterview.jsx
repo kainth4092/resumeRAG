@@ -134,17 +134,27 @@ export function AIMockInterview() {
 
       const reportData = {
         interview_type: selectedType,
-        duration: duration,
+        duration,
         overall_score: evaluationResult.overall_score || 0,
         questions_attempted: completedAnswers.length,
-        performance_summary:
-          evaluationResult.performance_summary ||
-          "Completed mock interview session.",
+        performance_summary: evaluationResult.performance_summary || "Completed mock interview session.",
         answers: finalAnswers,
       };
 
+      const sessionPayload = {
+        interview_type: reportData.interview_type,
+        duration: reportData.duration,
+        overall_score: reportData.overall_score,
+        questions_attempted: reportData.questions_attempted,
+        performance_summary: reportData.performance_summary,
+        evaluation_report: reportData,
+      };
+
       // 3. Save session to database
-      const res = await mockInterviewService.saveSession(reportData);
+      const res =
+        await mockInterviewService.saveSession(
+          sessionPayload,
+        );
 
       const savedReport = {
         ...reportData,
@@ -199,7 +209,13 @@ export function AIMockInterview() {
   };
 
   const handleReopenHistory = (session) => {
-    setActiveReport(session);
+    const reportData = {
+      ...session,
+      ...(session.evaluation_report || {}),
+      answers: session.evaluation_report?.answers || [],
+    };
+
+    setActiveReport(reportData);
     setView("report");
   };
 

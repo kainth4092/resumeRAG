@@ -1,115 +1,143 @@
 import json
 import logging
-import requests
 from typing import Dict, Any, List
 
-from app.core.config import settings
+from app.services.ai import get_ai_provider
 
 logger = logging.getLogger(__name__)
 
 
 class EvaluationService:
     def __init__(self):
-        self.base_url = settings.OLLAMA_BASE_URL.rstrip("/")
-        self.model = settings.OLLAMA_MODEL
+        self.ai_provider = get_ai_provider()
 
-    def evaluate_interview(self, answers_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def evaluate_interview(
+        self,
+        answers_data: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
         """
-        Evaluate all candidate answers together using local Ollama.
-        Each item in answers_data has: 'question_text', 'transcript'
+        Evaluate all candidate answers together using the
+        application's configured AI provider.
+
+        Each item contains:
+        - question_text
+        - transcript
         """
-        if not self.base_url:
-            logger.warning(
-                "OLLAMA_BASE_URL is not configured; using fallback interview evaluation."
-            )
-            return self._get_fallback_interview_evaluation(
-                answers_data,
-                "OLLAMA_BASE_URL is not configured.",
-            )
-
-        url = f"{self.base_url}/api/chat"
-
         system_prompt = (
-            "You are an expert technical interviewer and communications coach. "
-            "Evaluate the candidate's spoken answers to all the interview questions. "
-            "You must return ONLY a JSON object containing the overall evaluation and individual question breakdowns. "
-            "Do not include any introductory text, markdown block wrappers, or explanation outside the JSON.\n\n"
+            "You are an expert technical interviewer and "
+            "communications coach. Evaluate the candidate's "
+            "spoken answers accurately. Do not reward an empty, "
+            "skipped, missing, or meaningless answer. A skipped "
+            "answer must receive zero for all numeric scores. "
+            "Return ONLY one valid JSON object. Do not include "
+            "markdown, code fences, introductory text, or text "
+            "outside the JSON.\n\n"
             "JSON Schema:\n"
             "{\n"
-            '  "overall_score": 0-100 integer,\n'
-            '  "performance_summary": "a comprehensive overall summary of the candidate\'s performance across all questions",\n'
+            '  "overall_score": 0,\n'
+            '  "performance_summary": "overall summary",\n'
             '  "answers": [\n'
             "    {\n"
-            '      "question_text": "the exact question text",\n'
-            '      "overall_score": 0-100 integer,\n'
-            '      "technical_score": 0-100 integer,\n'
-            '      "communication_score": 0-100 integer,\n'
-            '      "clarity_score": 0-100 integer,\n'
-            '      "confidence_score": 0-100 integer,\n'
-            '      "grammar_score": 0-100 integer,\n'
-            '      "strengths": ["strength 1", "strength 2"],\n'
-            '      "weaknesses": ["weakness 1", "weakness 2"],\n'
-            '      "missing_points": ["missing point 1", "missing point 2"],\n'
-            '      "improvements": ["improvement 1", "improvement 2"],\n'
-            '      "ideal_answer": "a high-quality, comprehensive ideal response to the question"\n'
+            '      "question_text": "exact question text",\n'
+            '      "overall_score": 0,\n'
+            '      "technical_score": 0,\n'
+            '      "communication_score": 0,\n'
+            '      "clarity_score": 0,\n'
+            '      "confidence_score": 0,\n'
+            '      "grammar_score": 0,\n'
+            '      "strengths": [],\n'
+            '      "weaknesses": [],\n'
+            '      "missing_points": [],\n'
+            '      "improvements": [],\n'
+            '      "ideal_answer": "high-quality ideal answer"\n'
             "    }\n"
             "  ]\n"
-            "}"
+            "}\n\n"
+            "Scoring rules:\n"
+            "- Every score must be an integer from 0 to 100.\n"
+            "- Judge technical correctness, relevance, clarity, "
+            "communication, confidence, and grammar.\n"
+            "- Do not infer knowledge that the candidate did not "
+            "demonstrate.\n"
+            "- Empty, skipped, whitespace-only, or no-answer "
+            "responses receive 0 in every score category.\n"
+            "- Preserve every question exactly and return one "
+            "evaluation for every supplied question.\n"
+            "- The overall score must reflect all questions, "
+            "including skipped questions."
         )
 
-        # Build user prompt
-        user_content_parts = ["Please evaluate the following interview responses:\n"]
-        for idx, item in enumerate(answers_data):
+        user_content_parts = [
+            "Evaluate these interview responses:\n"
+        ]
+
+        for index, item in enumerate(
+            answers_data,
+            start=1,
+        ):
+            question_text = str(
+                item.get("question_text") or ""
+            ).strip()
+
+            transcript = str(
+                item.get("transcript") or ""
+            ).strip()
+
+            if not transcript:
+                transcript = "[SKIPPED - NO ANSWER]"
+
             user_content_parts.append(
-                f"Question {idx+1}: {item['question_text']}\n"
-                f"Candidate Answer {idx+1}: {item.get('transcript') or 'Skipped/No answer'}\n"
+                f"Question {index}: {question_text}\n"
+                f"Candidate Answer {index}: "
+                f"{transcript}\n"
             )
-        user_content_parts.append("\nPerform the evaluation and output the JSON now.")
-        user_content = "\n".join(user_content_parts)
 
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            "format": "json",
-            "stream": False,
-            "options": {"temperature": 0.2},
-        }
+        user_prompt = "\n".join(
+            user_content_parts
+        )
 
-        # Auto-retry logic (max 2 attempts)
-        for attempt in range(1, 3):
-            try:
-                logger.info(
-                    f"Ollama evaluation request (attempt {attempt}/2) for {len(answers_data)} questions."
+        try:
+            logger.info(
+                "Interview evaluation request through "
+                "configured AI provider for %s questions.",
+                len(answers_data),
+            )
+
+            content = self.ai_provider.chat(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=0.1,
+                timeout=120.0,
+            )
+
+            evaluation = self._parse_json_content(
+                content
+            )
+
+            self._validate_evaluation(
+                evaluation,
+                answers_data,
+            )
+
+            return evaluation
+
+        except Exception as exc:
+            logger.error(
+                "Interview evaluation failed: %s",
+                exc,
+                exc_info=True,
+            )
+
+            return (
+                self._get_fallback_interview_evaluation(
+                    answers_data,
+                    str(exc),
                 )
-                response = requests.post(url, json=payload, timeout=60)
-                response.raise_for_status()
-
-                res_data = response.json()
-                message_content = res_data.get("message", {}).get("content", "")
-
-                evaluation = self._parse_json_content(message_content)
-
-                # Basic validation to ensure "answers" is in returned JSON and has correct length
-                if "answers" not in evaluation or not isinstance(
-                    evaluation["answers"], list
-                ):
-                    raise ValueError("Ollama JSON response missing 'answers' list.")
-
-                return evaluation
-
-            except Exception as e:
-                logger.error(
-                    "Ollama evaluation attempt %s failed: %s", attempt, e, exc_info=True
-                )
-                if attempt == 2:
-                    return self._get_fallback_interview_evaluation(answers_data, str(e))
+            )
 
     def _parse_json_content(self, content: str) -> Dict[str, Any]:
         """
-        Clean and parse the response from Ollama.
+        Clean and parse the configured AI provider response.
         """
         content = content.strip()
         if content.startswith("```json"):
@@ -123,72 +151,153 @@ class EvaluationService:
         try:
             return json.loads(content)
         except json.JSONDecodeError as jde:
-            logger.error("Failed to decode JSON from Ollama output: %s", jde, exc_info=True)
-            raise ValueError("Ollama did not return a valid JSON object.")
+            logger.error(
+                "Failed to decode JSON from AI provider output: %s",
+                jde,
+                exc_info=True,
+            )
+            raise ValueError(
+                "AI provider did not return a valid JSON object."
+            )
+
+    def _validate_evaluation(
+        self,
+        evaluation: Dict[str, Any],
+        answers_data: List[Dict[str, Any]],
+    ) -> None:
+        """
+        Validate the minimum structure returned by the AI
+        provider before the report is accepted.
+        """
+        answers = evaluation.get("answers")
+
+        if not isinstance(answers, list):
+            raise ValueError(
+                "AI evaluation is missing the answers list."
+            )
+
+        if len(answers) != len(answers_data):
+            raise ValueError(
+                "AI evaluation answer count does not match "
+                "the submitted question count."
+            )
+
+        if not isinstance(
+            evaluation.get("overall_score"),
+            int,
+        ):
+            raise ValueError(
+                "AI evaluation has an invalid overall score."
+            )
+
+        score_fields = (
+            "overall_score",
+            "technical_score",
+            "communication_score",
+            "clarity_score",
+            "confidence_score",
+            "grammar_score",
+        )
+
+        for index, answer in enumerate(answers):
+            if not isinstance(answer, dict):
+                raise ValueError(
+                    "AI evaluation contains an invalid "
+                    "answer object."
+                )
+
+            for field in score_fields:
+                score = answer.get(field)
+
+                if (
+                    not isinstance(score, int)
+                    or isinstance(score, bool)
+                    or score < 0
+                    or score > 100
+                ):
+                    raise ValueError(
+                        f"Invalid {field} for answer "
+                        f"{index + 1}."
+                    )
 
     def _get_fallback_interview_evaluation(
-        self, answers_data: List[Dict[str, Any]], error_msg: str
+        self,
+        answers_data: List[Dict[str, Any]],
+        error_msg: str,
     ) -> Dict[str, Any]:
         """
-        Fallback structured JSON response when Ollama fails twice.
+        Return a transparent unavailable-state report when
+        the configured AI provider cannot evaluate answers.
+
+        No heuristic or fabricated scores are generated.
         """
         logger.warning(
-            "Generating fallback batch interview evaluation due to service error."
+            "Generating unavailable-state interview report "
+            "because the AI evaluation service failed."
         )
 
         fallback_answers = []
-        total_score = 0
 
         for item in answers_data:
-            transcript = item.get("transcript") or ""
-            words = transcript.split()
-            word_count = len(words)
+            question_text = str(
+                item.get("question_text") or ""
+            )
 
-            score = 65
-            if word_count > 30:
-                score = 80
-            elif word_count > 10:
-                score = 70
-            elif word_count == 0:
-                score = 0
+            transcript = str(
+                item.get("transcript") or ""
+            ).strip()
 
-            total_score += score
+            was_answered = bool(transcript)
 
             fallback_answers.append(
                 {
-                    "question_text": item["question_text"],
-                    "overall_score": score,
-                    "technical_score": max(0, score - 2),
-                    "communication_score": max(0, score + 3),
-                    "clarity_score": max(0, score + 1),
-                    "confidence_score": max(0, score - 1),
-                    "grammar_score": 80 if word_count > 0 else 0,
-                    "strengths": [
-                        (
-                            "Answered the question verbally."
-                            if word_count > 0
-                            else "Skipped question."
-                        )
-                    ],
-                    "weaknesses": [
-                        "Evaluation service unavailable, fallback heuristic applied."
-                    ],
-                    "missing_points": [
-                        "Unable to evaluate missing concepts due to offline AI."
-                    ],
-                    "improvements": [
-                        "Check Ollama server health or pull the configured model."
-                    ],
-                    "ideal_answer": "This is a placeholder ideal answer since the local AI model was unreachable. Please review typical technical documentation for this question.",
+                    "question_text": question_text,
+                    "overall_score": 0,
+                    "technical_score": 0,
+                    "communication_score": 0,
+                    "clarity_score": 0,
+                    "confidence_score": 0,
+                    "grammar_score": 0,
+                    "strengths": [],
+                    "weaknesses": (
+                        [
+                            "The answer could not be evaluated "
+                            "because the AI evaluation service "
+                            "was unavailable."
+                        ]
+                        if was_answered
+                        else [
+                            "No answer was provided."
+                        ]
+                    ),
+                    "missing_points": [],
+                    "improvements": (
+                        [
+                            "Retry the evaluation when the AI "
+                            "service is available."
+                        ]
+                        if was_answered
+                        else [
+                            "Provide an answer before requesting "
+                            "an evaluation."
+                        ]
+                    ),
+                    "ideal_answer": "",
+                    "evaluation_status": "unavailable",
                 }
             )
 
-        avg_score = round(total_score / len(answers_data)) if answers_data else 0
-
         return {
-            "overall_score": avg_score,
-            "performance_summary": f"Evaluation fallback completed for {len(answers_data)} questions. Details: {error_msg[:100]}",
+            "overall_score": 0,
+            "performance_summary": (
+                "The interview was completed, but AI evaluation "
+                "is currently unavailable. No estimated or "
+                "heuristic scores were generated. Please retry "
+                "the evaluation later."
+            ),
             "answers": fallback_answers,
+            "evaluation_status": "unavailable",
+            "evaluation_error": error_msg[:200],
         }
 
 

@@ -1,5 +1,10 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Path as ApiPath,
+)
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -35,8 +40,12 @@ def get_tracked_jobs(
 
 @router.patch("/{job_id}", response_model=TrackedJobResponse)
 def update_job_status(
-    job_id: str,
     payload: UpdateJobStatusRequest,
+    job_id: str = ApiPath(
+        ...,
+        min_length=1,
+        max_length=255,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -116,7 +125,11 @@ def update_job_status(
 
 @router.delete("/{job_id}")
 def delete_tracked_job(
-    job_id: str,
+    job_id: str = ApiPath(
+        ...,
+        min_length=1,
+        max_length=255,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

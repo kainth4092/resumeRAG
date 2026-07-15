@@ -43,7 +43,15 @@ export const mockInterviewService = {
   },
 
   evaluateInterview: (answers) =>
-    api.post("/mock-interview/evaluate", { answers }).then((res) => res.data),
+    api
+      .post(
+        "/mock-interview/evaluate",
+        { answers },
+        {
+          timeout: 150000,
+        },
+      )
+      .then((res) => res.data),
 
   saveSession: (sessionData) =>
     api.post("/mock-interview/session", sessionData).then((res) => res.data),

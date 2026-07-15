@@ -35,6 +35,15 @@ def list_resumes(
     return ResumeService.list_resumes(db, current_user.id)
 
 
+@router.get("/active")
+def get_active_resume(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.get_active_resume(db, current_user.id)
+
+
+
 @router.get("/{resume_id}")
 def get_resume(
     resume_id: int,
@@ -44,22 +53,56 @@ def get_resume(
     return ResumeService.get_resume_by_id(resume_id, db, current_user.id)
 
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 class ResumeUpdateSchema(BaseModel):
-    title: str | None = None
-    template: str | None = None
-    version: str | None = None
-    ats_score: int | None = None
+    title: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255,
+    )
+    template: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+    )
+    version: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+    )
+    ats_score: int | None = Field(
+        default=None,
+        ge=0,
+        le=100,
+    )
     resume_json: dict | None = None
 
+    @field_validator(
+        "title",
+        "template",
+        "version",
+    )
+    @classmethod
+    def clean_text(
+        cls,
+        value: str | None,
+    ):
+        if value is None:
+            return value
 
-@router.get("/active")
-def get_active_resume(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return ResumeService.get_active_resume(db, current_user.id)
+        value = value.strip()
+
+        if not value:
+            raise ValueError(
+                "Value cannot be empty."
+            )
+
+        return value
 
 
 @router.post("/import-profile")
@@ -79,7 +122,9 @@ def update_resume(
 ):
     return ResumeService.update_resume(
         resume_id,
-        payload.dict(exclude_unset=True),
+        payload.model_dump(
+            exclude_unset=True,
+        ),
         db,
         current_user.id
     )

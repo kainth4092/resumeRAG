@@ -46,7 +46,6 @@ QUESTION_BANK_SKILL_ALIASES = {
     },
     "machine learning": {
         "machine learning",
-        "ml",
         "scikit-learn",
         "classification",
         "regression",
@@ -66,6 +65,62 @@ QUESTION_BANK_SKILL_ALIASES = {
         "artificial intelligence",
         "semantic ai",
         "applied ai",
+    },
+    "nlp": {
+        "nlp",
+        "natural language processing",
+        "text preprocessing",
+        "topic modelling",
+        "topic modeling",
+        "sentence transformers",
+        "sbert",
+    },
+    "semantic search": {
+        "semantic search",
+        "semantic matching",
+        "search relevance",
+        "dense retrieval",
+        "sparse retrieval",
+        "hybrid search",
+        "recommendation",
+        "ranking",
+    },
+    "embeddings & vector search": {
+        "embedding",
+        "embeddings",
+        "sentence embedding",
+        "sentence embeddings",
+        "sentence transformer",
+        "sentence transformers",
+        "sbert",
+        "bi-encoder",
+        "cross-encoder",
+        "cosine similarity",
+        "dot-product similarity",
+        "vector search",
+        "faiss",
+        "chroma",
+        "chroma db",
+        "azure ai search",
+    },
+    "mlops": {
+        "mlops",
+        "mlflow",
+        "model lifecycle",
+        "model registry",
+        "model monitoring",
+        "experiment tracking",
+        "distributed model pipelines",
+        "production support",
+        "ci/cd",
+    },
+    "pyspark": {
+        "pyspark",
+        "apache spark",
+        "spark sql",
+        "databricks",
+        "azure databricks",
+        "distributed model pipelines",
     },
 }
 
@@ -570,26 +625,91 @@ class MockInterviewService:
         selected_technical = []
         selected_ids = set()
 
-        skill_order = list(questions_by_skill.keys())
+        skill_order = []
 
-        random.shuffle(skill_order)
+        domain_skill_groups = [
+            {
+                "machine learning",
+            },
+            {
+                "nlp",
+                "rag",
+                "semantic search",
+            },
+            {
+                "embeddings & vector search",
+                "mlops",
+                "pyspark",
+            },
+        ]
+
+        # Select one available skill from each major
+        # ML/Data domain group before supporting skills.
+        for skill_group in domain_skill_groups:
+            available_group_skills = [
+                skill_name
+                for skill_name in questions_by_skill
+                if (
+                    skill_name in skill_group
+                    and skill_name not in skill_order
+                )
+            ]
+
+            random.shuffle(
+                available_group_skills
+            )
+
+            if available_group_skills:
+                skill_order.append(
+                    available_group_skills[0]
+                )
+
+        # Add all remaining matched skills in random
+        # order. This preserves generic behavior for
+        # non-ML resumes and provides supporting skills
+        # such as Python, SQL, or FastAPI.
+        remaining_skills = [
+            skill_name
+            for skill_name in questions_by_skill
+            if skill_name not in skill_order
+        ]
+
+        random.shuffle(
+            remaining_skills
+        )
+
+        skill_order.extend(
+            remaining_skills
+        )
 
         # First pass:
         # select one question from each distinct
         # matched skill before repeating a skill.
         for skill_name in skill_order:
-            skill_questions = questions_by_skill[skill_name]
+            skill_questions = (
+                questions_by_skill[
+                    skill_name
+                ]
+            )
 
             if not skill_questions:
                 continue
 
-            question = skill_questions.pop()
+            question = (
+                skill_questions.pop()
+            )
 
-            selected_technical.append(question)
+            selected_technical.append(
+                question
+            )
 
-            selected_ids.add(question.id)
+            selected_ids.add(
+                question.id
+            )
 
-            if len(selected_technical) == 4:
+            if len(
+                selected_technical
+            ) == 4:
                 break
 
         # Second pass:

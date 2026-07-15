@@ -3,7 +3,7 @@ import os
 import tempfile
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Form
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, List
 
 from app.core.database import get_db
@@ -24,21 +24,50 @@ router = APIRouter(
 
 
 class AnswerItem(BaseModel):
-    question_text: str
+    question_text: str = Field(
+        ...,
+        min_length=1,
+    )
+
+    # An empty transcript is valid because
+    # the candidate may skip a question.
     transcript: str
 
 
 class BatchEvaluateRequest(BaseModel):
-    answers: List[AnswerItem]
+    answers: List[AnswerItem] = Field(
+        ...,
+        min_length=1,
+    )
 
 
 class SaveSessionRequest(BaseModel):
-    interview_type: str
-    duration: int
-    overall_score: int
-    questions_attempted: int
-    performance_summary: str
-    evaluation_report: Dict[str, Any]
+    interview_type: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+    )
+    duration: int = Field(
+        ...,
+        ge=0,
+    )
+    overall_score: int = Field(
+        ...,
+        ge=0,
+        le=100,
+    )
+    questions_attempted: int = Field(
+        ...,
+        ge=0,
+    )
+    performance_summary: str = Field(
+        ...,
+        min_length=1,
+    )
+    evaluation_report: Dict[
+        str,
+        Any,
+    ]
 
 
 @router.get("/questions")
@@ -52,9 +81,16 @@ def get_mock_questions(
             db, interview_type=type, user_id=current_user.id
         )
         return {"questions": questions}
+    except HTTPException:
+        raise
+
     except Exception:
         logger.exception("Error fetching mock questions")
-        raise HTTPException(status_code=500, detail="Failed to fetch mock questions.")
+
+        raise HTTPException(
+            status_code=500,
+            detail=("Failed to fetch " "mock questions."),
+        )
 
 
 @router.post("/transcribe")

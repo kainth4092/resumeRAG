@@ -1,4 +1,5 @@
 import logging
+from html import escape
 from typing import Optional
 from ..providers.resend_provider import ResendEmailProvider
 from app.core.config import settings
@@ -22,7 +23,12 @@ class EmailService:
         attachment_path: Optional[str] = None,
         attachment_name: Optional[str] = None,
     ) -> dict:
-        formatted_message = message.replace("\n", "<br>")
+        formatted_message = escape(
+            message
+        ).replace(
+            "\n",
+            "<br>",
+        )
         html_content = f"""
         <html>
             <body style="font-family: Arial, sans-serif; color: #333333; line-height: 1.6;">
@@ -32,7 +38,7 @@ class EmailService:
                     </div>
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;">
                     <p style="font-size: 11px; color: #64748b; text-align: center; margin: 0;">
-                        This document was delivered securely via ResuPilot AI AI application.
+                        This document was delivered securely via ResuPilot AI application.
                     </p>
                 </div>
             </body>

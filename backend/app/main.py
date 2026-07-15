@@ -80,48 +80,161 @@ def _error(detail: str, status_code: int) -> JSONResponse:
     return JSONResponse(status_code=status_code, content={"detail": detail})
 
 
+FIELD_LABEL_OVERRIDES = {
+    "ats_score": "ATS score",
+    "api_key": "API key",
+    "email": "Email",
+    "id": "ID",
+    "job_description": "Job description",
+    "resume_id": "Resume ID",
+    "section_name": "Section name",
+    "url": "URL",
+}
+
+
+def _get_validation_field(field_path) -> str | None:
+    """Return the final user-editable field from a Pydantic error location."""
+    if not field_path:
+        return None
+
+    for part in reversed(field_path):
+        if isinstance(part, str) and part not in {"body", "query", "path", "header"}:
+            return part
+
+    return None
+
+
+def _format_field_label(field: str | None) -> str:
+    """Convert backend field names into readable user-facing labels."""
+    if not field:
+        return "Input"
+
+    if field in FIELD_LABEL_OVERRIDES:
+        return FIELD_LABEL_OVERRIDES[field]
+
+    return field.replace("_", " ").strip().capitalize()
+
+
 @app.exception_handler(RequestValidationError)
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ):
     errors = exc.errors()
+
     if not errors:
-        return _error("The submitted data is invalid. Please check your input.", 422)
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "The submitted data is invalid. Please check your input.",
+                "error_code": "VALIDATION_ERROR",
+                "field": None,
+            },
+        )
 
     first_error = errors[0]
 
     field_path = first_error.get("loc", [])
-    field_name = str(field_path[-1].replace("_", "").title() if field_path else "Input")
+    field = _get_validation_field(field_path)
+    field_label = _format_field_label(field)
 
     error_type = first_error.get("type", "")
-    ctx = first_error.get("ctx", {})
+    ctx = first_error.get("ctx") or {}
 
-    if error_type == "string_too_short":
+    if error_type == "missing":
+        message = f"{field_label} is required."
+
+    elif error_type == "string_too_short":
         min_length = ctx.get("min_length")
         message = (
-            f"{field_name} is too short."
+            f"{field_label} is too short. "
             f"Please enter at least {min_length} characters."
         )
 
-    elif error_type == "missing":
-        message = f"{field_name} is required."
+    elif error_type == "string_too_long":
+        max_length = ctx.get("max_length")
+        message = (
+            f"{field_label} is too long. "
+            f"Please enter no more than {max_length} characters."
+        )
 
-    elif error_type == "string_type":
-        message = f"{field_name} must be valid text."
+    elif error_type in {"string_type", "string_unicode"}:
+        message = f"{field_label} must be valid text."
 
-    elif error_type == "int_parsing":
-        message = f"{field_name} must be a valid number."
+    elif error_type in {"int_type", "int_parsing"}:
+        message = f"{field_label} must be a valid whole number."
+
+    elif error_type in {"float_type", "float_parsing"}:
+        message = f"{field_label} must be a valid number."
+
+    elif error_type in {"bool_type", "bool_parsing"}:
+        message = f"{field_label} must be true or false."
+
+    elif error_type == "greater_than":
+        message = f"{field_label} must be greater than {ctx.get('gt')}."
+
+    elif error_type == "greater_than_equal":
+        message = (
+            f"{field_label} must be greater than or equal to "
+            f"{ctx.get('ge')}."
+        )
+
+    elif error_type == "less_than":
+        message = f"{field_label} must be less than {ctx.get('lt')}."
+
+    elif error_type == "less_than_equal":
+        message = (
+            f"{field_label} must be less than or equal to "
+            f"{ctx.get('le')}."
+        )
+
+    elif error_type == "list_type":
+        message = f"{field_label} must be a valid list."
+
+    elif error_type == "too_short":
+        min_length = ctx.get("min_length")
+        message = (
+            f"{field_label} must contain at least "
+            f"{min_length} item{'s' if min_length != 1 else ''}."
+        )
+
+    elif error_type == "too_long":
+        max_length = ctx.get("max_length")
+        message = (
+            f"{field_label} must contain no more than "
+            f"{max_length} item{'s' if max_length != 1 else ''}."
+        )
+
+    elif error_type == "json_invalid":
+        field = None
+        message = "The request body contains invalid JSON."
+
+    elif error_type == "value_error":
+        raw_message = str(first_error.get("msg", "Invalid value."))
+        message = raw_message.removeprefix("Value error, ").strip()
+
+        if message:
+            message = message[0].upper() + message[1:]
+            if message[-1] not in ".!?":
+                message += "."
+        else:
+            message = f"{field_label} contains an invalid value."
 
     else:
-        raw_message = first_error.get("msg", "Invalid input.")
-        message = f"{field_name}: {raw_message}"
+        raw_message = str(first_error.get("msg", "Invalid input.")).strip()
+
+        if raw_message:
+            raw_message = raw_message[0].upper() + raw_message[1:]
+            if raw_message[-1] not in ".!?":
+                raw_message += "."
+
+        message = f"{field_label}: {raw_message}"
 
     return JSONResponse(
         status_code=422,
         content={
             "detail": message,
             "error_code": "VALIDATION_ERROR",
-            "field": field_path[-1] if field_path else None,
+            "field": field,
         },
     )
 

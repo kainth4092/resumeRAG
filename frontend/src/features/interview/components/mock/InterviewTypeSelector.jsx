@@ -22,6 +22,17 @@ export function InterviewTypeSelector({ onSelect, history, onReopenHistory }) {
     return mins > 0 ? `${mins}m ${remainingSecs}s` : `${remainingSecs}s`;
   };
 
+  const getGrade = (score) => {
+    const numericScore = Number(score) || 0;
+
+    if (numericScore >= 90) return "A+";
+    if (numericScore >= 80) return "A";
+    if (numericScore >= 70) return "B+";
+    if (numericScore >= 60) return "B";
+    if (numericScore >= 50) return "C";
+    return "F";
+  };
+
   const getGradeColor = (grade) => {
     if (["A+", "A"].includes(grade))
       return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
@@ -158,9 +169,21 @@ export function InterviewTypeSelector({ onSelect, history, onReopenHistory }) {
                         {session.interview_type}
                       </h4>
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getGradeColor(session.overall_grade || "B")}`}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          session.evaluation_report?.evaluation_status ===
+                          "unavailable"
+                            ? "bg-red-500/10 text-red-500 border-red-500/20"
+                            : getGradeColor(
+                                getGrade(session.overall_score),
+                              )
+                        }`}
                       >
-                        Grade {session.overall_grade || "B"}
+                        {session.evaluation_report?.evaluation_status ===
+                        "unavailable"
+                          ? "Evaluation Unavailable"
+                          : `Grade ${getGrade(
+                              session.overall_score,
+                            )}`}
                       </span>
                     </div>
                     <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 flex-wrap">

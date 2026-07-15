@@ -1,6 +1,12 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Path as ApiPath,
+    Query,
+)
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -19,11 +25,28 @@ router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 
 @router.get("/search")
 async def search_jobs(
-    query: str,
-    location: str | None = None,
-    employment_type: str | None = None,
-    remote: str | None = None,
-    page: int = 1,
+    query: str = Query(
+        ...,
+        min_length=2,
+        max_length=200,
+    ),
+    location: str | None = Query(
+        default=None,
+        max_length=100,
+    ),
+    employment_type: str | None = Query(
+        default=None,
+        max_length=30,
+    ),
+    remote: str | None = Query(
+        default=None,
+        pattern="^(yes|no)$",
+    ),
+    page: int = Query(
+        default=1,
+        ge=1,
+        le=100,
+    ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -45,9 +68,18 @@ async def search_jobs(
 
 @router.get("/recommended")
 async def recommended_jobs(
-    location: str | None = None,
-    employment_type: str | None = None,
-    remote: str | None = None,
+    location: str | None = Query(
+        default=None,
+        max_length=100,
+    ),
+    employment_type: str | None = Query(
+        default=None,
+        max_length=30,
+    ),
+    remote: str | None = Query(
+        default=None,
+        pattern="^(yes|no)$",
+    ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -68,7 +100,11 @@ async def recommended_jobs(
 
 @router.get("/{job_id}")
 async def get_job(
-    job_id: str,
+    job_id: str = ApiPath(
+        ...,
+        min_length=1,
+        max_length=255,
+    ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

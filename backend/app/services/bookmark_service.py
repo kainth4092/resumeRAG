@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.bookmark import InterviewBookmark
@@ -9,6 +10,26 @@ def toggle_bookmark(
     user_id: int,
     question_id: int,
 ):
+    question = (
+        db.query(
+            InterviewQuestionBank
+        )
+        .filter(
+            InterviewQuestionBank.id
+            == question_id
+        )
+        .first()
+    )
+
+    if not question:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Interview question "
+                "not found."
+            ),
+        )
+
     bookmark = (
         db.query(InterviewBookmark)
         .filter(

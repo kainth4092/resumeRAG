@@ -1,6 +1,13 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+)
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -11,6 +18,7 @@ from app.schemas.interview_bank import (
     InterviewQuestionUpdate,
     InterviewQuestionResponse,
     InterviewQuestionListResponse,
+    GenerateBankAnswerRequest,
 )
 from app.schemas.interview_retrieval import InterviewRetrievalRequest
 from app.interview.services.interview_bank_service import (
@@ -111,44 +119,98 @@ def get_bank_meta(
 
 @router.post("/generate-answer")
 def generate_bank_answer(
-    payload: dict,
-    current_user: User = Depends(get_current_user),
+    payload: GenerateBankAnswerRequest,
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
-    question = payload.get("question")
-    skill = payload.get("skill", "")
-    category = payload.get("category", "")
-    experience_level = payload.get("experience_level", "")
-
-    if not question or not question.strip():
-        raise HTTPException(status_code=400, detail="Question is required.")
-
-    from app.services.llm_service import generate_general_answer
+    from app.services.llm_service import (
+        generate_general_answer,
+    )
 
     try:
         answer = generate_general_answer(
-            question=question,
-            skill=skill,
-            category=category,
-            experience_level=experience_level,
+            question=payload.question,
+            skill=payload.skill,
+            category=payload.category,
+            experience_level=(
+                payload.experience_level
+            ),
         )
-        return {"answer": answer}
-    except Exception:
-        logger.exception("Failed to generate bank answer")
-        raise HTTPException(status_code=500, detail="Failed to generate answer.")
+
+        if not isinstance(
+            answer,
+            str,
+        ) or not answer.strip():
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "The AI service did not return "
+                    "a usable answer. Please try again."
+                ),
+            )
+
+        return {
+            "answer": answer.strip()
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        logger.exception(
+            "Failed to generate interview "
+            "bank answer"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "We couldn't generate an answer "
+                "right now. Please try again."
+            ),
+        ) from exc
 
 
 @router.get("/", response_model=InterviewQuestionListResponse)
 def list_bank_questions(
-    skill: str | None = None,
-    category: str | None = None,
-    experience: str | None = None,
-    difficulty: str | None = None,
-    company: str | None = None,
-    source: str | None = None,
-    search: str | None = None,
+    skill: str | None = Query(
+        default=None,
+        max_length=100,
+    ),
+    category: str | None = Query(
+        default=None,
+        max_length=50,
+    ),
+    experience: str | None = Query(
+        default=None,
+        max_length=50,
+    ),
+    difficulty: str | None = Query(
+        default=None,
+        max_length=20,
+    ),
+    company: str | None = Query(
+        default=None,
+        max_length=100,
+    ),
+    source: str | None = Query(
+        default=None,
+        max_length=20,
+    ),
+    search: str | None = Query(
+        default=None,
+        max_length=200,
+    ),
     bookmark_only: bool = False,
-    page: int = 1,
-    limit: int = 10,
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -175,9 +237,64 @@ def list_bank_questions(
         raise HTTPException(status_code=500, detail="Failed to fetch questions.")
 
 
+@router.post(
+    "/retrieve",
+    response_model=list[InterviewQuestionResponse],
+)
+def retrieve_interview_questions(
+    payload: InterviewRetrievalRequest,
+    limit: int = Query(
+        default=40,
+        ge=1,
+        le=100,
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        resume = ResumeRepository.get_resume_by_id(
+            db, payload.resume_id, current_user.id
+        )
+        if not resume:
+            raise HTTPException(
+                status_code=404,
+                detail="Resume not found.",
+            )
+        resume_skills = extract_resume_skills(
+            resume.parsed_text,
+        )
+        jd_skills = extract_jd_skills(
+            payload.job_description,
+        )
+        questions = retrieve_questions_rag(
+            db,
+            resume_skills=resume_skills,
+            jd_skills=jd_skills,
+            limit=limit,
+        )
+        return questions
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception(
+            "Failed to retrieve interview "
+            "questions"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "We couldn't retrieve interview "
+                "questions right now. "
+                "Please try again."
+            ),
+        ) from exc
+
 @router.get("/{question_id}", response_model=InterviewQuestionResponse)
 def get_bank_question(
-    question_id: int,
+    question_id: int = Path(
+        ...,
+        gt=0,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -238,7 +355,10 @@ def update_bank_question(
 
 @router.delete("/{question_id}")
 def delete_bank_question(
-    question_id: int,
+    question_id: int = Path(
+        ...,
+        gt=0,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -270,44 +390,3 @@ def delete_bank_question(
     except Exception:
         logger.exception("Failed to delete interview bank question")
         raise HTTPException(status_code=500, detail="Failed to delete question.")
-
-
-@router.post(
-    "/retrieve",
-    response_model=list[InterviewQuestionResponse],
-)
-def retrieve_interview_questions(
-    payload: InterviewRetrievalRequest,
-    limit: int = 40,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    try:
-        resume = ResumeRepository.get_resume_by_id(
-            db, payload.resume_id, current_user.id
-        )
-        if not resume:
-            raise HTTPException(
-                status_code=404,
-                detail="Resume not found.",
-            )
-        resume_skills = extract_resume_skills(
-            resume.parsed_text,
-        )
-        jd_skills = extract_jd_skills(
-            payload.job_description,
-        )
-        questions = retrieve_questions_rag(
-            db,
-            resume_skills=resume_skills,
-            jd_skills=jd_skills,
-            limit=limit,
-        )
-        return questions
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve interview questions: {str(e)}",
-        )

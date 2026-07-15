@@ -32,10 +32,17 @@ def bookmark_question(
             question_id=payload.question_id,
         )
 
-    except Exception as e:
+    except HTTPException:
+        raise
+
+    except Exception:
+        db.rollback()
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update bookmark: {str(e)}",
+            detail=(
+                "Failed to update bookmark. "
+                "Please try again."
+            ),
         )
 
 
@@ -53,8 +60,14 @@ def bookmarks(
             user_id=current_user.id,
         )
 
-    except Exception as e:
+    except HTTPException:
+        raise
+
+    except Exception:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to fetch bookmarks: {str(e)}",
+            detail=(
+                "Failed to fetch bookmarks. "
+                "Please try again."
+            ),
         )

@@ -41,10 +41,20 @@ class TrackerService:
             return None
 
         job.status = status
-        if status.lower() == "applied":
+        normalized_status = (
+            status.value
+            if hasattr(status, "value")
+            else str(status)
+        ).lower()
+
+        if normalized_status == "applied":
             job.applied_at = datetime.utcnow()
-        elif status.lower() == "viewed":
+
+        elif normalized_status == "viewed":
             job.viewed_at = datetime.utcnow()
+
+        elif normalized_status == "interview":
+            job.interview_date = datetime.utcnow()
 
         db.commit()
         db.refresh(job)

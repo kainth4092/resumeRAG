@@ -28,6 +28,47 @@ router = APIRouter(prefix="/api/generator", tags=["Generator"])
 logger = logging.getLogger(__name__)
 
 
+def safe_json_loads(
+    value,
+    default,
+):
+    """Safely decode JSON stored in legacy database rows."""
+
+    if value is None or value == "":
+        return default
+
+    if isinstance(
+        value,
+        type(default),
+    ):
+        return value
+
+    try:
+        parsed = json.loads(value)
+    except (
+        TypeError,
+        ValueError,
+        json.JSONDecodeError,
+    ):
+        logger.warning(
+            "Invalid stored JSON encountered "
+            "in generator health data."
+        )
+        return default
+
+    if not isinstance(
+        parsed,
+        type(default),
+    ):
+        logger.warning(
+            "Unexpected stored JSON type in "
+            "generator health data."
+        )
+        return default
+
+    return parsed
+
+
 @router.post("/analyze", response_model=AnalyzeResponse)
 def analyze(
     payload: AnalyzeRequest,
@@ -181,7 +222,9 @@ def generate(
             name = contact.get("name", "").strip()
         
         if not name:
-            name = (current_user.full_name or "").strip() or resume.title
+            name = (
+                current_user.name or ""
+            ).strip() or resume.title
         
         # Clean title using standard cleaning
         cleaned_title = name
@@ -367,8 +410,9 @@ def get_resume_health(
     if not health_report:
         return None
 
-    suggestions_data = (
-        json.loads(health_report.suggestions) if health_report.suggestions else {}
+    suggestions_data = safe_json_loads(
+        health_report.suggestions,
+        {},
     )
     return {
         "ats_score": health_report.ats_score,
@@ -387,15 +431,16 @@ def get_resume_health(
         "formatting_status": suggestions_data.get("formatting_status", ""),
         "grammar_status": suggestions_data.get("grammar_status", ""),
         "suggestions": suggestions_data,
-        "missing_sections": (
-            json.loads(health_report.missing_sections)
-            if health_report.missing_sections
-            else []
+        "missing_sections": safe_json_loads(
+            health_report.missing_sections,
+            [],
         ),
-        "strengths": (
-            json.loads(health_report.strengths) if health_report.strengths else []
+        "strengths": safe_json_loads(
+            health_report.strengths,
+            [],
         ),
-        "weaknesses": (
-            json.loads(health_report.weaknesses) if health_report.weaknesses else []
+        "weaknesses": safe_json_loads(
+            health_report.weaknesses,
+            [],
         ),
     }

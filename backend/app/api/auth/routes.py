@@ -56,10 +56,26 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not user.password_hash:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    if not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not verify_password(
+        payload.password,
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
 
-    expires_delta = timedelta(days=30) if payload.remember_me else None
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
+    expires_delta = (
+        timedelta(days=30)
+        if payload.remember_me
+        else None
+    )
     token = create_access_token({"sub": str(user.id)}, expires_delta=expires_delta)
     return {"access_token": token, "token_type": "bearer"}
 
@@ -106,11 +122,46 @@ def google_auth(payload: GoogleLoginRequest, db: Session = Depends(get_db)):
     email = idinfo.get("email")
     name = idinfo.get("name")
     picture = idinfo.get("picture")
-    
+
+    email_verified = idinfo.get(
+        "email_verified",
+        False,
+    )
+
+    if isinstance(
+        email_verified,
+        str,
+    ):
+        email_verified = (
+            email_verified.lower()
+            == "true"
+        )
+
+    if not google_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Google token does not contain "
+                "a valid subject."
+            ),
+        )
+
     if not email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google token does not contain email address."
+            detail=(
+                "Google token does not contain "
+                "email address."
+            ),
+        )
+
+    if not email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Google email address is not "
+                "verified."
+            ),
         )
         
     # Check if the user already exists by email

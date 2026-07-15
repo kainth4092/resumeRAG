@@ -31,10 +31,56 @@ def send_email(
     attachment_created = False
 
     if resume.file_content_base64:
-        suffix = Path(resume.original_filename or "resume.pdf").suffix or ".pdf"
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            temp_file.write(base64.b64decode(resume.file_content_base64))
-            attachment_path = temp_file.name
+        suffix = (
+            Path(
+                resume.original_filename
+                or "resume.pdf"
+            ).suffix
+            or ".pdf"
+        )
+
+        try:
+            attachment_content = (
+                base64.b64decode(
+                    resume.file_content_base64,
+                    validate=True,
+                )
+            )
+        except (
+            ValueError,
+            base64.binascii.Error,
+        ) as exc:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    "The selected resume attachment "
+                    "is corrupted or unreadable."
+                ),
+            ) from exc
+
+        if not attachment_content:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                ),
+                detail=(
+                    "The selected resume attachment "
+                    "is empty."
+                ),
+            )
+
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=suffix,
+        ) as temp_file:
+            temp_file.write(
+                attachment_content
+            )
+            attachment_path = (
+                temp_file.name
+            )
             attachment_created = True
     elif resume.file_path and os.path.exists(resume.file_path):
         attachment_path = resume.file_path

@@ -118,17 +118,35 @@ class ResumeService:
         background_tasks: BackgroundTasks,
     ) -> dict:
         file_ext = Path(file.filename).suffix.lower()
-        allowed_content_types = [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/msword",
-        ]
+        allowed_file_types = {
+            ".pdf": {
+                "application/pdf",
+            },
+            ".docx": {
+                (
+                    "application/vnd.openxmlformats-"
+                    "officedocument.wordprocessingml.document"
+                ),
+            },
+        }
+
+        allowed_content_types = (
+            allowed_file_types.get(
+                file_ext,
+            )
+        )
+
         if (
-            file_ext not in [".pdf", ".docx"]
-            and file.content_type not in allowed_content_types
+            allowed_content_types is None
+            or file.content_type
+            not in allowed_content_types
         ):
             raise HTTPException(
-                status_code=400, detail="Only PDF and DOCX files are allowed."
+                status_code=400,
+                detail=(
+                    "Only valid PDF and DOCX "
+                    "files are allowed."
+                ),
             )
         unique_name = f"{uuid.uuid4()}_{file.filename}"
 
@@ -564,16 +582,42 @@ class ResumeService:
         if "ats_score" in payload:
             resume.ats_score = payload["ats_score"]
         if "resume_json" in payload:
-            resume.resume_json = json.dumps(payload["resume_json"])
-            # Update skills list based on resume_json's skills
-            skills_list = payload["resume_json"].get("skills", [])
-            if skills_list:
-                resume.skills = ",".join(skills_list)
-            
-            from app.resume.services.resume_normalizer import canonical_resume_to_text
-            text_rep = canonical_resume_to_text(payload["resume_json"])
-            resume.parsed_text = text_rep
-            resume.canonical_hash = hashlib.sha256(text_rep.encode("utf-8")).hexdigest()
+            from app.resume.services.resume_normalizer import (
+                canonical_resume_to_text,
+                get_canonical_hash,
+                normalize_resume,
+            )
+
+            normalized_resume = normalize_resume(
+                payload["resume_json"]
+            )
+
+            resume.resume_json = json.dumps(
+                normalized_resume
+            )
+
+            resume.skills = ",".join(
+                normalized_resume.get(
+                    "skills",
+                    [],
+                )
+            )
+
+            text_representation = (
+                canonical_resume_to_text(
+                    normalized_resume
+                )
+            )
+
+            resume.parsed_text = (
+                text_representation
+            )
+
+            resume.canonical_hash = (
+                get_canonical_hash(
+                    normalized_resume
+                )
+            )
 
         try:
             db.commit()

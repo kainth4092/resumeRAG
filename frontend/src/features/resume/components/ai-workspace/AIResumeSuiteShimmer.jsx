@@ -12,7 +12,7 @@ const Shimmer = ({ className = "" }) => {
           absolute inset-0
           -translate-x-full
           animate-[shimmer_1.6s_infinite]
-          bg-gradient-to-r
+          bg-linear-to-r
           from-transparent
           via-white/70
           to-transparent
