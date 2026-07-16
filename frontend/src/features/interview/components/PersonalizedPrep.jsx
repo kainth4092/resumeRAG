@@ -112,6 +112,7 @@ export const PersonalizedPrep = memo(function PersonalizedPrep({
           className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}
         >
           <InterviewFilterSidebar
+            key="personalized-filter"
             search={search}
             setSearch={setSearch}
             bookmarkOnly={bookmarkOnly}

@@ -11,11 +11,18 @@ export function useQuestionFilters({
   setError,
   locationState,
   mapExperienceToDifficulty,
+  activeTab,
 }) {
   const { user } = useAuth();
-  const lastResumeIdKey = user?.email ? `last_resume_id_${user.email}` : "last_resume_id";
-  const lastJobDescKey = user?.email ? `last_job_description_${user.email}` : "last_job_description";
-  const bookmarkedQuestionsKey = user?.email ? `bookmarked_questions_${user.email}` : "bookmarked_questions";
+  const lastResumeIdKey = user?.email
+    ? `last_resume_id_${user.email}`
+    : "last_resume_id";
+  const lastJobDescKey = user?.email
+    ? `last_job_description_${user.email}`
+    : "last_job_description";
+  const bookmarkedQuestionsKey = user?.email
+    ? `bookmarked_questions_${user.email}`
+    : "bookmarked_questions";
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -33,9 +40,14 @@ export function useQuestionFilters({
   useEffect(() => {
     if (viewState === "loading") return;
     if (!user) return;
+    if (activeTab !== "library") {
+      return;
+    }
 
-    const resumeId = locationState?.resumeId || localStorage.getItem(lastResumeIdKey);
-    const jd = locationState?.jobDescription || localStorage.getItem(lastJobDescKey);
+    const resumeId =
+      locationState?.resumeId || localStorage.getItem(lastResumeIdKey);
+    const jd =
+      locationState?.jobDescription || localStorage.getItem(lastJobDescKey);
     if (resumeId && jd) return;
 
     const fetchFilteredQuestions = async () => {
@@ -48,14 +60,19 @@ export function useQuestionFilters({
         if (diffFilter) params.experience = diffFilter;
 
         const res = await getAllInterviewQuestions(params);
-        const data = Array.isArray(res.data) ? res.data : (res.data?.questions || []);
-        const savedBookmarks = JSON.parse(localStorage.getItem(bookmarkedQuestionsKey) || "[]");
+        const data = Array.isArray(res.data)
+          ? res.data
+          : res.data?.questions || [];
+        const savedBookmarks = JSON.parse(
+          localStorage.getItem(bookmarkedQuestionsKey) || "[]",
+        );
 
         const transformed = data.map((q) => ({
           ...q,
           difficulty: mapExperienceToDifficulty(q.experience_level),
           bookmarked: savedBookmarks.includes(q.id),
-          is_personalized: q.is_personalized !== undefined ? q.is_personalized : false,
+          is_personalized:
+            q.is_personalized !== undefined ? q.is_personalized : false,
           source: q.source || "question_bank",
           sampleAnswer: asText(q.answer),
           estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
@@ -64,14 +81,32 @@ export function useQuestionFilters({
         setQuestions(transformed);
       } catch (err) {
         console.error("Failed to fetch filtered questions:", err);
-        setError(err.response?.data?.detail || err.message || "Failed to search questions.");
+        setError(
+          err.response?.data?.detail ||
+            err.message ||
+            "Failed to search questions.",
+        );
       } finally {
         setFetching(false);
       }
     };
 
     fetchFilteredQuestions();
-  }, [debouncedSearch, activeFilter, diffFilter, locationState, viewState, setQuestions, setFetching, setError, mapExperienceToDifficulty, user, lastResumeIdKey, lastJobDescKey, bookmarkedQuestionsKey]);
+  }, [
+    debouncedSearch,
+    activeFilter,
+    diffFilter,
+    locationState,
+    viewState,
+    setQuestions,
+    setFetching,
+    setError,
+    mapExperienceToDifficulty,
+    user,
+    lastResumeIdKey,
+    lastJobDescKey,
+    bookmarkedQuestionsKey,
+  ]);
 
   const filteredQuestions = questions.filter((q) => {
     if (bookmarkOnly && !q.bookmarked) return false;
@@ -90,7 +125,9 @@ export function useQuestionFilters({
       const query = search.toLowerCase();
       const matchQuestion = q.question?.toLowerCase().includes(query);
       const matchSkill = q.skill?.toLowerCase().includes(query);
-      const matchAnswer = (q.sampleAnswer || q.answer)?.toLowerCase().includes(query);
+      const matchAnswer = (q.sampleAnswer || q.answer)
+        ?.toLowerCase()
+        .includes(query);
 
       let matchTags = false;
       if (Array.isArray(q.tags)) {

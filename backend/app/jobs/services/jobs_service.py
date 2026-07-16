@@ -13,42 +13,42 @@ def clean_headline_for_job_search(headline: str) -> str:
     if not headline:
         return ""
     h = headline.lower()
-    
+
     # Remove common experience / level prefixes, suffixes or parentheticals
     patterns_to_remove = [
-        r'\bentry[- ]level\b',
-        r'\bmid[- ]level\b',
-        r'\bco-op\b',
-        r'\binternship\b',
-        r'\bintern\b',
-        r'\bjunior\b',
-        r'\bmid\b',
-        r'\bsenior\b',
-        r'\blead\b',
-        r'\bprincipal\b',
-        r'\bexperience\b',
-        r'\bexp\b',
-        r'\byears\b',
-        r'\byear\b',
-        r'\byoe\b',
-        r'\d+\+?\s*(yrs|years|yr|yoe|exp)?',
-        r'\bwith\b',
-        r'\bat\b',
-        r'\bseeking\b',
-        r'\blooking for\b',
-        r'\bprofessional\b',
-        r'\baspirant\b',
-        r'\baspiring\b',
-        r'\bopen to\b',
-        r'\bopportunities\b',
+        r"\bentry[- ]level\b",
+        r"\bmid[- ]level\b",
+        r"\bco-op\b",
+        r"\binternship\b",
+        r"\bintern\b",
+        r"\bjunior\b",
+        r"\bmid\b",
+        r"\bsenior\b",
+        r"\blead\b",
+        r"\bprincipal\b",
+        r"\bexperience\b",
+        r"\bexp\b",
+        r"\byears\b",
+        r"\byear\b",
+        r"\byoe\b",
+        r"\d+\+?\s*(yrs|years|yr|yoe|exp)?",
+        r"\bwith\b",
+        r"\bat\b",
+        r"\bseeking\b",
+        r"\blooking for\b",
+        r"\bprofessional\b",
+        r"\baspirant\b",
+        r"\baspiring\b",
+        r"\bopen to\b",
+        r"\bopportunities\b",
     ]
-    
+
     for pattern in patterns_to_remove:
-        h = re.sub(pattern, ' ', h)
-        
+        h = re.sub(pattern, " ", h)
+
     # Replace common separators/special chars with spaces
-    h = re.sub(r'[|,\-/•()\[\]:;]', ' ', h)
-    
+    h = re.sub(r"[|,\-/•()\[\]:;]", " ", h)
+
     # Collapse multiple spaces and strip
     words = [w.strip() for w in h.split() if w.strip()]
     cleaned = " ".join(words).title().strip()
@@ -59,9 +59,9 @@ def clean_skill_for_search(skill: str) -> str:
     if not skill:
         return ""
     # Remove anything inside parentheses, e.g. "JavaScript (ES6+)" -> "JavaScript"
-    s = re.sub(r'\(.*?\)', '', skill)
+    s = re.sub(r"\(.*?\)", "", skill)
     # Remove trailing/leading special characters except # or + (for C# / C++)
-    s = re.sub(r'[^\w\s#+.]', ' ', s)
+    s = re.sub(r"[^\w\s#+.]", " ", s)
     return " ".join(s.split()).strip()
 
 
@@ -90,71 +90,98 @@ class JobsService:
             latest_resume = JobsRepository.get_latest_resume(db, current_user.id)
 
         if latest_resume:
+            resume_json = {}
+            if latest_resume.resume_json:
+                try:
+                    import json
+
+                    resume_json = json.loads(latest_resume.resume_json)
+                except Exception:
+                    resume_json = {}
+
+            # --------------------------------------------------
+            # 1. Headline from Active Resume JSON
+            # --------------------------------------------------
+            if not headline and resume_json:
+                headline = (
+                    resume_json.get("headline")
+                    or resume_json.get("personal_info", {}).get("headline")
+                    or ""
+                ).strip()
+
+            # --------------------------------------------------
+            # 2. Skills from Active Resume JSON
+            # --------------------------------------------------
+            if not skills and resume_json:
+                json_skills = resume_json.get("skills", [])
+                if isinstance(json_skills, list):
+                    cleaned = []
+                    for s in json_skills:
+                        if isinstance(s, str):
+                            s = clean_skill_for_search(s)
+                            if s:
+                                cleaned.append(s)
+                    skills = cleaned[:12]
+
+            # --------------------------------------------------
+            # 3. Fallback to parsed text ONLY if needed
+            # --------------------------------------------------
             if not headline:
-                filename = latest_resume.title
+                filename = latest_resume.title or ""
                 if "." in filename:
                     filename = filename.rsplit(".", 1)[0]
                 filename_clean = filename.replace("_", " ").replace("-", " ").strip()
-
                 job_keywords = [
-                    "developer", "engineer", "designer", "manager", "analyst", "architect", 
-                    "specialist", "administrator", "consultant", "scientist", "lead", 
-                    "programmer", "strategist", "tester", "expert", "intern"
+                    "developer",
+                    "engineer",
+                    "designer",
+                    "manager",
+                    "analyst",
+                    "architect",
+                    "specialist",
+                    "administrator",
+                    "consultant",
+                    "scientist",
+                    "lead",
+                    "programmer",
+                    "tester",
                 ]
-                
+
                 filename_lower = filename_clean.lower()
-                has_job_keyword = any(kw in filename_lower for kw in job_keywords)
-                filler_words = ["resume", "cv", "portfolio", "profile", "bio", "job", "apply", "latest", "updated", "final"]
-                has_filler = any(fw in filename_lower for fw in filler_words)
-
-                extracted_headline = None
-                if has_job_keyword and not has_filler:
-                    extracted_headline = filename_clean
-                elif latest_resume.parsed_text:
-                    text_lines = [line.strip() for line in latest_resume.parsed_text.split("\n") if line.strip()][:30]
-                    for line in text_lines:
-                        line.lower()
-                        if len(line) < 80:
-                            parts = [p.strip() for p in re.split(r'[|,\-/•]', line) if p.strip()]
-                            for part in parts:
-                                part_lower = part.lower()
-                                if any(kw in part_lower for kw in job_keywords):
-                                    if not any(w in part_lower for w in ["education", "experience", "skills", "projects", "summary", "@", "phone", "email"]):
-                                        if current_user.name and current_user.name.lower() in part_lower:
-                                            continue
-                                        extracted_headline = part
-                                        break
-                            if extracted_headline:
-                                break
-                
-                if not extracted_headline and has_job_keyword:
-                    extracted_headline = filename_clean
-
-                if extracted_headline:
-                    headline = extracted_headline
-
+                if any(k in filename_lower for k in job_keywords):
+                    headline = filename_clean
             if not skills and latest_resume.parsed_text:
                 common_tech_skills = [
-                    "Python", "JavaScript", "TypeScript", "React", "Node.js", "Java", "C++", 
-                    "Go", "Rust", "Swift", "Kotlin", "HTML", "CSS", "SQL", "NoSQL", "Docker", 
-                    "Kubernetes", "AWS", "GCP", "Azure", "Git", "FastAPI", "Django", "Flask",
-                    "Vue", "Angular", "Tailwind", "Bootstrap", "PostgreSQL", "MongoDB", "Redis"
+                    "Python",
+                    "React",
+                    "FastAPI",
+                    "Flask",
+                    "PostgreSQL",
+                    "Docker",
+                    "Git",
+                    "JavaScript",
+                    "TypeScript",
+                    "HTML",
+                    "CSS",
                 ]
+
                 text_lower = latest_resume.parsed_text.lower()
                 extracted = []
                 for s in common_tech_skills:
                     if s.lower() in text_lower:
                         extracted.append(s)
-                        if len(extracted) >= 5:
-                            break
-                if extracted:
-                    skills = extracted
+                skills = extracted
 
         # Clean headline and skills to ensure a clean, general job search query
         if headline:
             headline = clean_headline_for_job_search(headline)
         if not headline:
             headline = "Software Engineer"
+        logger.info(
+            "Job Search -> headline=%s skills=%s",
+            headline,
+            skills,
+        )
 
         if skills:
             skills = [clean_skill_for_search(s) for s in skills]
@@ -164,10 +191,10 @@ class JobsService:
 
         query = ResumeQueryBuilder.build_query(headline=headline, skills=skills)
         jobs = await JSearchService.search_jobs(
-            db, 
-            query=query, 
+            db,
+            query=query,
             location=location,
             employment_type=employment_type,
-            remote=remote
+            remote=remote,
         )
         return jobs

@@ -3,188 +3,338 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.interview_bank import InterviewQuestionBank
 from app.services.qdrant_service import search_question_ids
+from app.interview.services.interview_bank_expansion_service import (
+    InterviewBankExpansionService,
+)
 
 logger = logging.getLogger(__name__)
 
 SKILLS = [
-    "React",
+    # Languages
+    "Python",
+    "Java",
     "JavaScript",
     "TypeScript",
+    "C",
+    "C++",
+    "C#",
+    "Go",
+    "Rust",
+    "PHP",
+    "Ruby",
+    "Kotlin",
+    "Swift",
+    # Frontend
+    "React",
+    "Next.js",
+    "Vue.js",
+    "Angular",
     "HTML",
     "CSS",
     "Tailwind CSS",
-    "Python",
+    "Bootstrap",
+    "Redux",
+    "React Router",
+    # Backend
     "FastAPI",
     "Flask",
     "Django",
-    "PostgreSQL",
-    "SQL",
-    "Docker",
-    "Git",
-    "GitHub",
-    "JWT",
+    "Express.js",
+    "Node.js",
+    "Spring Boot",
+    ".NET",
     "REST API",
+    "GraphQL",
+    "JWT",
+    # Databases
+    "SQL",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
     "Redis",
-    "Qdrant",
+    "SQLite",
+    "Oracle",
+    "Snowflake",
+    # Cloud
+    "AWS",
+    "Azure",
+    "Azure AI Search",
+    "Azure DevOps",
+    "GCP",
+    "Firebase",
+    # Data Engineering
+    "Apache Spark",
+    "PySpark",
+    "Databricks",
+    "Spark SQL",
+    "Airflow",
+    "dbt",
+    "ETL",
+    # AI / ML
+    "Machine Learning",
+    "Deep Learning",
+    "NLP",
+    "LLM",
+    "Transformers",
+    "TensorFlow",
+    "PyTorch",
+    "RAG",
     "LangChain",
     "LangGraph",
+    "Qdrant",
+    "FAISS",
+    "ChromaDB",
+    "Sentence Transformers",
+    "Embeddings",
+    "Vector Database",
+    "Semantic Search",
+    "Prompt Engineering",
+    # DevOps
+    "Docker",
+    "Docker Compose",
+    "Kubernetes",
+    "Git",
+    "GitHub",
+    "CI/CD",
+    "Linux",
+    # Testing
+    "Pytest",
+    "Unit Testing",
+    "Integration Testing",
+    # Misc
+    "Microservices",
+    "System Design",
+    "Design Patterns",
 ]
 
 
-def extract_resume_skills(resume_text: str):
-    if not resume_text:
+SKILL_ALIASES = {
+    "fast api": "FastAPI",
+    "rest apis": "REST API",
+    "restful api": "REST API",
+    "postgres": "PostgreSQL",
+    "postgresql": "PostgreSQL",
+    "mongo": "MongoDB",
+    "js": "JavaScript",
+    "ts": "TypeScript",
+    "node": "Node.js",
+    "express": "Express.js",
+    "pyspark": "PySpark",
+    "spark": "Apache Spark",
+    "docker compose": "Docker",
+    "azure ai search": "Azure AI Search",
+    "langchain": "LangChain",
+    "langgraph": "LangGraph",
+    "rag": "RAG",
+    "llms": "LLM",
+}
+
+
+def _extract_skills(text: str) -> list[str]:
+    if not text:
         return []
+
+    source = text.lower()
     found = []
-    resume = resume_text.lower()
+
     for skill in SKILLS:
-        if skill.lower() in resume:
+        if skill.lower() in source:
             found.append(skill)
 
-    return found
+    for alias, canonical in SKILL_ALIASES.items():
+        if alias in source and canonical not in found:
+            found.append(canonical)
+
+    return sorted(set(found))
+
+
+def extract_resume_skills(resume_text: str):
+    return _extract_skills(resume_text)
 
 
 def extract_jd_skills(job_description: str):
-    if not job_description:
-        return []
-    found = []
-    jd = job_description.lower()
-    for skill in SKILLS:
-        if skill.lower() in jd:
-            found.append(skill)
-
-    return found
+    return _extract_skills(job_description)
 
 
 def retrieve_questions_rag(
     db: Session,
+    user_id: int,
     resume_skills: list[str],
     jd_skills: list[str],
     limit: int = 40,
 ):
-    normalized_resume_skills = {
-        skill.strip().lower() for skill in resume_skills if skill and skill.strip()
-    }
-
-    normalized_jd_skills = {
-        skill.strip().lower() for skill in jd_skills if skill and skill.strip()
-    }
-
-    matched_skills = normalized_resume_skills & normalized_jd_skills
-
-    target_skills = matched_skills if matched_skills else normalized_resume_skills
-
-    logger.info(
-        "Number of skills extracted from resume: %d",
-        len(normalized_resume_skills),
-    )
-    logger.info(
-        "Number of skills extracted from job description: %d",
-        len(normalized_jd_skills),
-    )
-    logger.info(
-        "Candidate-supported target skills: %s",
-        sorted(target_skills),
+    resume_skills = sorted(
+        {s.strip().lower() for s in resume_skills if s and s.strip()}
     )
 
-    if not target_skills:
-        logger.warning(
-            "No supported skills were extracted from the active resume. "
-            "Skipping question retrieval."
-        )
+    jd_skills = sorted({s.strip().lower() for s in jd_skills if s and s.strip()})
+
+    if not resume_skills:
+        logger.warning("No resume skills found.")
         return []
-
-    query = "Candidate Resume Skills: " + ", ".join(sorted(target_skills))
-
-    logger.info(
-        "Query sent to Qdrant:\n%s",
-        query,
-    )
-
     try:
-        question_ids = search_question_ids(
-            query=query,
-            limit=max(
-                limit * 3,
-                limit,
-            ),
+        InterviewBankExpansionService.expand_bank(
+            db=db,
+            user_id=user_id,
+            resume_skills=resume_skills,
         )
-
-        if not isinstance(
-            question_ids,
-            list,
-        ):
-            logger.warning(
-                "Qdrant returned an unexpected "
-                "question ID result type. "
-                "Using SQL fallback."
-            )
-            question_ids = []
-
     except Exception:
-        logger.warning(
-            "Qdrant question retrieval failed. "
-            "Using SQL skill-matched fallback.",
-            exc_info=True,
-        )
-        question_ids = []
+        logger.exception("Interview bank expansion failed.")
+
+    # ----------------------------
+    # Priority:
+    # Resume + JD
+    # Resume Only
+    # JD Only
+    # ----------------------------
+
+    common = [s for s in resume_skills if s in jd_skills]
+
+    resume_only = [s for s in resume_skills if s not in common]
+
+    jd_only = [s for s in jd_skills if s not in common]
+
+    ordered_skills = common + resume_only + jd_only
 
     logger.info(
-        "Number of retrieved question IDs: %d",
-        len(question_ids),
+        "Ordered skills: %s",
+        ordered_skills,
     )
 
-    questions_by_id = {}
+    # ----------------------------
+    # Per-skill quota
+    # ----------------------------
 
-    if question_ids:
-        rows = (
+    quota = max(
+        3,
+        limit
+        // max(
+            1,
+            len(ordered_skills),
+        ),
+    )
+
+    collected = []
+    seen_ids = set()
+
+    for skill in ordered_skills:
+
+        query = f"Interview questions " f"for {skill}"
+
+        try:
+
+            ids = search_question_ids(
+                query=query,
+                limit=quota * 3,
+            )
+
+        except Exception:
+
+            logger.warning(
+                "Qdrant failed " "for skill %s",
+                skill,
+                exc_info=True,
+            )
+
+            ids = []
+
+        # -------------------------
+        # Qdrant Results
+        # -------------------------
+
+        if ids:
+
+            rows = (
+                db.query(InterviewQuestionBank)
+                .filter(
+                    InterviewQuestionBank.id.in_(ids),
+                    func.lower(InterviewQuestionBank.skill) == skill,
+                )
+                .all()
+            )
+
+            rows = sorted(
+                rows,
+                key=lambda x: ids.index(x.id),
+            )
+
+            for row in rows:
+
+                if row.id in seen_ids:
+                    continue
+
+                collected.append(row)
+                seen_ids.add(row.id)
+
+                if len(collected) >= limit:
+                    break
+
+        if len(collected) >= limit:
+            break
+
+        # -------------------------
+        # SQL fallback
+        # -------------------------
+
+        remaining = quota - sum(1 for q in collected if q.skill.lower() == skill)
+
+        if remaining <= 0:
+            continue
+
+        sql_rows = (
             db.query(InterviewQuestionBank)
-            .filter(
-                InterviewQuestionBank.id.in_(question_ids),
-                func.lower(InterviewQuestionBank.skill).in_(target_skills),
-            )
+            .filter(func.lower(InterviewQuestionBank.skill) == skill)
+            .order_by(InterviewQuestionBank.id.desc())
+            .limit(remaining)
             .all()
         )
 
-        questions_by_id = {question.id: question for question in rows}
+        for row in sql_rows:
 
-    questions = [
-        questions_by_id[question_id]
-        for question_id in question_ids
-        if question_id in questions_by_id
-    ][:limit]
+            if row.id in seen_ids:
+                continue
 
-    if len(questions) < limit:
-        existing_ids = {question.id for question in questions}
+            collected.append(row)
+            seen_ids.add(row.id)
 
-        remaining_needed = limit - len(questions)
+            if len(collected) >= limit:
+                break
 
-        fallback_query = db.query(InterviewQuestionBank).filter(
-            func.lower(InterviewQuestionBank.skill).in_(target_skills)
-        )
+    # ---------------------------------
+    # Global fallback
+    # ---------------------------------
 
-        if existing_ids:
-            fallback_query = fallback_query.filter(
-                ~InterviewQuestionBank.id.in_(existing_ids)
-            )
+    if len(collected) < limit:
 
-        fallback_questions = (
-            fallback_query.order_by(
-                InterviewQuestionBank.id.desc(),
-            )
-            .limit(remaining_needed)
-            .all()
-        )
-
-        questions.extend(fallback_questions)
+        remaining = limit - len(collected)
 
         logger.info(
-            "Added %d active-resume skill-matched " "questions from SQL fallback.",
-            len(fallback_questions),
+            "Running global fallback " "for %d questions",
+            remaining,
         )
 
+        fallback = (
+            db.query(InterviewQuestionBank)
+            .order_by(InterviewQuestionBank.id.desc())
+            .limit(remaining * 3)
+            .all()
+        )
+
+        for row in fallback:
+
+            if row.id in seen_ids:
+                continue
+
+            collected.append(row)
+            seen_ids.add(row.id)
+
+            if len(collected) >= limit:
+                break
+
     logger.info(
-        "Returning %d candidate-relevant questions.",
-        len(questions),
+        "Returning %d questions " "from %d skills.",
+        len(collected),
+        len(ordered_skills),
     )
 
-    return questions
+    return collected[:limit]

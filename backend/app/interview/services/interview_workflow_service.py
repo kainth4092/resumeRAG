@@ -44,6 +44,7 @@ class InterviewWorkflowService:
             job_description=job_description,
             config=pipeline_config,
             db=db,
+            user_id=current_user.id,
         )
         session = InterviewSessionService.create_session(
             db=db,

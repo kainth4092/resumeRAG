@@ -24,9 +24,6 @@ export default function JobDescription({
   const isValid =
     uploaded && charCount >= MIN_JD_CHARS && wordCount >= MIN_JD_WORDS;
 
-  const handleChange = (event) => {
-    setJd(event.target.value);
-  };
   return (
     <div className="bg-card border border-border rounded-2xl p-5">
       <h3 className="text-foreground mb-4">Job Description</h3>

@@ -15,7 +15,6 @@ import { downloadPDF, downloadDOCX } from "../../../exporters";
 export default function ResumeTable({
   filtered,
   allResumes = filtered,
-  removingId,
   toggleStar,
   setPreviewResume,
   handleEdit,

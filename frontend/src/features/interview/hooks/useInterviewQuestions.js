@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  getAllInterviewQuestions,
   createInterviewQuestion,
   updateInterviewQuestion,
   deleteInterviewQuestion,
@@ -106,52 +105,6 @@ export function useInterviewQuestions(locationState) {
         setViewState("active");
         return;
       }
-
-      const savedBookmarks = JSON.parse(
-        localStorage.getItem(bookmarkedQuestionsKey) || "[]",
-      );
-      const res = await getAllInterviewQuestions();
-      const data = Array.isArray(res.data) ? res.data : (res.data?.questions || []);
-
-      const transformed = data.map((q) => ({
-        ...q,
-        difficulty: mapExperienceToDifficulty(q.experience_level),
-        bookmarked: savedBookmarks.includes(q.id),
-        is_personalized:
-          q.is_personalized !== undefined ? q.is_personalized : false,
-        source: q.source || "question_bank",
-        sampleAnswer: asText(q.answer),
-        estimatedMins: q.estimated_duration || estimateMinutes(q.answer),
-      }));
-
-      setQuestions(transformed);
-
-      if (transformed.length > 0) {
-        setSession({
-          company: "Interview Bank",
-          role: "Software Engineer",
-          companyLogo: "B",
-          logoColor: "#4F46E5",
-          resumeUsed: "None",
-          generatedAt: new Date().toLocaleDateString(),
-          questionCount: transformed.length,
-          difficulty: {
-            easy: transformed.filter(
-              (q) => mapExperienceToDifficulty(q.experience_level) === "Easy",
-            ).length,
-            medium: transformed.filter(
-              (q) => mapExperienceToDifficulty(q.experience_level) === "Medium",
-            ).length,
-            hard: transformed.filter(
-              (q) => mapExperienceToDifficulty(q.experience_level) === "Hard",
-            ).length,
-          },
-          status: "Ready",
-        });
-        setViewState("active");
-      } else {
-        setViewState("empty");
-      }
     } catch (err) {
       console.error("Failed to load session:", err);
       const detail =
@@ -159,8 +112,10 @@ export function useInterviewQuestions(locationState) {
         err.message ||
         "An unexpected error occurred.";
       setError(detail);
-      setViewState("empty");
+      setQuestions([]);
       setSession(null);
+      setViewState("empty");
+      return;
     }
   }, [locationState, user, bookmarkedQuestionsKey]);
 

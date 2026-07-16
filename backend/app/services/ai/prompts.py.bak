@@ -601,36 +601,6 @@ Hard questions should involve:
 STEP 3 — SKILLS
 ==================================================
 
-==================================================
-STEP 3A — RESUME FIRST PRIORITY
-==================================================
-
-Before generating any question:
-
-1. Extract every technical skill from the ACTIVE RESUME.
-
-2. Compare those skills with the Job Description.
-
-3. Split skills into:
-
-A. Resume + Job Description (Highest Priority)
-
-B. Resume Only (Medium Priority)
-
-C. Job Description Only (Never ask technical questions)
-
-Question distribution priority:
-
-- 60% Resume + JD matched skills
-- 25% Resume-only skills
-- 15% Resume projects and practical discussions
-
-Never generate a technical question whose primary technology exists only inside the Job Description.
-
-If the Job Description mentions Kubernetes but the resume does not, do not ask Kubernetes interview questions.
-
-If the resume contains Python, FastAPI and PostgreSQL while the JD also contains them, prioritize those first.
-
 Extract skills from the ACTIVE RESUME.
 
 Use the Job Description only to prioritize resume skills relevant to the role.
@@ -642,10 +612,6 @@ Questions must cover multiple relevant resume skills.
 
 Do not generate most questions for one technology while ignoring other
 important matched skills.
-
-Avoid generating more than TWO technical questions for the same skill unless the resume contains fewer than three technical skills.
-
-Prefer breadth over repetition.
 
 Do not require two questions for every skill when the requested question
 count is too small.
@@ -659,48 +625,50 @@ Every technical question must include its exact primary skill in the
 STEP 4 — PROJECT QUESTIONS
 ==================================================
 
-Project questions should reference the candidate's actual projects whenever possible.
+Generate project questions only from projects contained in the ACTIVE RESUME.
 
-Focus on:
+Questions may cover:
 
 - Architecture
 - Authentication
 - APIs
-- Database Design
+- Database design
+- Libraries
 - Deployment
+- Challenges
 - Debugging
+- Design decisions
 - Performance
 - Security
 - Trade-offs
-- Design Decisions
-- Challenges Faced
-- Future Improvements
 
-Avoid generic project questions that could apply to any project.
+Never invent project functionality.
 
-==================================================
-STEP 4B — GAP ANALYSIS
-==================================================
+Never use projects from another resume.
 
-Compare the Job Description against the ACTIVE RESUME.
-
-If the Job Description contains technologies missing from the resume:
-
-DO NOT generate technical questions assuming the candidate knows them.
-
-Instead ask learning-oriented interview questions.
-
-Examples:
-
-"I noticed your projects use Flask. How would you approach learning FastAPI?"
-
-"You mainly worked with SQLite. How would you migrate your project to PostgreSQL?"
-
-These questions should evaluate adaptability rather than unsupported knowledge.
+If the active resume contains no project, do not invent a completed candidate
+project for interview questioning.
 
 ==================================================
 STEP 5 — EXPERIENCE QUESTIONS
 ==================================================
+
+For candidates with experience, create questions based on actual:
+
+- Roles
+- Responsibilities
+- Technologies
+- Architecture
+- Production work
+- Bugs
+- Optimization
+- Deployment
+- Team collaboration
+
+Do not invent incidents or responsibilities.
+
+Ask the candidate to explain actual claims already present in the resume.
+
 ==================================================
 QUESTION COUNT
 ==================================================
@@ -740,23 +708,6 @@ STRICT RULES
 - Every question must relate to the active resume.
 - Difficulty must match candidate experience.
 - Questions must be practical and interview-ready.
-
-Prefer practical interview questions over textbook definitions.
-
-Avoid generic questions like:
-
-- What is Python?
-- What is React?
-- What is SQL?
-
-Instead generate questions such as:
-
-- Why did you choose FastAPI instead of Flask?
-- How did you optimize your Resume-RAG project?
-- Why did you use PostgreSQL?
-- Explain the biggest technical challenge in your project.
-
-Every question should sound like it came from a real interviewer reviewing this specific resume.
 
 ==================================================
 OUTPUT

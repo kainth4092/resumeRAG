@@ -123,13 +123,6 @@ export default function Navbar({
       searchInputRef.current.focus();
     }
   }, [searchOpen]);
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user?.id]);
-
   const fetchNotifications = async () => {
     try {
       setNotificationsLoading(true);
@@ -146,6 +139,12 @@ export default function Navbar({
       setNotificationsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
 
   const handleNotificationClick = async (notification) => {
     try {

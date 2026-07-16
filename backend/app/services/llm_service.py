@@ -608,6 +608,111 @@ OUTPUT_SCHEMA = {
 }
 
 
+def generate_interview_bank_questions(
+    skill: str,
+    experience_level: str,
+    count: int = 8,
+) -> list[dict]:
+    """
+    Generate interview questions for a skill.
+
+    Returns:
+        [
+            {
+                "question": "...",
+                "category": "...",
+                "difficulty": "..."
+            }
+        ]
+    """
+
+    prompt_str = prompts.get_interview_bank_generation_prompt(
+        skill=skill,
+        experience_level=experience_level,
+        count=count,
+    )
+
+    try:
+
+        response = call_llm_with_retry(
+            prompt_str,
+            feature="interview_bank_generation",
+            temperature=0.3,
+        )
+
+        response = response.strip()
+
+        if response.startswith("```"):
+            lines = response.splitlines()
+            response = "\n".join(lines[1:-1]).strip()
+
+        questions = json.loads(response)
+
+        if not isinstance(
+            questions,
+            list,
+        ):
+            raise ValueError("Expected JSON list.")
+
+        cleaned = []
+
+        seen = set()
+
+        for item in questions:
+
+            if not isinstance(
+                item,
+                dict,
+            ):
+                continue
+
+            question = str(
+                item.get(
+                    "question",
+                    "",
+                )
+            ).strip()
+
+            if len(question) < 10:
+                continue
+
+            key = question.lower()
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            cleaned.append(
+                {
+                    "question": question,
+                    "category": str(
+                        item.get(
+                            "category",
+                            "Technical",
+                        )
+                    ).strip(),
+                    "difficulty": str(
+                        item.get(
+                            "difficulty",
+                            "Medium",
+                        )
+                    ).strip(),
+                }
+            )
+
+        return cleaned
+
+    except Exception:
+
+        logger.exception(
+            "Interview bank generation failed " "for %s",
+            skill,
+        )
+
+        return []
+
+
 def generate_resume(resume_text: str, job_description: str):
     schema_str = json.dumps(OUTPUT_SCHEMA)
     prompt_str = prompts.get_resume_prompt(resume_text, job_description, schema_str)

@@ -250,7 +250,6 @@ export default function MyResumes() {
               ...mergedList[idx],
               id: dbItem.id,
               title: dbItem.title || mergedList[idx].title || "Untitled Resume",
-              resume: dbItem.resume_json || mergedList[idx].resume || null,
               score: dbItem.ats_score || mergedList[idx].score || 75,
               status: dbItem.is_active ? "Active" : "Draft",
               updatedAt: dbItem.created_at

@@ -20,6 +20,7 @@ class InterviewGeneratorService:
         job_description: str,
         config: Optional[InterviewPipelineConfig] = None,
         db: Optional[Session] = None,
+        user_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Flow:
@@ -105,6 +106,7 @@ class InterviewGeneratorService:
             pool=tech_db_pool,
             length=db_target,
             difficulty_distribution=config.difficulty_distribution,
+            priority_skills=list(matched_skills),
         )
         logger.info(
             "Selected %d technical questions from database", len(selected_db_questions)
@@ -125,6 +127,7 @@ class InterviewGeneratorService:
             )
 
         # Step 8: Call AI Generator to get Project/Experience/Behavioral questions
+        ai_questions = []
         try:
             logger.info("Generating AI questions for Projects and Experience")
             from app.interview.services.interview_service import (
@@ -135,7 +138,6 @@ class InterviewGeneratorService:
                 resume_text, job_description, target_count=config.length
             )
 
-            ai_questions = []
             for cat in ["project", "experience", "technical"]:
                 if cat in ai_payload and isinstance(ai_payload[cat], list):
                     for q in ai_payload[cat]:
@@ -152,19 +154,20 @@ class InterviewGeneratorService:
                             }
                         )
 
-            for ai_q in ai_questions:
-                if len(selected_questions_dicts) >= config.length:
-                    break
-                existing_texts = {
-                    eq["question"].lower().strip() for eq in selected_questions_dicts
-                }
-                if ai_q["question"].lower().strip() not in existing_texts:
-                    selected_questions_dicts.append(ai_q)
-
         except Exception as e:
             logger.error(
                 "Failed to generate AI questions: %s. Using DB fallback.", str(e)
             )
+        remaining_slots = config.length - len(selected_questions_dicts)
+
+        if remaining_slots > 0 and ai_questions:
+
+            selected_questions_dicts.extend(ai_questions[:remaining_slots])
+
+        logger.info(
+            "Added %d AI questions to interview session.",
+            min(remaining_slots, len(ai_questions)),
+        )
 
         if len(selected_questions_dicts) < config.length:
             remaining_needed = config.length - len(selected_questions_dicts)

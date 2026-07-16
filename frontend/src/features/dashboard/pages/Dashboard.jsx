@@ -48,10 +48,7 @@ export default function Dashboard() {
     setError(null);
     try {
       const localHour = new Date().getHours();
-      const data = await dashboardService.getDashboardData(
-        localHour,
-        isRefresh,
-      );
+      const data = await dashboardData.getDashboardData(localHour, isRefresh);
       setDashboardData(data);
       if (key) {
         localStorage.setItem(key, JSON.stringify(data));

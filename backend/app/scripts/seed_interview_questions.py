@@ -17,6 +17,29 @@ def seed_questions():
         encoding="utf-8",
     ) as file:
         questions = json.load(file)
+        # -----------------------------------------
+        # Remove duplicate questions from JSON
+        # -----------------------------------------
+        unique_questions = []
+        seen = set()
+
+        for item in questions:
+
+            key = (
+                normalize_key_text(item.get("question", "")),
+                normalize_key_text(item.get("skill", "")),
+            )
+
+            if key in seen:
+                print(
+                    f"Skipping duplicate JSON question: " f"{item.get('question')[:80]}"
+                )
+                continue
+
+            seen.add(key)
+            unique_questions.append(item)
+
+        questions = unique_questions
 
     json_count = len(questions)
     inserted_count = 0
@@ -25,13 +48,14 @@ def seed_questions():
 
     # Fetch all existing questions in one query
     existing_qs = db.query(InterviewQuestionBank).all()
-    lookup = {
-        (
-            normalize_key_text(q.question),
-            normalize_key_text(q.skill),
-        ): q
-        for q in existing_qs
-    }
+    lookup = {}
+    for q in existing_qs:
+        lookup[
+            (
+                normalize_key_text(q.question),
+                normalize_key_text(q.skill),
+            )
+        ] = q
 
     for item in questions:
         q_text = item["question"].strip()

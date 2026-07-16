@@ -126,46 +126,107 @@ def generate_and_update_answer_task(
     experience_level: str,
 ):
     from app.core.database import SessionLocal
+    from app.models.interview_bank import InterviewQuestionBank
     from app.services.llm_service import generate_general_answer
     from app.services.qdrant_service import upsert_question
-    from app.models.interview_bank import InterviewQuestionBank
 
     db = SessionLocal()
-    try:
-        answer_text = generate_general_answer(
-            question=question_text,
-            skill=skill,
-            category=category,
-            experience_level=experience_level,
-        )
 
+    try:
         question = (
             db.query(InterviewQuestionBank)
             .filter(InterviewQuestionBank.id == question_id)
             .first()
         )
-        if question:
-            question.answer = answer_text
-            db.commit()
-            db.refresh(question)
-            try:
-                upsert_question(
-                    question,
-                    force_update=True,
-                )
-            except Exception as q_err:
-                logger.warning(
-                    "Qdrant sync failed after generated answer "
-                    "for question ID %s: %s",
-                    question.id,
-                    q_err,
-                )
+
+        if not question:
+            logger.warning(
+                "Question %s no longer exists.",
+                question_id,
+            )
+            return
+
+        existing_answer = (question.answer or "").strip()
+
+        # ----------------------------------------------------
+        # Already generated -> Skip LLM completely
+        # ----------------------------------------------------
+        if existing_answer and existing_answer.lower() != "generating answer...":
+            logger.info(
+                "Answer already exists for question %s. Skipping AI generation.",
+                question.id,
+            )
+            return
+
+        logger.info(
+            "Generating AI answer for question %s",
+            question.id,
+        )
+
+        answer_text = generate_general_answer(
+            question=question.question,
+            skill=question.skill,
+            category=question.category,
+            experience_level=question.experience_level,
+        )
+
+        if not answer_text or not answer_text.strip():
+            logger.warning(
+                "LLM returned empty answer for question %s",
+                question.id,
+            )
+            return
+
+        question.answer = answer_text.strip()
+
+        db.commit()
+        db.refresh(question)
+
+        try:
+            upsert_question(
+                question,
+                force_update=True,
+            )
+        except Exception as q_err:
+            logger.warning(
+                "Failed syncing question %s to Qdrant: %s",
+                question.id,
+                q_err,
+            )
+
+        logger.info(
+            "Generated and cached answer for question %s",
+            question.id,
+        )
+
     except Exception:
         logger.exception(
-            "Background answer generation failed for question %s", question_id
+            "Background answer generation failed for question %s",
+            question_id,
         )
+        db.rollback()
+
     finally:
         db.close()
+
+
+existing = (
+    db.query(InterviewQuestionBank)
+    .filter(
+        InterviewQuestionBank.question.ilike(payload.question.strip()),
+        InterviewQuestionBank.skill.ilike(payload.skill.strip()),
+    )
+    .first()
+)
+
+if existing:
+
+    logger.info(
+        "Duplicate question skipped: %s",
+        payload.question,
+    )
+
+    return existing
 
 
 def create_question(
@@ -222,9 +283,21 @@ def create_question(
                     category=saved_question.category,
                     experience_level=saved_question.experience_level,
                 )
-                saved_question.answer = ans
-                db.commit()
-                db.refresh(saved_question)
+                if ans and ans.strip():
+                    saved_question.answer = ans.strip()
+                    db.commit()
+                    db.refresh(saved_question)
+
+                    try:
+                        upsert_question(
+                            saved_question,
+                            force_update=True,
+                        )
+                    except Exception as q_err:
+                        logger.warning(
+                            "Failed syncing generated answer to Qdrant: %s",
+                            q_err,
+                        )
             except Exception as e:
                 logger.warning("Fallback answer generation failed: %s", e)
 

@@ -271,6 +271,7 @@ export default function StudyLibrary({
         className={`${showSidebar ? "lg:col-span-1" : "lg:col-span-0 hidden"}`}
       >
         <InterviewFilterSidebar
+          key="library-filter"
           search={search}
           setSearch={setSearch}
           bookmarkOnly={bookmarkOnly}

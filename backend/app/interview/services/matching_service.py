@@ -1,16 +1,18 @@
-from typing import Set
+from collections import OrderedDict
+from typing import List
+
 
 COMMON_SKILLS = [
+    "Python",
+    "FastAPI",
+    "Flask",
+    "Django",
     "React",
     "JavaScript",
     "TypeScript",
     "HTML",
     "CSS",
     "Tailwind CSS",
-    "Python",
-    "FastAPI",
-    "Flask",
-    "Django",
     "PostgreSQL",
     "SQL",
     "Docker",
@@ -22,40 +24,100 @@ COMMON_SKILLS = [
     "Qdrant",
     "LangChain",
     "LangGraph",
-    "AI",
     "Machine Learning",
+    "AI",
     "GenAI",
     "RAG",
+    "NLP",
+    "Semantic Search",
+    "Embeddings",
     "Linux",
     "Kubernetes",
     "AWS",
-    "GCP",
     "Azure",
+    "GCP",
     "Java",
     "C++",
     "Go",
 ]
 
 
+SKILL_ALIASES = {
+    "postgres": "PostgreSQL",
+    "postgresql": "PostgreSQL",
+    "psql": "PostgreSQL",
+    "js": "JavaScript",
+    "javascript": "JavaScript",
+    "ts": "TypeScript",
+    "typescript": "TypeScript",
+    "py": "Python",
+    "python": "Python",
+    "ml": "Machine Learning",
+    "machine learning": "Machine Learning",
+    "nlp": "NLP",
+    "rag": "RAG",
+    "gen ai": "GenAI",
+    "generative ai": "GenAI",
+    "fast api": "FastAPI",
+    "fastapi": "FastAPI",
+    "rest": "REST API",
+    "rest api": "REST API",
+    "docker": "Docker",
+    "git": "Git",
+    "github": "GitHub",
+    "langchain": "LangChain",
+    "langgraph": "LangGraph",
+    "qdrant": "Qdrant",
+    "redis": "Redis",
+}
+
+
 class SkillMatchingService:
+
     @staticmethod
-    def extract_skills_from_text(text: str) -> Set[str]:
-        if not text:
-            return set()
-        found = set()
-        text_lower = text.lower()
-        for skill in COMMON_SKILLS:
-            # Word boundary matching or basic inclusion
-            if f" {skill.lower()} " in f" {text_lower} " or skill.lower() in text_lower:
-                found.add(skill)
-        return found
+    def normalize(skill: str) -> str:
+        return SKILL_ALIASES.get(skill.lower().strip(), skill)
 
     @classmethod
-    def match_candidate_skills(cls, resume_text: str, jd_text: str) -> Set[str]:
+    def extract_skills_from_text(cls, text: str) -> List[str]:
+        if not text:
+            return []
+
+        text_lower = text.lower()
+
+        found = OrderedDict()
+
+        for skill in COMMON_SKILLS:
+            if skill.lower() in text_lower:
+                found[cls.normalize(skill)] = None
+
+        for alias, canonical in SKILL_ALIASES.items():
+            if alias in text_lower:
+                found[canonical] = None
+
+        return list(found.keys())
+
+    @classmethod
+    def match_candidate_skills(
+        cls,
+        resume_text: str,
+        jd_text: str,
+    ) -> List[str]:
+
         resume_skills = cls.extract_skills_from_text(resume_text)
         jd_skills = cls.extract_skills_from_text(jd_text)
-        # Prioritize matching skills first, fallback to all resume skills if none match
-        matching = resume_skills.intersection(jd_skills)
-        if not matching:
-            return resume_skills
-        return matching
+
+        jd_set = set(jd_skills)
+
+        matched = [s for s in resume_skills if s in jd_set]
+
+        remaining = [s for s in resume_skills if s not in jd_set]
+
+        ordered = matched + remaining
+
+        seen = OrderedDict()
+
+        for skill in ordered:
+            seen[skill] = None
+
+        return list(seen.keys())

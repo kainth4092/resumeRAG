@@ -64,7 +64,7 @@ def create_bank_question(
             user_id=current_user.id,
             title="Question shared successfully",
             message=(
-                f'Your interview question about '
+                f"Your interview question about "
                 f'"{payload.skill or "General"}" has been shared with the community.'
             ),
             notification_type="interview",
@@ -120,9 +120,7 @@ def get_bank_meta(
 @router.post("/generate-answer")
 def generate_bank_answer(
     payload: GenerateBankAnswerRequest,
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(get_current_user),
 ):
     from app.services.llm_service import (
         generate_general_answer,
@@ -133,15 +131,16 @@ def generate_bank_answer(
             question=payload.question,
             skill=payload.skill,
             category=payload.category,
-            experience_level=(
-                payload.experience_level
-            ),
+            experience_level=(payload.experience_level),
         )
 
-        if not isinstance(
-            answer,
-            str,
-        ) or not answer.strip():
+        if (
+            not isinstance(
+                answer,
+                str,
+            )
+            or not answer.strip()
+        ):
             raise HTTPException(
                 status_code=502,
                 detail=(
@@ -150,24 +149,16 @@ def generate_bank_answer(
                 ),
             )
 
-        return {
-            "answer": answer.strip()
-        }
+        return {"answer": answer.strip()}
 
     except HTTPException:
         raise
 
     except Exception as exc:
-        logger.exception(
-            "Failed to generate interview "
-            "bank answer"
-        )
+        logger.exception("Failed to generate interview " "bank answer")
         raise HTTPException(
             status_code=500,
-            detail=(
-                "We couldn't generate an answer "
-                "right now. Please try again."
-            ),
+            detail=("We couldn't generate an answer " "right now. Please try again."),
         ) from exc
 
 
@@ -268,6 +259,7 @@ def retrieve_interview_questions(
         )
         questions = retrieve_questions_rag(
             db,
+            user_id=current_user.id,
             resume_skills=resume_skills,
             jd_skills=jd_skills,
             limit=limit,
@@ -276,10 +268,7 @@ def retrieve_interview_questions(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception(
-            "Failed to retrieve interview "
-            "questions"
-        )
+        logger.exception("Failed to retrieve interview " "questions")
         raise HTTPException(
             status_code=500,
             detail=(
@@ -288,6 +277,7 @@ def retrieve_interview_questions(
                 "Please try again."
             ),
         ) from exc
+
 
 @router.get("/{question_id}", response_model=InterviewQuestionResponse)
 def get_bank_question(

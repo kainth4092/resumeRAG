@@ -45,7 +45,7 @@ const TABS = [
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("account");
-  const [loading, setLoadind] = useState();
+  const [loading, setLoading] = useState();
 
   const ActiveComponent =
     TABS.find((t) => t.id === activeTab)?.component || AccountSettings;

@@ -157,7 +157,6 @@ export const QuestionCard = memo(function QuestionCard({
   question,
   index,
   onToggleBookmark,
-  onToggleImportant,
   onEdit,
   onDelete,
   isInitiallyExpanded = false,

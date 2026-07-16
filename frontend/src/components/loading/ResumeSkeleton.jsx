@@ -1,4 +1,13 @@
-import { FileText, Sparkles, Plus, ArrowLeft, Eye, Edit2, Download, Printer, UploadCloud } from "lucide-react";
+import {
+  FileText,
+  Sparkles,
+  Plus,
+  ArrowLeft,
+  Eye,
+  Download,
+  Printer,
+  UploadCloud,
+} from "lucide-react";
 
 export default function ResumeSkeleton({ mode = "list" }) {
   if (mode === "analysis") {
@@ -17,9 +26,9 @@ export default function ResumeSkeleton({ mode = "list" }) {
                   AI Resume Suite
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-xl">
-                  Upload your resume to audit general ATS compatibility, optimize
-                  sections with standalone AI tools, or tailor contents to a
-                  specific job description.
+                  Upload your resume to audit general ATS compatibility,
+                  optimize sections with standalone AI tools, or tailor contents
+                  to a specific job description.
                 </p>
               </div>
             </div>
@@ -38,7 +47,8 @@ export default function ResumeSkeleton({ mode = "list" }) {
                     Upload your resume
                   </h4>
                   <p className="text-[10px] text-muted-foreground mt-1 font-medium">
-                    Drag and drop, or <span className="text-primary/60 font-bold">browse</span>
+                    Drag and drop, or{" "}
+                    <span className="text-primary/60 font-bold">browse</span>
                   </p>
                   <p className="text-[9px] text-muted-foreground/80 mt-0.5">
                     PDF or DOCX (max. 5MB)
@@ -351,7 +361,9 @@ export default function ResumeSkeleton({ mode = "list" }) {
               key={i}
               className="bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between shadow-xs"
             >
-              <span className="text-xs text-muted-foreground">{i === 0 ? "Total" : "Active"}</span>
+              <span className="text-xs text-muted-foreground">
+                {i === 0 ? "Total" : "Active"}
+              </span>
               <div className="h-4 bg-muted shimmer rounded w-6" />
             </div>
           ))}
@@ -392,7 +404,10 @@ export default function ResumeSkeleton({ mode = "list" }) {
               </thead>
               <tbody>
                 {Array.from({ length: 4 }).map((_, idx) => (
-                  <tr key={idx} className="border-b border-border last:border-0">
+                  <tr
+                    key={idx}
+                    className="border-b border-border last:border-0"
+                  >
                     {/* Resume Column */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">

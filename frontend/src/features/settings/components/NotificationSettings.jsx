@@ -50,8 +50,6 @@ export default function NotificationSettings() {
   const [settings, setSettings] = useState(
     () => notificationSettingsCache || DEFAULT_SETTINGS,
   );
-
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");

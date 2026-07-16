@@ -2,11 +2,9 @@ import { useState } from "react";
 import { CheckCircle2, Circle, Plus } from "lucide-react";
 
 export default function UpcomingTasks({ data }) {
+  const userId = data?.user_id || "current";
+  const taskStorageKey = `resupilot_dashboard_tasks_${userId}`;
   const [customTasks, setCustomTasks] = useState(() => {
-    const userId = data?.user_id || "current";
-
-    const taskStorageKey = `resupilot_dashboard_tasks_${userId}`;
-
     const saved = localStorage.getItem(taskStorageKey);
     if (saved) {
       try {
@@ -21,10 +19,6 @@ export default function UpcomingTasks({ data }) {
   });
 
   const [doneDynamicIds, setDoneDynamicIds] = useState(() => {
-    const userId = data?.user_id || "current";
-
-    const taskStorageKey = `resupilot_dashboard_tasks_${userId}`;
-
     const saved = localStorage.getItem(taskStorageKey);
     if (saved) {
       try {

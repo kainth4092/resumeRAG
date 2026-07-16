@@ -188,6 +188,7 @@ export default function InterviewPrep() {
         {activeTab === "library" && (
           <div className="animate-in fade-in duration-200">
             <StudyLibrary
+              key="study-library"
               onEdit={handleEditClick}
               onDelete={handleDeleteClick}
             />

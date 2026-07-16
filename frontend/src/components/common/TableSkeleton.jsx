@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonCircle, SkeletonText } from "./Skeleton";
+import { SkeletonCircle, SkeletonText } from "./Skeleton";
 
 export default function TableSkeleton({
   rows = 6,

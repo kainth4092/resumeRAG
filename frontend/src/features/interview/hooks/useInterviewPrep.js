@@ -74,6 +74,7 @@ export function useInterviewPrep({ onQuestionShared }) {
     setError,
     locationState: location.state,
     mapExperienceToDifficulty,
+    activeTab,
   });
 
   const [showModal, setShowModal] = useState(false);

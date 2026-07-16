@@ -19,7 +19,17 @@ limits = httpx.Limits(
     max_connections=10,
 )
 
-DEFAULT_TIMEOUT = 120.0
+DEFAULT_TIMEOUT = 20.0
+FEATURE_TIMEOUTS = {
+    "resume_generation": 35.0,
+    "ats_analysis": 30.0,
+    "resume_health_analysis": 25.0,
+    "personalized_interview_questions": 20.0,
+    "interview_question_details": 15.0,
+    "interview_sample_answer": 15.0,
+    "interview_bank_generation": 20.0,
+    "interview_general_answer": 15.0,
+}
 
 _sync_client = httpx.Client(
     timeout=DEFAULT_TIMEOUT,
@@ -189,29 +199,19 @@ class OpenRouterProvider(AIProvider):
             or "schema" in user_prompt.lower()
         )
         if is_json_expected:
-            if "{" not in cleaned or "}" not in cleaned:
-                logger.warning(
-                    "[AI_RESPONSE_VALIDATION] JSON expected but response lacks curly braces: %r",
-                    content,
-                )
-                return True
             import json
 
-            start = cleaned.find("{")
-            end = cleaned.rfind("}")
-            if start == -1 or end == -1 or end <= start:
-                logger.warning(
-                    "[AI_RESPONSE_VALIDATION] JSON expected but braces are misaligned/missing: %r",
-                    content,
-                )
-                return True
+            candidate = cleaned
+            if cleaned.startswith("```"):
+                lines = cleaned.splitlines()
+
+                if len(lines) >= 2:
+                    candidate = "\n".join(lines[1:-1]).strip()
             try:
-                candidate = cleaned[start : end + 1]
                 parsed = json.loads(candidate)
-                if not isinstance(parsed, dict):
+                if not isinstance(parsed, (dict, list)):
                     logger.warning(
-                        "[AI_RESPONSE_VALIDATION] Parsed JSON is not a dictionary: %r",
-                        content,
+                        "[AI_RESPONSE_VALIDATION] Parsed JSON is neither object nor array."
                     )
                     return True
             except Exception as exc:
@@ -220,8 +220,8 @@ class OpenRouterProvider(AIProvider):
                     exc,
                     content,
                 )
+
                 return True
-        return False
 
     # -----------------------------------------------------------------------
     # SYNC CHAT
@@ -236,6 +236,7 @@ class OpenRouterProvider(AIProvider):
         feature: str = "unknown",
     ) -> str:
         models_to_try = self._get_models_to_try(self.model)
+        models_to_try = models_to_try[:2]
         last_exception = None
 
         for model in models_to_try:
@@ -267,7 +268,11 @@ class OpenRouterProvider(AIProvider):
             )
 
             try:
-                actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+                actual_timeout = (
+                    timeout
+                    if timeout is not None
+                    else FEATURE_TIMEOUTS.get(feature, DEFAULT_TIMEOUT)
+                )
                 response = _sync_client.post(
                     url,
                     json=payload,
@@ -350,6 +355,7 @@ class OpenRouterProvider(AIProvider):
         feature: str = "unknown",
     ) -> str:
         models_to_try = self._get_models_to_try(self.model)
+        models_to_try = models_to_try[:2]
         last_exception = None
 
         for model in models_to_try:
@@ -381,7 +387,11 @@ class OpenRouterProvider(AIProvider):
             )
 
             try:
-                actual_timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+                actual_timeout = (
+                    timeout
+                    if timeout is not None
+                    else FEATURE_TIMEOUTS.get(feature, DEFAULT_TIMEOUT)
+                )
                 response = await _async_client.post(
                     url,
                     json=payload,
