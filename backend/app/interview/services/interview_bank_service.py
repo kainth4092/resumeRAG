@@ -210,31 +210,28 @@ def generate_and_update_answer_task(
         db.close()
 
 
-existing = (
-    db.query(InterviewQuestionBank)
-    .filter(
-        InterviewQuestionBank.question.ilike(payload.question.strip()),
-        InterviewQuestionBank.skill.ilike(payload.skill.strip()),
-    )
-    .first()
-)
-
-if existing:
-
-    logger.info(
-        "Duplicate question skipped: %s",
-        payload.question,
-    )
-
-    return existing
-
-
 def create_question(
     db: Session,
     payload: InterviewQuestionCreate,
     created_by: int | None = None,
     background_tasks=None,
 ):
+    existing = (
+        db.query(InterviewQuestionBank)
+        .filter(
+            InterviewQuestionBank.question.ilike(payload.question.strip()),
+            InterviewQuestionBank.skill.ilike(payload.skill.strip()),
+        )
+        .first()
+    )
+
+    if existing:
+        logger.info(
+            "Duplicate question skipped: %s",
+            payload.question,
+        )
+        return existing
+
     answer_text = payload.answer
     generate_in_background = False
 
