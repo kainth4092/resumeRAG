@@ -110,20 +110,32 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Auto-retry for GET requests on network/server errors
-    if (config && config.method?.toLowerCase() === "get") {
-      const isNetworkError = !error.response;
-      const isServerError = error.response && error.response.status >= 500;
+    const method = config?.method?.toLowerCase();
+    const shouldRetry =
+      method === "get" ||
+      (method === "post" &&
+        (config.url?.includes("/auth/login") ||
+          config.url?.includes("/auth/google")));
 
-      if (isNetworkError || isServerError) {
+    if (config && shouldRetry) {
+      const isNetworkError = !error.response;
+      const status = error.response?.status;
+      const retryable =
+        !status ||
+        status === 500 ||
+        status === 502 ||
+        status === 503 ||
+        status === 504;
+
+      if (isNetworkError || retryable) {
         config.retryCount = config.retryCount || 0;
         const maxRetries = 2;
 
         if (config.retryCount < maxRetries) {
           config.retryCount += 1;
-          const backoffDelay = config.retryCount * 1000;
-          await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-          return api(config);
+          const delay = Math.min(1000 * Math.pow(2, config.retryCount), 5000);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return api.request(config);
         }
       }
     }
@@ -167,11 +179,19 @@ api.get = function (url, config = {}) {
   return promise;
 };
 
+api.invalidateCache = (prefix) => {
+  [...getCache.keys()].forEach((key) => {
+    if (key.startsWith(prefix)) {
+      getCache.delete(key);
+    }
+  });
+};
+
 api.clearCache = () => {
   getCache.clear();
   inFlightRequests.clear();
   if (api.defaults.headers.common) {
-    delete api.defaults.headers.common["Authorization"];
+    delete api.defaults.headers.common.Authorization;
   }
 };
 
