@@ -226,80 +226,46 @@ export default function MyResumes() {
         if (!active) return;
         if (!Array.isArray(dbResumes)) return;
 
-        const latestSaved = JSON.parse(
-          localStorage.getItem(resumesKey) || "[]",
+        const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+
+        const uiMeta = new Map(
+          saved.map((item) => [
+            String(item.id),
+            {
+              starred: item.starred,
+              color: item.color,
+              jobDescription: item.jobDescription,
+            },
+          ]),
         );
 
-        // Filter out database-backed resumes (id < 100000000000) that no longer exist in the backend
-        const dbIds = new Set(dbResumes.map((r) => String(r.id)));
-        const filteredSaved = latestSaved.filter((item) => {
-          const isLocalOnly = Number(item.id) > 100000000000;
-          if (isLocalOnly) return true;
-          return dbIds.has(String(item.id));
+        const backendList = dbResumes.map((dbItem) => {
+          const meta = uiMeta.get(String(dbItem.id)) || {};
+
+          return {
+            id: dbItem.id,
+            title: dbItem.title || "Untitled Resume",
+            score: dbItem.ats_score || 75,
+            status: dbItem.is_active ? "Active" : "Draft",
+            updatedAt: dbItem.created_at
+              ? new Date(dbItem.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "Just now",
+            version: dbItem.version || "v1",
+            template: dbItem.template || "Professional",
+            resume: dbItem.resume_json || localResume.resume,
+            parsing_status: dbItem.parsing_status,
+            starred: meta.starred || false,
+            color: meta.color || "#4F46E5",
+            jobDescription: meta.jobDescription || "",
+          };
         });
 
-        const mergedList = [...filteredSaved];
-
-        dbResumes.forEach((dbItem) => {
-          const idx = mergedList.findIndex(
-            (item) => String(item.id) === String(dbItem.id),
-          );
-
-          if (idx >= 0) {
-            mergedList[idx] = {
-              ...mergedList[idx],
-              id: dbItem.id,
-              title: dbItem.title || mergedList[idx].title || "Untitled Resume",
-              score: dbItem.ats_score || mergedList[idx].score || 75,
-              status: dbItem.is_active ? "Active" : "Draft",
-              updatedAt: dbItem.created_at
-                ? new Date(dbItem.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : mergedList[idx].updatedAt || "Just now",
-              version: dbItem.version || mergedList[idx].version || "v1",
-              template:
-                dbItem.template || mergedList[idx].template || "Professional",
-              starred: mergedList[idx].starred || false,
-              color: mergedList[idx].color || "#4F46E5",
-              resume: dbItem.resume_json ||
-                mergedList[idx].resume || {
-                  personal_info: { name: dbItem.title || "" },
-                  skills: dbItem.skills || [],
-                },
-              jobDescription: mergedList[idx].jobDescription || "",
-            };
-          } else {
-            mergedList.push({
-              id: dbItem.id,
-              title: dbItem.title || "Untitled Resume",
-              score: dbItem.ats_score || 75,
-              status: dbItem.is_active ? "Active" : "Draft",
-              updatedAt: dbItem.created_at
-                ? new Date(dbItem.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "Just now",
-              template: dbItem.template || "Professional",
-              color: "#4F46E5",
-              starred: false,
-              version: dbItem.version || "v1",
-              pages: 1,
-              resume: dbItem.resume_json || {
-                personal_info: { name: dbItem.title || "" },
-                skills: dbItem.skills || [],
-              },
-              jobDescription: "",
-            });
-          }
-        });
-
-        localStorage.setItem(resumesKey, JSON.stringify(mergedList));
-        setResumes(mapSavedList(mergedList));
+        localStorage.setItem(resumesKey, JSON.stringify(backendList));
+        setResumes(mapSavedList(backendList));
       } catch (err) {
         console.error("Failed to sync resumes with backend:", err);
       } finally {
@@ -346,6 +312,9 @@ export default function MyResumes() {
                 ...localResume,
                 parsing_status: dbItem.parsing_status,
                 score: dbItem.ats_score || dbItem.score || 75,
+                resume: dbItem.resume_json || localResume.resume,
+                version: dbItem.version || localResume.version,
+                template: dbItem.template || localResume.template,
               };
             }
             return localResume;
@@ -363,6 +332,9 @@ export default function MyResumes() {
                   ...item,
                   parsing_status: dbItem.parsing_status,
                   score: dbItem.ats_score || dbItem.score || item.score,
+                  resume: dbItem.resume_json || item.resume,
+                  version: dbItem.version || item.version,
+                  template: dbItem.template || item.template,
                 };
               }
               return item;

@@ -1,6 +1,6 @@
+import re
 from collections import OrderedDict
 from typing import List
-
 
 COMMON_SKILLS = [
     "Python",
@@ -69,6 +69,19 @@ SKILL_ALIASES = {
     "langgraph": "LangGraph",
     "qdrant": "Qdrant",
     "redis": "Redis",
+    "llm": "LLM",
+    "large language model": "LLM",
+    "large language models": "LLM",
+    "retrieval augmented generation": "RAG",
+    "huggingface": "Hugging Face",
+    "vector db": "Vector Database",
+    "vector database": "Vector Database",
+    "prompt engineering": "Prompt Engineering",
+    "azure databricks": "Databricks",
+    "pyspark": "PySpark",
+    "delta lake": "Delta Lake",
+    "unity catalog": "Unity Catalog",
+    "ollama": "Ollama",
 }
 
 
@@ -88,13 +101,14 @@ class SkillMatchingService:
         found = OrderedDict()
 
         for skill in COMMON_SKILLS:
-            if skill.lower() in text_lower:
+            pattern = r"\b" + re.escape(skill.lower()) + r"\b"
+            if re.search(pattern, text_lower):
                 found[cls.normalize(skill)] = None
 
         for alias, canonical in SKILL_ALIASES.items():
-            if alias in text_lower:
+            pattern = r"\b" + re.escape(alias) + r"\b"
+            if re.search(pattern, text_lower):
                 found[canonical] = None
-
         return list(found.keys())
 
     @classmethod

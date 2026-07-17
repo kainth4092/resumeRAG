@@ -1,9 +1,10 @@
-import { FileText, Sparkles } from "lucide-react";
+import { FileText, Sparkles, Loader2 } from "lucide-react";
 
 export default function SelectedResumeCard({
   selectedResume,
   runATSAnalysis,
   uploadedFile,
+  analyzing,
 }) {
   return (
     <>
@@ -30,9 +31,20 @@ export default function SelectedResumeCard({
           </div>
           <button
             onClick={runATSAnalysis}
+            disabled={analyzing}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/20 cursor-pointer"
           >
-            <Sparkles size={16} /> Run ATS Health Analysis
+            {analyzing ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Running Analysis...
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                Run ATS Health Analysis
+              </>
+            )}
           </button>
         </div>
       )}

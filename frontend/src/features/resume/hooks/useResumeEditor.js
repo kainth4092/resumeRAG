@@ -8,8 +8,12 @@ export function useResumeEditor() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { user } = useAuth();
-  const resumesKey = user?.email ? `saved_resumes_${user.email}` : "saved_resumes";
-  const editingResumeIdKey = user?.email ? `editing_resume_id_${user.email}` : "editing_resume_id";
+  const resumesKey = user?.email
+    ? `saved_resumes_${user.email}`
+    : "saved_resumes";
+  const editingResumeIdKey = user?.email
+    ? `editing_resume_id_${user.email}`
+    : "editing_resume_id";
 
   const [resumeName, setResumeName] = useState("Untitled Resume");
   const [saving, setSaving] = useState(false);
@@ -47,9 +51,7 @@ export function useResumeEditor() {
     } else {
       const savedId = localStorage.getItem(editingResumeIdKey);
       if (savedId) {
-        const savedList = JSON.parse(
-          localStorage.getItem(resumesKey) || "[]",
-        );
+        const savedList = JSON.parse(localStorage.getItem(resumesKey) || "[]");
         const found = savedList.find(
           (item) => String(item.id) === String(savedId),
         );
@@ -161,17 +163,13 @@ export function useResumeEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      const savedList = JSON.parse(
-        localStorage.getItem(resumesKey) || "[]",
-      );
+      const savedList = JSON.parse(localStorage.getItem(resumesKey) || "[]");
 
       const resumeId =
         state?.resume?.id ||
         state?.resume?.resume_id ||
         localStorage.getItem(editingResumeIdKey) ||
         Date.now().toString();
-      localStorage.setItem(editingResumeIdKey, resumeId);
       const existingIdx = savedList.findIndex(
         (item) => String(item.id) === String(resumeId),
       );
@@ -238,7 +236,8 @@ export function useResumeEditor() {
 
       let newVersion = "v1";
       if (existing) {
-        const changed = JSON.stringify(existing.resume) !== JSON.stringify(newResumeObj);
+        const changed =
+          JSON.stringify(existing.resume) !== JSON.stringify(newResumeObj);
         if (changed) {
           const currentVer = existing.version || "v1";
           const match = currentVer.match(/v(\d+)/);
@@ -277,15 +276,9 @@ export function useResumeEditor() {
         resume: newResumeObj,
       };
 
-      if (existingIdx >= 0) {
-        savedList[existingIdx] = resumeEntry;
-      } else {
-        savedList.push(resumeEntry);
-      }
-      localStorage.setItem(resumesKey, JSON.stringify(savedList));
-
-      const numericId = parseInt(resumeId, 10);
-      if (!isNaN(numericId)) {
+      const numericId = state?.resume?.id ?? state?.resume?.resume_id ?? null;
+      let backendSaved = true;
+      if (numericId !== null) {
         try {
           await updateResume(numericId, {
             title: resumeEntry.title,
@@ -295,9 +288,21 @@ export function useResumeEditor() {
             resume_json: newResumeObj,
           });
         } catch (err) {
+          backendSaved = false;
           console.error("Failed to sync resume save to backend:", err);
         }
       }
+      if (!backendSaved) {
+        alert("Failed to save resume. Please try again.");
+        return;
+      }
+      if (existingIdx >= 0) {
+        savedList[existingIdx] = resumeEntry;
+      } else {
+        savedList.push(resumeEntry);
+      }
+      localStorage.setItem(editingResumeIdKey, resumeId);
+      localStorage.setItem(resumesKey, JSON.stringify(savedList));
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);

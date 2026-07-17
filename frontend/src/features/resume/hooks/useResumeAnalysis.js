@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { getResumes, uploadResume, getResumeById } from "../services/resumeService";
+import {
+  getResumes,
+  uploadResume,
+  getResumeById,
+} from "../services/resumeService";
 import {
   analyzeResumeHealth,
   improveResumeSection,
   getResumeHealth,
 } from "../services/generatorService";
 
-import { useAuth } from "../../auth/context/AuthContext";
-
 export function useResumeAnalysis() {
-  const { user } = useAuth();
   const [resumesList, setResumesList] = useState([]);
   const [selectedResume, setSelectedResume] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -66,7 +67,8 @@ export function useResumeAnalysis() {
               freshData.ats_score !== selectedResume.ats_score
             ) {
               setSelectedResume((prev) => {
-                if (!prev || (prev.resume_id || prev.id) !== resumeId) return prev;
+                if (!prev || (prev.resume_id || prev.id) !== resumeId)
+                  return prev;
                 return { ...prev, ...freshData };
               });
 
@@ -74,8 +76,8 @@ export function useResumeAnalysis() {
                 prevList.map((item) =>
                   String(item.id) === String(resumeId)
                     ? { ...item, ...freshData }
-                    : item
-                )
+                    : item,
+                ),
               );
             }
 
@@ -91,7 +93,10 @@ export function useResumeAnalysis() {
                     setAnalysisResult(healthRes.data);
                   }
                 } catch (hErr) {
-                  console.error("Failed to load health after async parsing:", hErr);
+                  console.error(
+                    "Failed to load health after async parsing:",
+                    hErr,
+                  );
                 }
               }
             }
@@ -106,7 +111,11 @@ export function useResumeAnalysis() {
         clearInterval(intervalId);
       };
     }
-  }, [selectedResume?.parsing_status, selectedResume?.id, selectedResume?.resume_id]);
+  }, [
+    selectedResume?.parsing_status,
+    selectedResume?.id,
+    selectedResume?.resume_id,
+  ]);
 
   useEffect(() => {
     getResumes()
@@ -206,7 +215,10 @@ export function useResumeAnalysis() {
     setUploadedFile(null);
     setError("");
     setAnalysisResult(null);
-    if (resume.parsing_status === "pending" || resume.parsing_status === "processing") {
+    if (
+      resume.parsing_status === "pending" ||
+      resume.parsing_status === "processing"
+    ) {
       return;
     }
     try {
@@ -220,7 +232,13 @@ export function useResumeAnalysis() {
   };
 
   const runATSAnalysis = async () => {
-    if (!selectedResume || selectedResume.parsing_status === "pending" || selectedResume.parsing_status === "processing") return;
+    if (analyzing) return;
+    if (
+      !selectedResume ||
+      selectedResume.parsing_status === "pending" ||
+      selectedResume.parsing_status === "processing"
+    )
+      return;
 
     setAnalyzing(true);
     setError("");

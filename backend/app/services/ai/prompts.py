@@ -64,6 +64,7 @@ def get_resume_prompt(
     resume_text: str,
     job_description: str,
     schema_str: str,
+    improvement_feedback: str | None = None,
 ) -> str:
     return f"""
 ROLE:
@@ -211,23 +212,85 @@ OPTIMIZATION RULES
 - Improve grammar and professional wording.
 - Improve ATS readability.
 - Use strong but factual action verbs.
-- Prioritize existing skills relevant to the Job Description.
-- Do not add Job Description skills unsupported by the resume.
-- Remove exact duplicate skills.
+- Prioritize resume-supported Job Description skills first.
+
+- Reorder skills by relevance to the Job Description.
+- Promote technologies already demonstrated inside projects and experience.
+- Remove duplicate skills.
+- Merge obvious aliases.
+Examples:
+Postgres ↔ PostgreSQL
+JS ↔ JavaScript
+Py ↔ Python
+ML ↔ Machine Learning
+Do not remove distinct technologies.
+
+Never add unsupported Job Description skills.
 - Preserve distinct technologies.
 - Improve the professional summary.
 - Keep the summary approximately 60-100 words.
 - Preserve the candidate's actual experience level.
+==================================================
+JD COVERAGE OPTIMIZATION
+==================================================
+Before writing the resume:
+STEP 1
+Extract the Job Description into:
+
+- Required Skills
+- Preferred Skills
+- Responsibilities
+- Domain Keywords
+- Tools
+- Frameworks
+- Databases
+- Cloud Platforms
+- Soft Skills
+
+STEP 2
+Compare every extracted keyword with the uploaded resume.
+Create three internal groups:
+A. Already Supported
+Skills clearly supported by the resume.
+B. Indirectly Supported
+Skills reasonably inferred from projects or experience without inventing facts.
+
+Example:
+REST API
+↓
+Resume contains:
+Flask APIs
+→ acceptable
+Docker
+↓
+Resume contains Docker deployment
+→ acceptable
+C. Unsupported
+Skills with no evidence.
+Never add these.
+
+==================================================
+Resume optimization priorities:
+1. Rewrite the professional summary using the highest-priority supported JD keywords.
+2. Rewrite experience bullets to naturally include supported JD terminology.
+3. Rewrite project bullets to include supported technologies already demonstrated.
+4. Improve skill ordering so the most relevant supported skills appear first.
+5. Improve ATS keyword coverage naturally.
+6. Never repeat keywords unnaturally.
+7. Never perform keyword stuffing.
+8. Never invent experience.
+9. Never invent employment.
+10. Never invent years of experience.
+11. Maximize ATS using truthful evidence only.
+
 - Improve existing experience descriptions.
 - Improve existing project descriptions.
 - Do not fabricate measurable achievements.
 - Do not perform keyword stuffing.
 - Do not write "improved ATS score."
-
 ==================================================
 STRICT STRUCTURE
 ==================================================
-
 Return the root sections in exactly this order:
 
 1. personal_info
@@ -274,6 +337,18 @@ Do not return:
 Use exactly this schema:
 
 {schema_str}
+{
+f"""
+==================================================
+IMPROVEMENT FEEDBACK
+==================================================
+{improvement_feedback}
+Use this feedback only if it is provided.
+Improve the resume accordingly while preserving factual accuracy.
+"""
+if improvement_feedback
+else ""
+}
 
 FINAL VALIDATION:
 

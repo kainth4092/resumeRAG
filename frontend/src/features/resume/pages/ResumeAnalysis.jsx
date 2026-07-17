@@ -94,6 +94,7 @@ export default function ResumeAnalysis() {
                 selectedResume={selectedResume}
                 runATSAnalysis={runATSAnalysis}
                 uploadedFile={uploadedFile}
+                analyzing={analyzing}
               />
             </div>
 

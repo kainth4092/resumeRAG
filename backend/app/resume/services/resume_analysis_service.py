@@ -16,7 +16,7 @@ from app.services.ai.prompts import get_resume_health_prompt, get_ats_prompt
 
 logger = logging.getLogger(__name__)
 
-SCORING_VERSION = "v1"
+SCORING_VERSION = "v2"
 ATS_PROMPT_VERSION = "ats-2026-07-v2"
 HEALTH_PROMPT_VERSION = "health-2026-07-v2"
 
@@ -138,7 +138,6 @@ def analyze_resume_canonical(
     resume.resume_json = json.dumps(normalized_resume)
     if normalized_resume.get("skills"):
         resume.skills = ",".join(normalized_resume["skills"])
-    db.commit()
 
     # 3. Calculate Canonical Content Hash
     canonical_hash = get_canonical_hash(normalized_resume)
@@ -147,7 +146,6 @@ def analyze_resume_canonical(
     resume.prompt_version = (
         ATS_PROMPT_VERSION if job_description else HEALTH_PROMPT_VERSION
     )
-    db.commit()
 
     # 4. Handle Job Description if provided
     normalized_jd = None
@@ -156,7 +154,7 @@ def analyze_resume_canonical(
         normalized_jd = " ".join(job_description.split())
         jd_hash = hashlib.sha256(normalized_jd.encode("utf-8")).hexdigest()
         resume.jd_hash = jd_hash
-        db.commit()
+    db.commit()
 
     # 5. Deterministic Scoring
     scores = calculate_scores(normalized_resume, normalized_jd)

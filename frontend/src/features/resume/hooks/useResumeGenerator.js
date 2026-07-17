@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   uploadResume,
@@ -13,6 +13,7 @@ import { useAuth } from "../../auth/context/AuthContext";
 export function useResumeGenerator() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const requestInProgress = useRef(false);
 
   const lastResumeIdKey = user?.email
     ? `last_resume_id_${user.email}`
@@ -181,7 +182,13 @@ export function useResumeGenerator() {
   };
 
   const handleAnalyze = async () => {
-    if (!resume || resume.parsing_status === "pending" || resume.parsing_status === "processing") return;
+    if (analyzing || generating) return;
+    if (
+      !resume ||
+      resume.parsing_status === "pending" ||
+      resume.parsing_status === "processing"
+    )
+      return;
     try {
       setAnalyzing(true);
       setGeneratorError(null);
@@ -247,7 +254,13 @@ export function useResumeGenerator() {
   };
 
   const handleGenerate = async (templateName = "Professional") => {
-    if (!resume || resume.parsing_status === "pending" || resume.parsing_status === "processing") return;
+    if (generating || analyzing) return;
+    if (
+      !resume ||
+      resume.parsing_status === "pending" ||
+      resume.parsing_status === "processing"
+    )
+      return;
     const resolvedTemplateName =
       typeof templateName === "string" && templateName.trim()
         ? templateName
@@ -264,15 +277,22 @@ export function useResumeGenerator() {
       }
 
       let currentAnalysis = analysis;
+
       if (!currentAnalysis) {
+        if (requestInProgress.current) return;
+        requestInProgress.current = true;
         setAnalyzing(true);
-        const analyzeResponse = await analyzeResume({
-          resume_id: requestResumeId,
-          job_description: jd,
-        });
-        currentAnalysis = analyzeResponse.data;
-        setAnalysis(currentAnalysis);
-        setAnalyzing(false);
+        try {
+          const analyzeResponse = await analyzeResume({
+            resume_id: requestResumeId,
+            job_description: jd,
+          });
+          currentAnalysis = analyzeResponse.data;
+          setAnalysis(currentAnalysis);
+        } finally {
+          requestInProgress.current = false;
+          setAnalyzing(false);
+        }
       }
 
       const response = await generateResume({
@@ -281,8 +301,7 @@ export function useResumeGenerator() {
       });
       const r = {
         ...response.data.resume,
-        id:
-          response.data.resume_id || requestResumeId || Date.now().toString(),
+        id: response.data.resume_id || requestResumeId || Date.now().toString(),
         resume_id:
           response.data.resume_id || requestResumeId || Date.now().toString(),
       };
@@ -348,7 +367,8 @@ export function useResumeGenerator() {
     const resumesKey = user?.email
       ? `saved_resumes_${user.email}`
       : "saved_resumes";
-    const resumeId = resume?.resume_id || resume?.id || localStorage.getItem(lastResumeIdKey);
+    const resumeId =
+      resume?.resume_id || resume?.id || localStorage.getItem(lastResumeIdKey);
     if (!resumeId) return;
 
     const savedList = JSON.parse(localStorage.getItem(resumesKey) || "[]");

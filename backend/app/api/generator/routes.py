@@ -50,20 +50,14 @@ def safe_json_loads(
         ValueError,
         json.JSONDecodeError,
     ):
-        logger.warning(
-            "Invalid stored JSON encountered "
-            "in generator health data."
-        )
+        logger.warning("Invalid stored JSON encountered " "in generator health data.")
         return default
 
     if not isinstance(
         parsed,
         type(default),
     ):
-        logger.warning(
-            "Unexpected stored JSON type in "
-            "generator health data."
-        )
+        logger.warning("Unexpected stored JSON type in " "generator health data.")
         return default
 
     return parsed
@@ -145,7 +139,11 @@ def generate(
 
                 if isinstance(stored_resume, dict) and stored_resume:
                     contact = stored_resume.get("contact", {})
-                    has_name = bool(contact.get("name", "").strip()) if isinstance(contact, dict) else False
+                    has_name = (
+                        bool(contact.get("name", "").strip())
+                        if isinstance(contact, dict)
+                        else False
+                    )
                     has_skills = bool(stored_resume.get("skills"))
                     has_experience = bool(stored_resume.get("experience"))
                     has_projects = bool(stored_resume.get("projects"))
@@ -220,21 +218,25 @@ def generate(
             name = pi.get("name", "").strip()
         if not name and isinstance(contact, dict):
             name = contact.get("name", "").strip()
-        
+
         if not name:
-            name = (
-                current_user.name or ""
-            ).strip() or resume.title
-        
+            name = (current_user.name or "").strip() or resume.title
+
         # Clean title using standard cleaning
         cleaned_title = name
         if cleaned_title:
-            cleaned_title = re.sub(r"^Optimized:\s*", "", cleaned_title, flags=re.IGNORECASE)
-            cleaned_title = re.sub(r"\.(pdf|docx|doc)$", "", cleaned_title, flags=re.IGNORECASE)
+            cleaned_title = re.sub(
+                r"^Optimized:\s*", "", cleaned_title, flags=re.IGNORECASE
+            )
+            cleaned_title = re.sub(
+                r"\.(pdf|docx|doc)$", "", cleaned_title, flags=re.IGNORECASE
+            )
             cleaned_title = re.sub(r"[_-]+", " ", cleaned_title)
-            cleaned_title = re.sub(r"\bresume\b.*$", "", cleaned_title, flags=re.IGNORECASE)
+            cleaned_title = re.sub(
+                r"\bresume\b.*$", "", cleaned_title, flags=re.IGNORECASE
+            )
             cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
-        
+
         new_title = cleaned_title or "Untitled Resume"
 
         # Ensure headline is preserved if generated one is empty
@@ -244,7 +246,11 @@ def generate(
             if resume.resume_json:
                 try:
                     orig_json = json.loads(resume.resume_json)
-                    orig_headline = (orig_json.get("headline") or orig_json.get("personal_info", {}).get("headline") or "").strip()
+                    orig_headline = (
+                        orig_json.get("headline")
+                        or orig_json.get("personal_info", {}).get("headline")
+                        or ""
+                    ).strip()
                 except Exception:
                     pass
             if orig_headline:
@@ -277,8 +283,86 @@ def generate(
 
         # Calculate real ATS scores using deterministic scoring against JD
         from app.resume.services.resume_scoring_service import calculate_scores
+
         scores = calculate_scores(r_data, payload.job_description)
         new_ats = scores.get("ats_score", 75)
+        # ----------------------------------------------------------
+        # Validate generated resume quality before saving
+        # ----------------------------------------------------------
+
+        matched_keywords = scores.get("matched_keywords", [])
+        missing_keywords = scores.get("missing_keywords", [])
+        coverage = len(matched_keywords) / max(
+            len(matched_keywords) + len(missing_keywords),
+            1,
+        )
+        quality_report = {
+            "ats": new_ats,
+            "coverage": round(coverage * 100, 2),
+            "matched": len(matched_keywords),
+            "missing": len(missing_keywords),
+        }
+        logger.info(
+            "[GENERATOR VALIDATION] %s",
+            quality_report,
+        )
+        if new_ats < 80:
+            logger.warning(
+                "[LOW ATS GENERATED] ATS=%s Coverage=%.2f%%",
+                new_ats,
+                coverage * 100,
+            )
+        if coverage < 0.70:
+            logger.warning(
+                "[LOW JD COVERAGE] %.2f%% keywords matched",
+                coverage * 100,
+            )
+
+        # ----------------------------------------------------------
+        # Retry generation once if the generated resume quality is low
+        # ----------------------------------------------------------
+        if new_ats < 90 and coverage < 0.85:
+            logger.info(
+                "[GENERATOR RETRY] ATS=%s Coverage=%.2f%% - requesting one improved generation.",
+                new_ats,
+                coverage * 100,
+            )
+            feedback = f"""
+            The previous generated resume achieved:           
+            ATS Score: {new_ats}
+            Matched Keywords:
+            {', '.join(matched_keywords)}     
+            Missing Keywords:
+            {', '.join(missing_keywords)} 
+            Improve the resume by naturally increasing coverage of supported missing keywords.
+            Do not invent employment, companies, experience, projects, certifications, or skills.
+            Strengthen the summary, skills ordering, experience bullets, and project descriptions where supported by the original resume.
+            """
+
+            retry_result = generate_resume(
+                source_resume_text,
+                payload.job_description,
+                improvement_feedback=feedback,
+            )
+            retry_resume = retry_result.get("resume", {})
+            if isinstance(retry_resume, dict) and retry_resume:
+                retry_scores = calculate_scores(
+                    retry_resume,
+                    payload.job_description,
+                )
+
+                retry_ats = retry_scores.get("ats_score", 0)
+                if retry_ats > new_ats:
+                    logger.info(
+                        "[GENERATOR RETRY SUCCESS] ATS improved %s -> %s",
+                        new_ats,
+                        retry_ats,
+                    )
+
+                    r_data = retry_resume
+                    scores = retry_scores
+                    new_ats = retry_ats
+                    skills_list = r_data.get("skills", [])
 
         optimized_analysis = {
             "ats_score": new_ats,
@@ -324,7 +408,9 @@ def generate(
         raise e
     except Exception as exc:
         logger.exception("Failed to generate resume")
-        raise HTTPException(status_code=500, detail="Failed to generate resume.") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to generate resume."
+        ) from exc
 
 
 @router.post("/analyze-health")

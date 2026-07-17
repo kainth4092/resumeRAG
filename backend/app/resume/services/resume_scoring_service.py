@@ -1,20 +1,166 @@
 import re
 
 TECH_KEYWORDS_LIST = [
-    "python", "javascript", "typescript", "java", "c++", "c#", "ruby", "go", "golang", "rust", "php", "html", "css", 
-    "sql", "nosql", "react", "angular", "vue", "node", "express", "django", "flask", "fastapi", "spring", "docker", 
-    "kubernetes", "aws", "azure", "gcp", "git", "github", "ci/cd", "agile", "scrum", "machine learning", "deep learning", 
-    "ai", "nlp", "data science", "devops", "cloud", "linux", "graphql", "rest", "api", "microservices", "terraform", 
-    "jenkins", "mysql", "postgresql", "mongodb", "redis", "elasticsearch", "firebase", "sqlite", "oracle", "sass", 
-    "webpack", "babel", "tailwind", "bootstrap", "jquery", "redux", "next.js", "nuxt.js", "gatsby", "svelte", 
-    "pytorch", "tensorflow", "keras", "pandas", "numpy", "scikit-learn", "spark", "hadoop", "tableau", "powerbi", 
-    "jira", "confluence", "figma", "trello", "heroku", "netlify", "vercel", "digitalocean", "cloudflare", "nginx", 
-    "apache", "bash", "shell", "powershell", "testing", "jest", "cypress", "selenium", "mocha", "chai", "junit", 
-    "pytest", "unit testing", "integration testing", "system architecture", "backend", "frontend", "full stack", 
-    "mobile", "ios", "android", "swift", "kotlin", "flutter", "react native", "xamarin", "dart", "objective-c", 
-    "webassembly", "seo", "ui/ux", "product management", "project management", "scrum master", "saas", "paas", 
-    "iaas", "security", "cybersecurity", "cryptography", "blockchain", "solidity", "ethereum", "bitcoin", 
-    "smart contracts", "web3", "networks", "tcp/ip", "dns", "http", "sockets", "restful", "grpc", "soap"
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "c++",
+    "c#",
+    "ruby",
+    "go",
+    "golang",
+    "rust",
+    "php",
+    "html",
+    "css",
+    "sql",
+    "nosql",
+    "react",
+    "angular",
+    "vue",
+    "node",
+    "express",
+    "django",
+    "flask",
+    "fastapi",
+    "spring",
+    "docker",
+    "kubernetes",
+    "aws",
+    "azure",
+    "gcp",
+    "git",
+    "github",
+    "ci/cd",
+    "agile",
+    "scrum",
+    "machine learning",
+    "deep learning",
+    "ai",
+    "nlp",
+    "data science",
+    "devops",
+    "cloud",
+    "linux",
+    "graphql",
+    "rest",
+    "api",
+    "microservices",
+    "terraform",
+    "jenkins",
+    "mysql",
+    "postgresql",
+    "mongodb",
+    "redis",
+    "elasticsearch",
+    "firebase",
+    "sqlite",
+    "oracle",
+    "sass",
+    "webpack",
+    "babel",
+    "tailwind",
+    "bootstrap",
+    "jquery",
+    "redux",
+    "next.js",
+    "nuxt.js",
+    "gatsby",
+    "svelte",
+    "pytorch",
+    "tensorflow",
+    "keras",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "spark",
+    "hadoop",
+    "tableau",
+    "powerbi",
+    "jira",
+    "confluence",
+    "figma",
+    "trello",
+    "heroku",
+    "netlify",
+    "vercel",
+    "digitalocean",
+    "cloudflare",
+    "nginx",
+    "apache",
+    "bash",
+    "shell",
+    "powershell",
+    "testing",
+    "jest",
+    "cypress",
+    "selenium",
+    "mocha",
+    "chai",
+    "junit",
+    "pytest",
+    "unit testing",
+    "integration testing",
+    "system architecture",
+    "backend",
+    "frontend",
+    "full stack",
+    "mobile",
+    "ios",
+    "android",
+    "swift",
+    "kotlin",
+    "flutter",
+    "react native",
+    "xamarin",
+    "dart",
+    "objective-c",
+    "webassembly",
+    "seo",
+    "ui/ux",
+    "product management",
+    "project management",
+    "scrum master",
+    "saas",
+    "paas",
+    "iaas",
+    "security",
+    "cybersecurity",
+    "cryptography",
+    "blockchain",
+    "solidity",
+    "ethereum",
+    "bitcoin",
+    "smart contracts",
+    "web3",
+    "networks",
+    "tcp/ip",
+    "dns",
+    "http",
+    "sockets",
+    "restful",
+    "grpc",
+    "soap",
+    "langchain",
+    "langgraph",
+    "llm",
+    "large language models",
+    "generative ai",
+    "retrieval augmented generation",
+    "vector db",
+    "qdrant",
+    "ollama",
+    "hugging face",
+    "prompt engineering",
+    "embeddings",
+    "reranking",
+    "hybrid search",
+    "semantic search",
+    "databricks",
+    "delta lake",
+    "unity catalog",
+    "jwt",
 ]
 
 # Alias map: maps common variant names to their canonical keyword.
@@ -65,6 +211,25 @@ KEYWORD_ALIASES = {
     "scikit learn": "scikit-learn",
     "sklearn": "scikit-learn",
     "react-native": "react native",
+    "llm": "large language models",
+    "large language model": "large language models",
+    "genai": "generative ai",
+    "generative ai": "generative ai",
+    "rag": "retrieval augmented generation",
+    "retrieval-augmented generation": "retrieval augmented generation",
+    "langchain framework": "langchain",
+    "langgraph framework": "langgraph",
+    "postgres sql": "postgresql",
+    "restful services": "rest",
+    "restful service": "rest",
+    "jwt authentication": "jwt",
+    "jwt auth": "jwt",
+    "vector database": "vector db",
+    "vector databases": "vector db",
+    "qdrant vector db": "qdrant",
+    "azure databricks": "databricks",
+    "pyspark": "spark",
+    "huggingface": "hugging face",
 }
 
 # Build reverse map: canonical -> set of aliases (including itself)
@@ -87,7 +252,7 @@ def extract_keywords(text: str) -> set[str]:
     """
     if not text:
         return set()
-    
+
     text_lower = text.lower()
     found = set()
 
@@ -109,12 +274,13 @@ def extract_keywords(text: str) -> set[str]:
                 found.add(canonical)
                 seen_canonical.add(canonical)
         else:
-            pattern = r'\b' + re.escape(term) + r'\b'
+            pattern = r"\b" + re.escape(term) + r"\b"
             if re.search(pattern, text_lower):
                 found.add(canonical)
                 seen_canonical.add(canonical)
 
     return found
+
 
 def get_text_from_canonical_resume(resume: dict) -> str:
     """
@@ -125,20 +291,28 @@ def get_text_from_canonical_resume(resume: dict) -> str:
     # Contact (canonical) or personal_info (generator)
     contact = resume.get("contact", resume.get("personal_info", {}))
     if isinstance(contact, dict):
-        for field in ["name", "email", "phone", "location", "linkedin", "github", "portfolio"]:
+        for field in [
+            "name",
+            "email",
+            "phone",
+            "location",
+            "linkedin",
+            "github",
+            "portfolio",
+        ]:
             parts.append(str(contact.get(field, "")))
-    
+
     # Headline / Summary
     parts.append(str(resume.get("headline", "")))
     summary = resume.get("summary", "")
     if isinstance(summary, dict):
         summary = summary.get("text", "")
     parts.append(str(summary))
-    
+
     # Skills
     for s in resume.get("skills", []):
         parts.append(str(s) if not isinstance(s, dict) else str(s.get("name", "")))
-    
+
     # Experience - handle both "bullets" and "description" keys
     for exp in resume.get("experience", []):
         if isinstance(exp, dict):
@@ -150,7 +324,7 @@ def get_text_from_canonical_resume(resume: dict) -> str:
                 parts.extend(str(b) for b in bullets)
             elif isinstance(bullets, str):
                 parts.append(bullets)
-        
+
     # Projects - handle both structured and flat description
     for proj in resume.get("projects", []):
         if isinstance(proj, dict):
@@ -165,7 +339,7 @@ def get_text_from_canonical_resume(resume: dict) -> str:
                 parts.extend(str(t) for t in tech)
             elif isinstance(tech, str):
                 parts.append(tech)
-        
+
     # Education
     for edu in resume.get("education", []):
         if isinstance(edu, dict):
@@ -174,12 +348,19 @@ def get_text_from_canonical_resume(resume: dict) -> str:
             parts.append(str(edu.get("location", "")))
 
     # Extras
-    for f in ["certifications", "achievements", "languages", "publications", "volunteer_experience"]:
+    for f in [
+        "certifications",
+        "achievements",
+        "languages",
+        "publications",
+        "volunteer_experience",
+    ]:
         vals = resume.get(f, [])
         if isinstance(vals, list):
             parts.extend(str(v) for v in vals)
-        
+
     return "\n".join(parts)
+
 
 def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     """
@@ -194,7 +375,7 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         completeness += 15
     elif contact.get("name"):
         completeness += 5
-        
+
     if resume.get("headline"):
         completeness += 10
     if resume.get("summary"):
@@ -205,11 +386,15 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         completeness += 25
     if resume.get("education"):
         completeness += 15
-        
+
     # Extra bonus
     if resume.get("projects"):
         completeness += 5
-    if resume.get("certifications") or resume.get("achievements") or resume.get("languages"):
+    if (
+        resume.get("certifications")
+        or resume.get("achievements")
+        or resume.get("languages")
+    ):
         completeness += 5
     section_completeness = min(100, completeness)
 
@@ -233,24 +418,29 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     exp_quality = 50
     if exp_list:
         exp_quality += min(30, len(exp_list) * 10)
-        
+
         # Regex for metrics (numbers followed by %, k, million, etc.)
-        metric_pat = re.compile(r'\b\d+%\b|\b\d+\s*k\b|\$\d+|\b\d+\s*million\b|\bpercent\b', re.IGNORECASE)
-        strong_verb_pat = re.compile(r'^(led|developed|created|optimized|managed|built|designed|implemented|coordinated|directed|supervised|headed|executed|spearheaded|formulated)', re.IGNORECASE)
-        
+        metric_pat = re.compile(
+            r"\b\d+%\b|\b\d+\s*k\b|\$\d+|\b\d+\s*million\b|\bpercent\b", re.IGNORECASE
+        )
+        strong_verb_pat = re.compile(
+            r"^(led|developed|created|optimized|managed|built|designed|implemented|coordinated|directed|supervised|headed|executed|spearheaded|formulated)",
+            re.IGNORECASE,
+        )
+
         has_metrics = False
         has_strong_verbs = False
         for exp in exp_list:
             bullets = exp.get("bullets", exp.get("description", []))
             if isinstance(bullets, str):
                 bullets = [bullets]
-            for bullet in (bullets or []):
+            for bullet in bullets or []:
                 bullet_str = str(bullet)
                 if metric_pat.search(bullet_str):
                     has_metrics = True
                 if strong_verb_pat.search(bullet_str.strip()):
                     has_strong_verbs = True
-                    
+
         if has_metrics:
             exp_quality += 10
         if has_strong_verbs:
@@ -266,7 +456,11 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         proj_quality += min(30, len(proj_list) * 15)
         # Check URLs
         has_url = any(
-            p.get("github_url") or p.get("github") or p.get("live_url") or p.get("live") or p.get("url")
+            p.get("github_url")
+            or p.get("github")
+            or p.get("live_url")
+            or p.get("live")
+            or p.get("url")
             for p in proj_list
         )
         if has_url:
@@ -282,7 +476,9 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
     if not edu_list:
         education_quality = 50
     else:
-        has_complete = any(edu.get("institution") and edu.get("degree") for edu in edu_list)
+        has_complete = any(
+            edu.get("institution") and edu.get("degree") for edu in edu_list
+        )
         if has_complete:
             education_quality = 100
         else:
@@ -295,7 +491,7 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         formatting -= 10
     if not resume.get("headline"):
         formatting -= 10
-        
+
     long_bullets = 0
     short_bullets = 0
     for exp in exp_list:
@@ -310,7 +506,7 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
                 long_bullets += 1
             elif length < 20:
                 short_bullets += 1
-                
+
     formatting -= min(15, long_bullets * 5)
     formatting -= min(10, short_bullets * 3)
     formatting_score = max(50, formatting)
@@ -323,16 +519,15 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         readability -= 15
     elif summary_len < 50:
         readability -= 10
-        
+
     bullet_count = sum(
-        len(exp.get("bullets", exp.get("description", [])) or [])
-        for exp in exp_list
+        len(exp.get("bullets", exp.get("description", [])) or []) for exp in exp_list
     )
     if bullet_count > 25:
         readability -= 15
     elif bullet_count < 3:
         readability -= 10
-        
+
     readability_score = max(50, readability)
 
     # 8. Grammar & Writing Score (Weight: 100 max)
@@ -341,36 +536,36 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
 
     # 9. Recruiter Readiness
     recruiter_readiness = int(
-        0.35 * experience_quality + 
-        0.25 * projects_quality + 
-        0.15 * education_quality + 
-        0.25 * section_completeness
+        0.35 * experience_quality
+        + 0.25 * projects_quality
+        + 0.15 * education_quality
+        + 0.25 * section_completeness
     )
 
     # 10. Keyword Optimization & ATS Score with Job Description
     # If job description is provided, calculate intersection
     matched_keywords = []
     missing_keywords = []
-    
+
     if job_description:
         jd_kws = extract_keywords(job_description)
         resume_text = get_text_from_canonical_resume(resume)
         resume_kws = extract_keywords(resume_text)
-        
+
         # Add actual skills list from resume to resume keywords,
         # normalizing through alias map for consistent matching
         for s in skills:
             s_lower = s.lower() if isinstance(s, str) else str(s).lower()
             canonical = _normalize_keyword(s_lower)
             resume_kws.add(canonical)
-            
+
         matched = jd_kws.intersection(resume_kws)
         missing = jd_kws.difference(resume_kws)
-        
+
         # Sort for determinism
         matched_keywords = sorted(list(matched))
         missing_keywords = sorted(list(missing))
-        
+
         if jd_kws:
             keyword_optimization = int((len(matched) / len(jd_kws)) * 100)
         else:
@@ -381,20 +576,33 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
 
     # 11. Resume Health Score
     resume_health_score = int(
-        0.20 * section_completeness +
-        0.20 * experience_quality +
-        0.15 * skills_coverage +
-        0.15 * projects_quality +
-        0.10 * readability_score +
-        0.10 * formatting_score +
-        0.10 * grammar_writing
+        0.20 * section_completeness
+        + 0.20 * experience_quality
+        + 0.15 * skills_coverage
+        + 0.15 * projects_quality
+        + 0.10 * readability_score
+        + 0.10 * formatting_score
+        + 0.10 * grammar_writing
     )
 
     # 12. Overall ATS Score
     if job_description:
-        ats_score = int(0.50 * keyword_optimization + 0.50 * resume_health_score)
+        ats_score = int(
+            0.40 * keyword_optimization
+            + 0.20 * experience_quality
+            + 0.15 * projects_quality
+            + 0.10 * skills_coverage
+            + 0.10 * section_completeness
+            + 0.05 * readability_score
+        )
     else:
-        ats_score = resume_health_score
+        ats_score = int(
+            0.35 * resume_health_score
+            + 0.25 * experience_quality
+            + 0.20 * projects_quality
+            + 0.10 * skills_coverage
+            + 0.10 * section_completeness
+        )
 
     return {
         "ats_score": ats_score,
@@ -410,5 +618,5 @@ def calculate_scores(resume: dict, job_description: str | None = None) -> dict:
         "section_completeness": section_completeness,
         "recruiter_readiness": recruiter_readiness,
         "matched_keywords": matched_keywords,
-        "missing_keywords": missing_keywords
+        "missing_keywords": missing_keywords,
     }

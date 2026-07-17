@@ -307,7 +307,18 @@ def normalize_generate_response(result: dict) -> dict:
                 cleaned_skills.append(str(skill_name))
             elif s is not None:
                 cleaned_skills.append(str(s))
-        resume_data["skills"] = [s.strip() for s in cleaned_skills if s.strip()]
+        seen = set()
+        deduped = []
+        for skill in cleaned_skills:
+            normalized = skill.strip()
+            if not normalized:
+                continue
+            key = normalized.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(normalized)
+        resume_data["skills"] = deduped
 
     for list_field in [
         "experience",
@@ -374,6 +385,10 @@ def normalize_generate_response(result: dict) -> dict:
             str(d).strip() for d in desc_list if d is not None and str(d).strip()
         ]
         cleaned_exp["bullets"] = cleaned_exp["description"]
+        if not (
+            cleaned_exp["company"] or cleaned_exp["role"] or cleaned_exp["description"]
+        ):
+            continue
 
         cleaned_experience.append(cleaned_exp)
     resume_data["experience"] = cleaned_experience
@@ -406,9 +421,15 @@ def normalize_generate_response(result: dict) -> dict:
             tech_list = [t.strip() for t in tech_list.split(",") if t.strip()]
         elif not isinstance(tech_list, list):
             tech_list = [str(tech_list)] if tech_list else []
-        cleaned_proj["technologies"] = [
-            str(t).strip() for t in tech_list if t is not None and str(t).strip()
-        ]
+        seen = set()
+        techs = []
+        for tech in cleaned_proj["technologies"]:
+            key = tech.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            techs.append(tech)
+        cleaned_proj["technologies"] = techs
         cleaned_projects.append(cleaned_proj)
     resume_data["projects"] = cleaned_projects
 
@@ -715,7 +736,12 @@ def generate_interview_bank_questions(
 
 def generate_resume(resume_text: str, job_description: str):
     schema_str = json.dumps(OUTPUT_SCHEMA)
-    prompt_str = prompts.get_resume_prompt(resume_text, job_description, schema_str)
+    prompt_str = prompts.get_resume_prompt(
+        resume_text,
+        job_description,
+        schema_str,
+        improvement_feedback=improvement_feedback,
+    )
     result = call_llm_with_retry(
         prompt_str,
         feature="resume_generation",

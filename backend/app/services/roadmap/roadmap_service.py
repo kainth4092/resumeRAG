@@ -436,6 +436,10 @@ def build_roadmap_phases(
 
         phase_number += 1
 
+    high_priority.sort(key=lambda s: s["name"])
+    medium_priority.sort(key=lambda s: s["name"])
+    low_priority.sort(key=lambda s: s["name"])
+
     add_phase(
         title="Critical Foundations",
         skills=high_priority,
@@ -527,7 +531,16 @@ def build_learning_recommendations(
 ) -> list[dict]:
     recommendations = []
 
-    for skill in missing_skills[:8]:
+    priority_order = {
+        "High": 0,
+        "Medium": 1,
+        "Low": 2,
+    }
+    sorted_skills = sorted(
+        missing_skills,
+        key=lambda s: priority_order.get(s.get("priority"), 3),
+    )
+    for skill in sorted_skills[:10]:
         skill_name = skill.get("name", "").strip()
 
         if not skill_name:
