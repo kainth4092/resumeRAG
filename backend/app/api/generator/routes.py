@@ -397,11 +397,7 @@ def generate(
             resume_json=json.dumps(r_data),
         )
 
-        db.add(new_resume)
-        db.commit()
-        db.refresh(new_resume)
-
-        return {"resume": result.get("resume", {}), "resume_id": new_resume.id}
+        return {"resume": result.get("resume", {}), "resume_id": None}
     except HTTPException as e:
         raise e
     except AppException as e:

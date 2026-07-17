@@ -14,7 +14,12 @@ from app.models.resume import Resume
 from app.models.resume_health import ResumeHealthAnalysis
 from app.resume.repository.resume_repository import ResumeRepository
 from app.services.pdf_service import extract_text_from_pdf
-
+from app.resume.services.resume_normalizer import (
+    normalize_resume,
+    canonical_resume_to_text,
+    get_canonical_hash,
+)
+from app.resume.services.resume_scoring_service import calculate_scores
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +31,13 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         if not resume:
             logger.error(f"[BG_PARSING] Resume id {resume_id} not found")
             return
-        
+
         resume.parsing_status = "processing"
         db.commit()
 
-        from app.resume.services.resume_analysis_service import parse_resume_text_to_json
+        from app.resume.services.resume_analysis_service import (
+            parse_resume_text_to_json,
+        )
         from app.resume.services.resume_normalizer import normalize_resume
         from app.resume.services.resume_scoring_service import calculate_scores
 
@@ -38,6 +45,7 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         normalized = normalize_resume(parsed_json)
         scores = calculate_scores(normalized)
         import re
+
         contact_info = normalized.get("contact", {}) or {}
         personal_info = normalized.get("personal_info", {}) or {}
         name = contact_info.get("name", "").strip()
@@ -58,27 +66,29 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         resume.resume_json = json.dumps(normalized)
         resume.skills = ",".join(normalized.get("skills", []))
         resume.ats_score = scores["ats_score"]
-        
-        resume.analysis_results = json.dumps({
-            "ats_score": scores["ats_score"],
-            "matched_keywords": scores["matched_keywords"],
-            "missing_keywords": scores["missing_keywords"],
-            "suggestions": [
-                "Include specific metrics (e.g. 'improved performance by 20%')",
-                "Add details about cloud deployment (AWS/GCP)",
-                "Strengthen your professional summary by aligning with target roles",
-                "List individual Docker/CI/CD tool integrations",
-                "Format project sections with clear technology listings",
-            ],
-            "heatmap": {
-                "contact_info": scores["formatting_score"],
-                "summary": scores["readability_score"],
-                "skills": scores["skills_coverage"],
-                "experience": scores["experience_quality"],
-                "projects": scores["projects_quality"],
-                "education": scores["education_quality"],
-            },
-        })
+
+        resume.analysis_results = json.dumps(
+            {
+                "ats_score": scores["ats_score"],
+                "matched_keywords": scores["matched_keywords"],
+                "missing_keywords": scores["missing_keywords"],
+                "suggestions": [
+                    "Include specific metrics (e.g. 'improved performance by 20%')",
+                    "Add details about cloud deployment (AWS/GCP)",
+                    "Strengthen your professional summary by aligning with target roles",
+                    "List individual Docker/CI/CD tool integrations",
+                    "Format project sections with clear technology listings",
+                ],
+                "heatmap": {
+                    "contact_info": scores["formatting_score"],
+                    "summary": scores["readability_score"],
+                    "skills": scores["skills_coverage"],
+                    "experience": scores["experience_quality"],
+                    "projects": scores["projects_quality"],
+                    "education": scores["education_quality"],
+                },
+            }
+        )
         resume.scoring_version = "v1"
         resume.prompt_version = "v1"
         resume.parsing_status = "completed"
@@ -88,16 +98,16 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         from app.services.profile_population_service import extract_and_populate_profile
 
         exp_count = (
-            db.query(UserExperience)
-            .filter(UserExperience.user_id == user_id)
-            .count()
+            db.query(UserExperience).filter(UserExperience.user_id == user_id).count()
         )
         if exp_count == 0:
             extract_and_populate_profile(db, user_id, parsed_text)
 
         logger.info(f"[BG_PARSING] Successfully parsed resume id {resume_id}")
     except Exception as e:
-        logger.exception(f"[BG_PARSING_FAILED] Failed to parse resume in background: {e}")
+        logger.exception(
+            f"[BG_PARSING_FAILED] Failed to parse resume in background: {e}"
+        )
         try:
             resume = db.query(Resume).filter(Resume.id == resume_id).first()
             if resume:
@@ -130,23 +140,17 @@ class ResumeService:
             },
         }
 
-        allowed_content_types = (
-            allowed_file_types.get(
-                file_ext,
-            )
+        allowed_content_types = allowed_file_types.get(
+            file_ext,
         )
 
         if (
             allowed_content_types is None
-            or file.content_type
-            not in allowed_content_types
+            or file.content_type not in allowed_content_types
         ):
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Only valid PDF and DOCX "
-                    "files are allowed."
-                ),
+                detail=("Only valid PDF and DOCX " "files are allowed."),
             )
         unique_name = f"{uuid.uuid4()}_{file.filename}"
 
@@ -175,6 +179,7 @@ class ResumeService:
                 parsed_text = extract_text_from_pdf(str(temp_path))
             else:
                 from app.services.docx_service import extract_text_from_docx
+
                 parsed_text = extract_text_from_docx(str(temp_path))
         except Exception:
             if temp_path and temp_path.exists():
@@ -381,7 +386,9 @@ class ResumeService:
             ),
             "version": resume.version or "v1",
             "template": resume.template or "Professional",
-            "resume_json": json.loads(resume.resume_json) if resume.resume_json else None,
+            "resume_json": (
+                json.loads(resume.resume_json) if resume.resume_json else None
+            ),
             "parsing_status": resume.parsing_status or "completed",
         }
 
@@ -563,6 +570,68 @@ class ResumeService:
         return {"message": "Profile imported successfully", "resume_id": resume.id}
 
     @staticmethod
+    def save_generated_resume(
+        payload: dict,
+        db: Session,
+        user_id: int,
+    ) -> dict:
+        normalized_resume = normalize_resume(payload["resume"])
+
+        parsed_text = canonical_resume_to_text(normalized_resume)
+        canonical_hash = get_canonical_hash(normalized_resume)
+
+        scores = calculate_scores(normalized_resume)
+
+        resume = Resume(
+            user_id=user_id,
+            title=payload["title"],
+            original_filename=f'{payload["title"]}.pdf',
+            file_path="generated",
+            parsed_text=parsed_text,
+            is_active=False,
+            ats_score=scores["ats_score"],
+            skills=",".join(normalized_resume.get("skills", [])),
+            analysis_results=json.dumps(
+                {
+                    "ats_score": scores["ats_score"],
+                    "matched_keywords": scores["matched_keywords"],
+                    "missing_keywords": scores["missing_keywords"],
+                    "suggestions": ["Include measurable achievements where possible."],
+                    "heatmap": {
+                        "contact_info": scores["formatting_score"],
+                        "summary": scores["readability_score"],
+                        "skills": scores["skills_coverage"],
+                        "experience": scores["experience_quality"],
+                        "projects": scores["projects_quality"],
+                        "education": scores["education_quality"],
+                    },
+                }
+            ),
+            version="v1",
+            template=payload["template"],
+            is_generated=True,
+            resume_json=json.dumps(normalized_resume),
+            parsing_status="completed",
+            canonical_hash=canonical_hash,
+            scoring_version="v1",
+            prompt_version="v1",
+        )
+
+        try:
+            ResumeRepository.create_resume(db, resume)
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save generated resume.",
+            )
+
+        return {
+            "message": "Generated resume saved successfully.",
+            "resume_id": resume.id,
+        }
+
+    @staticmethod
     def update_resume(
         resume_id: int,
         payload: dict,
@@ -588,13 +657,9 @@ class ResumeService:
                 normalize_resume,
             )
 
-            normalized_resume = normalize_resume(
-                payload["resume_json"]
-            )
+            normalized_resume = normalize_resume(payload["resume_json"])
 
-            resume.resume_json = json.dumps(
-                normalized_resume
-            )
+            resume.resume_json = json.dumps(normalized_resume)
 
             resume.skills = ",".join(
                 normalized_resume.get(
@@ -603,21 +668,11 @@ class ResumeService:
                 )
             )
 
-            text_representation = (
-                canonical_resume_to_text(
-                    normalized_resume
-                )
-            )
+            text_representation = canonical_resume_to_text(normalized_resume)
 
-            resume.parsed_text = (
-                text_representation
-            )
+            resume.parsed_text = text_representation
 
-            resume.canonical_hash = (
-                get_canonical_hash(
-                    normalized_resume
-                )
-            )
+            resume.canonical_hash = get_canonical_hash(normalized_resume)
 
         try:
             db.commit()

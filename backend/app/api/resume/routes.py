@@ -4,6 +4,11 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.resume.services.resume_service import ResumeService
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 router = APIRouter(prefix="/api/resume", tags=["Resume"])
 
@@ -15,7 +20,9 @@ async def upload_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return await ResumeService.upload_resume(file, db, current_user.id, background_tasks)
+    return await ResumeService.upload_resume(
+        file, db, current_user.id, background_tasks
+    )
 
 
 @router.post("/{resume_id}/active")
@@ -43,7 +50,6 @@ def get_active_resume(
     return ResumeService.get_active_resume(db, current_user.id)
 
 
-
 @router.get("/{resume_id}")
 def get_resume(
     resume_id: int,
@@ -58,6 +64,7 @@ from pydantic import (
     Field,
     field_validator,
 )
+
 
 class ResumeUpdateSchema(BaseModel):
     title: str | None = Field(
@@ -94,13 +101,32 @@ class ResumeUpdateSchema(BaseModel):
     ):
         if value is None:
             return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Value cannot be empty.")
 
+        return value
+
+
+class SaveGeneratedResumeSchema(BaseModel):
+    title: str = Field(
+        min_length=1,
+        max_length=255,
+    )
+    template: str = Field(
+        default="Professional",
+        min_length=1,
+        max_length=100,
+    )
+    resume: dict
+
+    @field_validator("title", "template")
+    @classmethod
+    def clean_text(cls, value: str):
         value = value.strip()
 
         if not value:
-            raise ValueError(
-                "Value cannot be empty."
-            )
+            raise ValueError("Value cannot be empty.")
 
         return value
 
@@ -111,6 +137,19 @@ def import_profile_to_resume(
     current_user: User = Depends(get_current_user),
 ):
     return ResumeService.import_profile_to_resume(db, current_user.id)
+
+
+@router.post("/save-generated")
+def save_generated_resume(
+    payload: SaveGeneratedResumeSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.save_generated_resume(
+        payload.model_dump(),
+        db,
+        current_user.id,
+    )
 
 
 @router.put("/{resume_id}")
@@ -126,7 +165,7 @@ def update_resume(
             exclude_unset=True,
         ),
         db,
-        current_user.id
+        current_user.id,
     )
 
 
