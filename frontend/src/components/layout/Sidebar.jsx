@@ -177,7 +177,11 @@ export default function Sidebar({ collapsed, setMobileOpen }) {
                 const active = isRouteActive(item.route);
                 const Icon = item.icon;
                 const displayBadge =
-                  item.badge === "count" ? jobCount : item.badge;
+                  item.badge === "count"
+                    ? jobCount > 0
+                      ? jobCount
+                      : null
+                    : item.badge;
 
                 return (
                   <button
