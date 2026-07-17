@@ -734,7 +734,11 @@ def generate_interview_bank_questions(
         return []
 
 
-def generate_resume(resume_text: str, job_description: str):
+def generate_resume(
+    resume_text: str,
+    job_description: str,
+    improvement_feedback: str | None = None,
+):
     schema_str = json.dumps(OUTPUT_SCHEMA)
     prompt_str = prompts.get_resume_prompt(
         resume_text,
