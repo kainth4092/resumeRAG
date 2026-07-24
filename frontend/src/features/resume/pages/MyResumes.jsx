@@ -600,10 +600,18 @@ export default function MyResumes() {
         throw new Error("Invalid session ID received.");
       }
     } catch (err) {
-      console.error(err);
-      setError(
-        "Failed to generate interview prep. Make sure the resume has correct skills and experience.",
-      );
+      console.error("Interview Generate Error:", err);
+      console.error("Status:", err.response?.status);
+      console.error("Response:", err.response?.data);
+      const message =
+        typeof err.response?.data?.detail === "string"
+          ? err.response.data.detail
+          : err.response?.data?.detail?.[0]?.msg ||
+            err.response?.data?.message ||
+            err.message ||
+            "Failed to generate interview prep.";
+
+      setError(message);
     } finally {
       setGeneratingPrep(false);
     }
