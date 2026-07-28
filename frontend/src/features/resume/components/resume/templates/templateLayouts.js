@@ -40,7 +40,7 @@ export const generateLayout = (templateName, resumeData) => {
     ]
       .filter(Boolean)
       .join(" | ");
-    console.log("Template personal =", personal);
+
     return {
       type: "document",
       props: { fontFamily: "Inter", template: "Professional" },
@@ -331,7 +331,7 @@ export const generateLayout = (templateName, resumeData) => {
           }
         : null,
     ].filter(Boolean);
-    console.log("Template personal =", personal);
+
     return {
       type: "document",
       props: { fontFamily: "sans", template: "Corporate" },
@@ -597,7 +597,7 @@ export const generateLayout = (templateName, resumeData) => {
     ]
       .filter(Boolean)
       .join("  |  ");
-    console.log("Template personal =", personal);
+
     return {
       type: "document",
       props: { fontFamily: "Times New Roman", template: "ATS" },
@@ -881,7 +881,6 @@ export const generateLayout = (templateName, resumeData) => {
     // Minimal template renders all sections in a two-column layout
     // We create a helper function that returns this grid/two-column section
     const makeMinimalSection = (title, childrenNodes) => {
-      console.log("Template personal =", personal);
       return {
         type: "row",
         props: { justify: "between", align: "start", spaceAfter: 12 },
@@ -912,7 +911,7 @@ export const generateLayout = (templateName, resumeData) => {
         ],
       };
     };
-    console.log("Template personal =", personal);
+
     return {
       type: "document",
       props: { fontFamily: "Georgia", template: "Minimal" },

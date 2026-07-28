@@ -68,7 +68,6 @@ export const cleanResumeData = (resume) => {
         ? p.description.join("\n")
         : p.description || ""),
   }));
-  console.log("cleanResumeData personal =", personal);
 
   return {
     raw: r,
