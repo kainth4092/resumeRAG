@@ -394,8 +394,9 @@ def normalize_generate_response(result: dict) -> dict:
     resume_data["experience"] = cleaned_experience
 
     # --- Normalize projects ---
+    # --- Normalize projects ---
     cleaned_projects = []
-    for proj in resume_data["projects"]:
+    for proj in resume_data.get("projects", []):
         if not isinstance(proj, dict):
             continue
         cleaned_proj = {}
@@ -404,32 +405,39 @@ def normalize_generate_response(result: dict) -> dict:
         cleaned_proj["live"] = str(
             proj.get("live") or proj.get("live_url") or proj.get("url") or ""
         )
-
-        desc_list = proj.get("description") or proj.get("desc") or []
-        if isinstance(desc_list, str):
-            desc_list = [line.strip() for line in desc_list.split("\n") if line.strip()]
-        elif not isinstance(desc_list, list):
-            desc_list = [str(desc_list)] if desc_list else []
+        # ---------------- Description ---------------- #
+        description = proj.get("description") or proj.get("desc") or []
+        if isinstance(description, str):
+            description = [x.strip() for x in description.split("\n") if x.strip()]
+        elif not isinstance(description, list):
+            description = [str(description)] if description else []
         cleaned_proj["description"] = [
-            str(d).strip() for d in desc_list if d is not None and str(d).strip()
+            str(x).strip() for x in description if str(x).strip()
         ]
 
-        tech_list = (
+        # ---------------- Technologies ---------------- #
+        technologies = (
             proj.get("technologies") or proj.get("tech") or proj.get("tech_stack") or []
         )
-        if isinstance(tech_list, str):
-            tech_list = [t.strip() for t in tech_list.split(",") if t.strip()]
-        elif not isinstance(tech_list, list):
-            tech_list = [str(tech_list)] if tech_list else []
+        if isinstance(technologies, str):
+            technologies = re.split(
+                r"[,|;/•·]",
+                technologies,
+            )
+        elif not isinstance(technologies, list):
+            technologies = [str(technologies)] if technologies else []
         seen = set()
-        techs = []
-        for tech in cleaned_proj["technologies"]:
+        cleaned_tech = []
+        for tech in technologies:
+            tech = str(tech).strip()
+            if not tech:
+                continue
             key = tech.lower()
             if key in seen:
                 continue
             seen.add(key)
-            techs.append(tech)
-        cleaned_proj["technologies"] = techs
+            cleaned_tech.append(tech)
+        cleaned_proj["technologies"] = cleaned_tech
         cleaned_projects.append(cleaned_proj)
     resume_data["projects"] = cleaned_projects
 

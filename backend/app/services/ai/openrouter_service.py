@@ -169,8 +169,9 @@ class OpenRouterProvider(AIProvider):
         )
         if is_free:
             fallback_pool = [
-                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemma-4-26b-a4b-it:free",
                 "google/gemma-4-31b-it:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
                 "qwen/qwen3-coder:free",
                 "meta-llama/llama-3.2-3b-instruct:free",
                 "nvidia/nemotron-3-nano-30b-a3b:free",
