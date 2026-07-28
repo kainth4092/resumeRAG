@@ -1,20 +1,20 @@
 import { useResumeAnalysis } from "../hooks/useResumeAnalysis";
-import Header from "../components/resume analysis/Header";
-import ErrorAlert from "../components/resume analysis/ErrorAlert";
-import UploadCard from "../components/resume analysis/UploadCard";
-import SelectedResumeCard from "../components/resume analysis/SelectedResumeCard";
-import SavedResumeList from "../components/resume analysis/SavedResumeList";
-import AnalysisLoading from "../components/resume analysis/AnalysisLoading";
-import ATSScoreCards from "../components/resume analysis/ATSScoreCards";
-import WeaknessCard from "../components/resume analysis/WeaknessesCard";
-import AISectionImprover from "../components/resume analysis/AISectionImprover";
-import SectionMenu from "../components/resume analysis/SectionMenu";
-import ImprovedTextPanel from "../components/resume analysis/ImprovedTextPanel";
-import MissingSectionsCard from "../components/resume analysis/MissingSectionsCard";
-import ProgressScore from "../components/resume analysis/ProgressScore";
-import Analyzing from "../components/resume analysis/Analyzing";
-import QuickSummary from "../components/resume analysis/QuickSummary";
-import StrengthsCard from "../components/resume analysis/StrengthsCard";
+import Header from "../components/resumeAnalysis/Header";
+import ErrorAlert from "../components/resumeAnalysis/ErrorAlert";
+import UploadCard from "../components/resumeAnalysis/UploadCard";
+import SelectedResumeCard from "../components/resumeAnalysis/SelectedResumeCard";
+import SavedResumeList from "../components/resumeAnalysis/SavedResumeList";
+import AnalysisLoading from "../components/resumeAnalysis/AnalysisLoading";
+import ATSScoreCards from "../components/resumeAnalysis/ATSScoreCards";
+import WeaknessCard from "../components/resumeAnalysis/WeaknessesCard";
+import AISectionImprover from "../components/resumeAnalysis/AISectionImprover";
+import SectionMenu from "../components/resumeAnalysis/SectionMenu";
+import ImprovedTextPanel from "../components/resumeAnalysis/ImprovedTextPanel";
+import MissingSectionsCard from "../components/resumeAnalysis/MissingSectionsCard";
+import ProgressScore from "../components/resumeAnalysis/ProgressScore";
+import Analyzing from "../components/resumeAnalysis/Analyzing";
+import QuickSummary from "../components/resumeAnalysis/QuickSummary";
+import StrengthsCard from "../components/resumeAnalysis/StrengthsCard";
 
 export default function ResumeAnalysis() {
   const {
