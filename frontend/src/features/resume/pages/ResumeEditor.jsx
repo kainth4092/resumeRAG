@@ -126,13 +126,13 @@ export default function ResumeEditor() {
             {saving ? "Saving…" : saved ? "Saved!" : "Save"}
           </button>
 
-          <button
+          {/* <button
             onClick={() => printResume()}
             className="w-9 h-9 flex items-center justify-center rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
             title="Print Resume"
           >
             <Printer size={14} />
-          </button>
+          </button> */}
 
           <button
             onClick={() =>
@@ -147,6 +147,7 @@ export default function ResumeEditor() {
                   projects,
                 },
                 `${resumeName}.pdf`,
+                activeTemplate,
               )
             }
             className="w-9 h-9 flex items-center justify-center rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
@@ -155,7 +156,7 @@ export default function ResumeEditor() {
             <Download size={14} />
           </button>
 
-          <button
+          {/* <button
             onClick={() =>
               downloadDOCX(
                 {
@@ -175,7 +176,7 @@ export default function ResumeEditor() {
             title="Download DOCX"
           >
             <FileText size={14} />
-          </button>
+          </button> */}
         </div>
       </div>
 

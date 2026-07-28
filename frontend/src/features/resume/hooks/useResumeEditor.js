@@ -71,15 +71,16 @@ export function useResumeEditor() {
     }
 
     const r = activeResume?.resume || activeResume || {};
+    const info = r.personal_info || r.contact || {};
     setPersonal({
-      name: r.personal_info?.name || "",
-      title: r.headline || r.personal_info?.title || "",
-      email: r.personal_info?.email || "",
-      phone: r.personal_info?.phone || "",
-      location: r.personal_info?.location || "",
-      linkedin: r.personal_info?.linkedin || "",
-      github: r.personal_info?.github || "",
-      website: r.personal_info?.website || "",
+      name: info.name || activeResume.name || "",
+      title: r.headline || info.title || activeResume.role || "",
+      email: info.email || "",
+      phone: info.phone || "",
+      location: info.location || "",
+      linkedin: info.linkedin || "",
+      github: info.github || "",
+      website: info.website || "",
     });
 
     setSummary({

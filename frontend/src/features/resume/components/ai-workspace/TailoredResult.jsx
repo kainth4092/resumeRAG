@@ -107,6 +107,7 @@ export default function TailoredResult({
               downloadPDF(
                 generatedResume,
                 `${generatedResume.personal_info?.name || "Optimized"}_Resume.pdf`,
+                activeTemplate,
               )
             }
             className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border text-[10px] font-bold text-foreground bg-card hover:bg-muted transition-all cursor-pointer"

@@ -246,7 +246,7 @@ export default function ResumeTable({
                       Download PDF
                     </button>
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         if (target && !isParsing) {
                           const resumeData = target.resume || target;
@@ -263,7 +263,7 @@ export default function ResumeTable({
                     >
                       <FileText size={15} className="text-muted-foreground" />
                       Download DOCX
-                    </button>
+                    </button> */}
 
                     <button
                       onClick={() => {

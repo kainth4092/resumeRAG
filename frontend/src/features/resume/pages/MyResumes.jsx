@@ -242,6 +242,20 @@ export default function MyResumes() {
         const backendList = dbResumes.map((dbItem) => {
           const meta = uiMeta.get(String(dbItem.id)) || {};
 
+          // Find existing local resume with same id
+          const localResume = saved.find(
+            (item) => String(item.id) === String(dbItem.id),
+          );
+
+          // Use backend resume only if it actually contains parsed data
+          const hasParsedData =
+            dbItem.resume_json &&
+            (dbItem.resume_json.summary ||
+              dbItem.resume_json.experience ||
+              dbItem.resume_json.work_experience ||
+              dbItem.resume_json.education ||
+              dbItem.resume_json.projects);
+
           return {
             id: dbItem.id,
             title: dbItem.title || "Untitled Resume",
@@ -255,8 +269,13 @@ export default function MyResumes() {
                 })
               : "Just now",
             version: dbItem.version || "v1",
-            template: dbItem.template || "Professional",
-            resume: dbItem.resume_json || localResume.resume,
+            template:
+              dbItem.template || localResume?.template || "Professional",
+
+            resume: hasParsedData
+              ? dbItem.resume_json
+              : localResume?.resume || dbItem.resume_json,
+
             parsing_status: dbItem.parsing_status,
             starred: meta.starred || false,
             color: meta.color || "#4F46E5",

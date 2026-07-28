@@ -432,7 +432,7 @@ export function ResumeGenerator({ onBack }) {
                     >
                       <Download size={12} /> PDF
                     </button>
-                    <button
+                    {/* <button
                       onClick={() =>
                         downloadDOCX(
                           generatedResume,
@@ -444,7 +444,7 @@ export function ResumeGenerator({ onBack }) {
                       title="Download DOCX"
                     >
                       <Download size={12} /> DOCX
-                    </button>
+                    </button> */}
                     <button
                       onClick={() =>
                         navigate("/resume/editor", {
