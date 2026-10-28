@@ -1,13 +1,15 @@
 services:
   - type: web
     name: resu-pilot-ai-backend
-    env: python
+    runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     plan: starter
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -16,15 +18,22 @@ services:
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: 60
+      - key: AI_PROVIDER
+        value: openrouter
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_BASE_URL
         value: https://openrouter.ai/api/v1
+      # Documented paid model for production reliability
       - key: OPENROUTER_MODEL
-        value: openrouter/free
+        value: anthropic/claude-3.5-sonnet
       - key: QDRANT_URL
         sync: false
       - key: QDRANT_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: RESEND_API_KEY
         sync: false
@@ -44,6 +53,9 @@ services:
         sync: false
       - key: OLLAMA_MODEL
         value: gemma3:4b
+      # Voice interview requires 1GB - 2GB RAM; disabled by default on 512MB starter plans
+      - key: FEATURE_VOICE_INTERVIEW
+        value: false
       - key: WHISPER_MODEL_SIZE
         value: small
       - key: WHISPER_DEVICE
@@ -60,8 +72,14 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     publishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
         sync: false
       - key: VITE_APP_NAME
         value: ResuPilot AI

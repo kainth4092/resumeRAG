@@ -10,7 +10,6 @@ from app.models.user import User
 from app.resume.services.resume_normalizer import (
     normalize_resume,
     get_canonical_hash,
-    coerce_to_canonical,
 )
 from app.resume.services.resume_scoring_service import calculate_scores
 from app.resume.services.resume_analysis_service import analyze_resume_canonical

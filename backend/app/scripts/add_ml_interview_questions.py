@@ -2,9 +2,10 @@ import json
 from pathlib import Path
 
 
-DATA_PATH = Path(
-    "app/data/interview_questions.json"
+DATA_PATH = (
+    Path(__file__).resolve().parent.parent / "interview" / "data" / "interview_questions.json"
 )
+
 
 
 def question(

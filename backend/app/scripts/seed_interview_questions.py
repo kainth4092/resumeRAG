@@ -1,7 +1,12 @@
 import json
+from pathlib import Path
 from app.core.database import SessionLocal
 from app.models.interview_bank import InterviewQuestionBank
 from app.interview.services.interview_bank_service import classify_difficulty
+
+QUESTIONS_PATH = (
+    Path(__file__).resolve().parent.parent / "interview" / "data" / "interview_questions.json"
+)
 
 
 def normalize_key_text(value: str) -> str:
@@ -9,14 +14,21 @@ def normalize_key_text(value: str) -> str:
 
 
 def seed_questions():
+    if not QUESTIONS_PATH.is_file():
+        raise FileNotFoundError(
+            f"Required question bank file not found at: {QUESTIONS_PATH}. "
+            "Please ensure backend/app/interview/data/interview_questions.json exists."
+        )
+
     db = SessionLocal()
 
     with open(
-        "app/data/interview_questions.json",
+        QUESTIONS_PATH,
         "r",
         encoding="utf-8",
     ) as file:
         questions = json.load(file)
+
         # -----------------------------------------
         # Remove duplicate questions from JSON
         # -----------------------------------------

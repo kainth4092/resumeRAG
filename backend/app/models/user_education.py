@@ -9,8 +9,9 @@ class UserEducation(Base):
     __tablename__ = "user_education"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     institution: Mapped[str] = mapped_column(String(255))
+
     degree: Mapped[str] = mapped_column(String(100))
     start_year: Mapped[str | None] = mapped_column(String(20), nullable=True)
     end_year: Mapped[str | None] = mapped_column(String(20), nullable=True)

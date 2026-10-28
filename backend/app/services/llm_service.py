@@ -534,7 +534,47 @@ def normalize_health_response(result: dict) -> dict:
     return result
 
 
+def normalize_analyze_response(result: dict) -> dict:
+    if not isinstance(result, dict):
+        result = {}
+
+    if "ats_score" not in result:
+        result["ats_score"] = 70
+    else:
+        try:
+            result["ats_score"] = int(result["ats_score"])
+        except (ValueError, TypeError):
+            result["ats_score"] = 70
+
+    for list_field in ["matched_keywords", "missing_keywords", "suggestions"]:
+        if list_field not in result or not isinstance(result[list_field], list):
+            result[list_field] = []
+
+    if "heatmap" not in result or not isinstance(result["heatmap"], dict):
+        result["heatmap"] = {}
+
+    heatmap = result["heatmap"]
+    for field in [
+        "contact_info",
+        "summary",
+        "skills",
+        "experience",
+        "projects",
+        "education",
+    ]:
+        if field not in heatmap:
+            heatmap[field] = 70
+        else:
+            try:
+                heatmap[field] = int(heatmap[field])
+            except (ValueError, TypeError):
+                heatmap[field] = 70
+
+    return result
+
+
 def analyze_resume(resume_text: str, job_description: str):
+
     prompt_str = prompts.get_ats_prompt(
         resume_text,
         job_description,

@@ -1,11 +1,15 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, Text, Integer, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, Integer, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.sql import func
 from app.core.database import Base
 
 
 class UserJob(Base):
     __tablename__ = "user_jobs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", name="uq_user_jobs_user_id_job_id"),
+        Index("ix_user_jobs_user_id_created_at", "user_id", "created_at"),
+    )
 
     id = Column(
         String,

@@ -2,7 +2,6 @@ from typing import Any
 
 from app.services.roadmap.role_catalog import ROLE_CATALOG, ROLE_ALIASES
 from app.services.roadmap.skill_normalizer import (
-    normalize_skill,
     normalize_skills,
     build_user_skill_set,
     user_has_skill,

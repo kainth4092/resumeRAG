@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from qdrant_client import QdrantClient
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -9,16 +10,23 @@ from app.services.qdrant_service import (
     COLLECTION_NAME,
 )
 
+QUESTIONS_PATH = (
+    Path(__file__).resolve().parent.parent / "interview" / "data" / "interview_questions.json"
+)
+
 
 def sync_questions():
+    if not QUESTIONS_PATH.is_file():
+        raise FileNotFoundError(
+            f"Required question bank file not found at: {QUESTIONS_PATH}. "
+            "Please ensure backend/app/interview/data/interview_questions.json exists."
+        )
+
     # 1. Number of JSON questions loaded
-    json_count = 0
-    try:
-        with open("app/data/interview_questions.json", "r") as f:
-            data = json.load(f)
-            json_count = len(data)
-    except Exception as e:
-        print(f"Warning: Could not load JSON questions: {e}")
+    with open(QUESTIONS_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        json_count = len(data)
+
 
     # 2. Number of vectors already existing (batch scroll check)
     vectors_existing = 0

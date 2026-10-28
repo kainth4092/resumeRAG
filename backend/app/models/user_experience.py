@@ -9,8 +9,9 @@ class UserExperience(Base):
     __tablename__ = "user_experience"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     company: Mapped[str] = mapped_column(String(255))
+
     role: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_month: Mapped[str | None] = mapped_column(String(20), nullable=True)

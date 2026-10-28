@@ -1,15 +1,11 @@
 import axios from "axios";
 
+// VITE_API_URL must include the /api prefix (e.g., http://localhost:8000/api or https://domain.com/api).
+// Local development values are defined in frontend/.env.development.
 const getBaseURL = () => {
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:8000/api";
-  }
   return import.meta.env.VITE_API_URL || "/api";
 };
+
 
 const getCache = new Map();
 const inFlightRequests = new Map();

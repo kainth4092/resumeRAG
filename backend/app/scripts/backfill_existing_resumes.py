@@ -34,7 +34,7 @@ def backfill():
                     raw_json = None
                 
                 if not raw_json and resume.parsed_text:
-                    print(f"  No valid resume_json found. Parsing raw text using LLM parser...")
+                    print("  No valid resume_json found. Parsing raw text using LLM parser...")
                     raw_json = parse_resume_text_to_json(resume.parsed_text)
                 
                 if not raw_json:
@@ -79,7 +79,7 @@ def backfill():
                     health_report.scoring_version = "v1"
                     health_report.prompt_version = "v1"
                 else:
-                    print(f"  No existing health report found.")
+                    print("  No existing health report found.")
                 
                 backfilled_count += 1
                 
@@ -88,7 +88,7 @@ def backfill():
                 error_count += 1
         
         db.commit()
-        print(f"\n--- Backfill Summary ---")
+        print("\n--- Backfill Summary ---")
         print(f"Successfully processed and updated: {backfilled_count} resumes")
         print(f"Errors encountered: {error_count}")
         

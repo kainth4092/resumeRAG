@@ -1,31 +1,40 @@
-import os
 import logging
-from faster_whisper import WhisperModel
-from dotenv import load_dotenv
+from typing import Any
 
-load_dotenv()
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 class SpeechToTextService:
-    _model_instance = None
+    _model_instance: Any = None
 
     @classmethod
-    def get_model(cls) -> WhisperModel:
+    def get_model(cls):
+        if not settings.FEATURE_VOICE_INTERVIEW:
+            raise RuntimeError(
+                "Voice interview feature is disabled on this instance (FEATURE_VOICE_INTERVIEW=false)."
+            )
+
         if cls._model_instance is None:
-            model_size = os.getenv("WHISPER_MODEL_SIZE", "base")
-            device = os.getenv("WHISPER_DEVICE", "cpu")
-            compute_type = os.getenv("WHISPER_COMPUTE_TYPE", "float32")
+            # Lazy import to avoid memory overhead if not enabled or used
+            from faster_whisper import WhisperModel
+
+            model_size = settings.WHISPER_MODEL_SIZE
+            device = settings.WHISPER_DEVICE
+            compute_type = settings.WHISPER_COMPUTE_TYPE
             logger.info(
-                f"Initializing Faster-Whisper Model: {model_size} on {device} ({compute_type})"
+                "Initializing Faster-Whisper Model: %s on %s (%s)",
+                model_size,
+                device,
+                compute_type,
             )
             try:
                 cls._model_instance = WhisperModel(
                     model_size, device=device, compute_type=compute_type
                 )
             except Exception as e:
-                logger.error(f"Failed to load Faster-Whisper model: {e}")
+                logger.error("Failed to load Faster-Whisper model: %s", e)
                 cls._model_instance = WhisperModel(
                     model_size, device="cpu", compute_type="float32"
                 )
@@ -34,7 +43,7 @@ class SpeechToTextService:
     def transcribe(
         self,
         audio_file_path: str,
-        prompt: str = None,
+        prompt: str | None = None,
         language: str = "en",
     ) -> str:
         """
@@ -46,7 +55,9 @@ class SpeechToTextService:
             lang_param = None if language in (None, "auto", "") else language
 
             logger.info(
-                f"Transcribing audio file: {audio_file_path} with language={lang_param}, vad_filter=True"
+                "Transcribing audio file: %s with language=%s, vad_filter=True",
+                audio_file_path,
+                lang_param,
             )
 
             segments, info = model.transcribe(
@@ -62,11 +73,13 @@ class SpeechToTextService:
 
             transcript = " ".join(transcript_parts).strip()
             logger.info(
-                f"Transcription completed. Language: {info.language} (probability: {info.language_probability:.2f})"
+                "Transcription completed. Language: %s (probability: %.2f)",
+                info.language,
+                info.language_probability,
             )
             return transcript
         except Exception as e:
-            logger.error(f"Transcription failed: {e}")
+            logger.error("Transcription failed: %s", e)
             raise RuntimeError(f"Failed to transcribe audio: {str(e)}")
 
 

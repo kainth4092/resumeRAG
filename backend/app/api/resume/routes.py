@@ -59,11 +59,6 @@ def get_resume(
     return ResumeService.get_resume_by_id(resume_id, db, current_user.id)
 
 
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator,
-)
 
 
 class ResumeUpdateSchema(BaseModel):

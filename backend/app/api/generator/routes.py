@@ -237,8 +237,6 @@ def generate(
             )
             cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
 
-        new_title = cleaned_title or "Untitled Resume"
-
         # Ensure headline is preserved if generated one is empty
         gen_headline = r_data.get("headline", "").strip()
         if not gen_headline:
@@ -255,31 +253,10 @@ def generate(
                     pass
             if orig_headline:
                 r_data["headline"] = orig_headline
-                headline = orig_headline
             else:
                 r_data["headline"] = "Optimized Resume"
-                headline = "Optimized Resume"
-        else:
-            headline = gen_headline
 
-        summary = r_data.get("summary", "")
-        skills_list = r_data.get("skills", [])
 
-        optimized_text = json.dumps(
-            r_data,
-            ensure_ascii=False,
-            indent=2,
-        )
-
-        try:
-            curr_ver = resume.version or "v1"
-            match = re.search(r"v(\d+)", curr_ver)
-            if match:
-                new_ver = f"v{int(match.group(1)) + 1}"
-            else:
-                new_ver = "v2"
-        except Exception:
-            new_ver = "v2"
 
         # Calculate real ATS scores using deterministic scoring against JD
         from app.resume.services.resume_scoring_service import calculate_scores
@@ -362,42 +339,11 @@ def generate(
                     r_data = retry_resume
                     scores = retry_scores
                     new_ats = retry_ats
-                    skills_list = r_data.get("skills", [])
 
-        optimized_analysis = {
-            "ats_score": new_ats,
-            "matched_keywords": scores.get("matched_keywords", skills_list[:10]),
-            "missing_keywords": scores.get("missing_keywords", []),
-            "suggestions": [
-                "Include specific metrics (e.g. 'improved performance by 20%')"
-            ],
-            "heatmap": {
-                "contact_info": scores.get("section_completeness", 80),
-                "summary": scores.get("readability_score", 80),
-                "skills": scores.get("skills_coverage", 80),
-                "experience": scores.get("experience_quality", 80),
-                "projects": scores.get("projects_quality", 80),
-                "education": scores.get("education_quality", 80),
-            },
-        }
-
-        new_resume = Resume(
-            user_id=current_user.id,
-            title=new_title,
-            original_filename=resume.original_filename,
-            file_path=resume.file_path,
-            parsed_text=optimized_text,
-            is_active=False,
-            ats_score=new_ats,
-            skills=",".join(skills_list),
-            analysis_results=json.dumps(optimized_analysis),
-            version=new_ver,
-            template=resume.template or "Professional",
-            is_generated=True,
-            resume_json=json.dumps(r_data),
-        )
 
         return {"resume": result.get("resume", {}), "resume_id": None}
+
+
     except HTTPException as e:
         raise e
     except AppException as e:

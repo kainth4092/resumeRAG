@@ -52,8 +52,6 @@ def create_collection():
 
 def upsert_question(question, force_update: bool = False) -> bool:
     try:
-        ensure_collection_exists()
-
         if not force_update:
             try:
                 existing = get_client().retrieve(
@@ -61,10 +59,17 @@ def upsert_question(question, force_update: bool = False) -> bool:
                     ids=[question.id],
                 )
                 if existing:
-                    logger.info("Question ID %d already exists in Qdrant, skipping duplicate insertion.", question.id)
+                    logger.info(
+                        "Question ID %d already exists in Qdrant, skipping duplicate insertion.",
+                        question.id,
+                    )
                     return False
             except Exception as check_err:
-                logger.warning("Failed to check if question ID %d exists in Qdrant: %s", question.id, check_err)
+                logger.warning(
+                    "Failed to check if question ID %d exists in Qdrant: %s",
+                    question.id,
+                    check_err,
+                )
 
         text = build_text(question)
         vector = get_embedding(text)
@@ -92,7 +97,6 @@ def upsert_question(question, force_update: bool = False) -> bool:
 
 def search_questions(query: str, limit: int = 20):
     try:
-        ensure_collection_exists()
         vector = get_embedding(query)
 
         results = get_client().query_points(
@@ -122,7 +126,6 @@ def search_question_ids(query: str, limit: int = 20):
 
 def delete_question_vector(question_id: int):
     try:
-        ensure_collection_exists()
         get_client().delete(
             collection_name=COLLECTION_NAME,
             points_selector=rest.PointIdsList(points=[question_id]),

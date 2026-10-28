@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Index
 
 from app.core.database import Base
 
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notifications_user_id_is_read", "user_id", "is_read"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
 

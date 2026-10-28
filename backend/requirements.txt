@@ -32,3 +32,7 @@ PyMuPDF==1.27.2.3
 # AI & Speech-to-Text
 fastembed==0.8.0
 faster-whisper==1.2.1
+
+# Testing & Quality
+pytest==8.3.4
+ruff==0.15.20

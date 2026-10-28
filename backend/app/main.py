@@ -1,16 +1,15 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import JWTError
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from app.core.database import Base, engine
+from app.core.database import engine
 from app.core.config import settings
-from app.core.database import get_db
 from app.core.exceptions import AppException
 import app.models
 
@@ -49,11 +48,8 @@ for noisy_logger_name in ("sqlalchemy.engine", "httpcore", "httpx"):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
     from app.services.qdrant_service import COLLECTION_NAME
 
-    print(f"[STARTUP] Active QDRANT_URL: {settings.QDRANT_URL}")
-    print(f"[STARTUP] Active Qdrant collection: {COLLECTION_NAME}")
     logger.info("Active QDRANT_URL: %s", settings.QDRANT_URL)
     logger.info("Active Qdrant collection: %s", COLLECTION_NAME)
     try:
@@ -297,10 +293,52 @@ def home():
 
 
 @app.get("/health", include_in_schema=False)
-def health(db=Depends(get_db)):
-    db.execute(text("SELECT 1"))
-    return {
-        "status": "healthy",
-        "database": "connected",
-        "version": "1.0.0",
-    }
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/ready", include_in_schema=False)
+def ready():
+    status_report = {}
+    is_ready = True
+
+    # 1. Database check
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        status_report["database"] = "connected"
+    except Exception as exc:
+        status_report["database"] = f"unhealthy: {exc}"
+        is_ready = False
+
+    # 2. Qdrant check
+    try:
+        if settings.QDRANT_URL:
+            from app.services.qdrant_service import get_client
+
+            client = get_client()
+            client.get_collections()
+            status_report["qdrant"] = "connected"
+        else:
+            status_report["qdrant"] = "not_configured"
+    except Exception as exc:
+        status_report["qdrant"] = f"unhealthy: {exc}"
+        is_ready = False
+
+    # 3. AI Provider check
+    try:
+        from app.services.ai import get_ai_provider
+
+        provider = get_ai_provider()
+        provider.validate_startup()
+        status_report["ai_provider"] = "configured"
+    except Exception as exc:
+        status_report["ai_provider"] = f"misconfigured: {exc}"
+        is_ready = False
+
+    status_report["status"] = "ready" if is_ready else "not_ready"
+
+    if not is_ready:
+        return JSONResponse(status_code=503, content=status_report)
+    return status_report
+

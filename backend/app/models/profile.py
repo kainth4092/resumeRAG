@@ -15,10 +15,11 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
     )
+
 
     full_name: Mapped[str | None] = mapped_column(
         String(150),

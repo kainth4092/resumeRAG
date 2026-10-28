@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 def classify_difficulty(question_text: str, experience_level: str, skill: str) -> str:
     question_lower = question_text.lower()
     exp_lower = experience_level.lower()
-    skill_lower = skill.lower()
 
     # 1. Technical Depth and Complexity Keywords (Immediate Hard)
+
     hard_keywords = [
         "vacuum",
         "garbage collection",

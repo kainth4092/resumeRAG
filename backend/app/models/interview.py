@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     JSON,
+    Index,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -15,8 +16,12 @@ from app.core.database import Base
 
 class InterviewSession(Base):
     __tablename__ = "interview_sessions"
+    __table_args__ = (
+        Index("ix_interview_sessions_user_id_created_at", "user_id", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
+
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )

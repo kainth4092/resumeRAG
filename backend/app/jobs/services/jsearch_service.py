@@ -6,7 +6,6 @@ from app.core.exceptions import JobNotFoundException
 from app.jobs.services.job_mapper import map_job
 from app.jobs.repository.jobs_repository import JobsRepository
 from app.schemas.jobs import JobResponse
-from app.models.job_cache import SearchCache
 
 logger = logging.getLogger(__name__)
 
