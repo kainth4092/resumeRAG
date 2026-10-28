@@ -1,55 +1,62 @@
 from pydantic import BaseModel
-from typing import List
 
 
 class RoadmapTask(BaseModel):
-    done: bool
-    text: str
+    id: str
+    title: str
+    skill: str
+    completed: bool = False
 
 
-class RoadmapPeriod(BaseModel):
-    period: str
-    color: str
-    barColor: str
-    items: List[RoadmapTask]
+class RoadmapPhase(BaseModel):
+    id: str
+    phase: int
+    title: str
+    duration: str
+    goal: str
+    skills: list[str]
+    tasks: list[RoadmapTask]
 
 
-class SkillLevel(BaseModel):
+class RoadmapSkill(BaseModel):
     name: str
-    level: int
-
-
-class RequiredSkillLevel(BaseModel):
-    name: str
-    level: int
-    gap: str
+    priority: str | None = None
+    weight: int | None = None
+    status: str | None = None
 
 
 class RecommendationItem(BaseModel):
     title: str
-    type: str
-    platform: str
-    time: str
+    provider: str
+    skill: str
+    topic: str
+    difficulty: str
+    duration: str
     priority: str
-    url: str = ""
+    url: str | None = None
 
 
 class ProjectItem(BaseModel):
     name: str
-    skills: List[str]
+    description: str
+    skills: list[str]
     difficulty: str
-    url: str = ""
+    why: str
+    url: str | None = None
 
 
 class RoadmapResponse(BaseModel):
-    readiness: int
     target_role: str
     target_level: str
-    current_skills: List[SkillLevel]
-    required_skills: List[RequiredSkillLevel]
-    roadmap: List[RoadmapPeriod]
-    learning_recommendations: List[RecommendationItem]
-    projects_to_build: List[ProjectItem]
+    readiness: int
+    profile_skills: list[str]
+    current_skills: list[RoadmapSkill]
+    required_skills: list[RoadmapSkill]
+    missing_skills: list[RoadmapSkill]
+    roadmap: list[RoadmapPhase]
+    learning_recommendations: list[RecommendationItem]
+    projects_to_build: list[ProjectItem]
+    completed_tasks: list[str] = []
 
 
 class RoadmapTargetUpdate(BaseModel):
@@ -59,3 +66,4 @@ class RoadmapTargetUpdate(BaseModel):
 
 class RoadmapTaskToggle(BaseModel):
     task_id: str
+

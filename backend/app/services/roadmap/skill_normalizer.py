@@ -177,30 +177,29 @@ def normalize_skill(skill_name: str) -> str:
     if not skill_name:
         return ""
 
-    original = str(skill_name).strip()
+    from app.core.skills_taxonomy import normalize_skill as taxonomy_normalize_skill
 
+    original = str(skill_name).strip()
     if not original:
         return ""
 
-    raw_key = original.lower().strip()
+    res = taxonomy_normalize_skill(original)
+    if res and res.lower() != original.lower():
+        return res
 
-    # Exact alias lookup first.
+    raw_key = original.lower().strip()
     if raw_key in SKILL_ALIASES:
         return SKILL_ALIASES[raw_key]
 
     cleaned_key = clean_skill_key(original)
-
     if cleaned_key in SKILL_ALIASES:
         return SKILL_ALIASES[cleaned_key]
 
-    # Handle dots for aliases such as React.js / Node.js.
     without_dots = cleaned_key.replace(".", "")
-
     if without_dots in SKILL_ALIASES:
         return SKILL_ALIASES[without_dots]
 
-    # Unknown skills remain available.
-    return original
+    return res or original
 
 
 def skill_comparison_key(skill_name: str) -> str:

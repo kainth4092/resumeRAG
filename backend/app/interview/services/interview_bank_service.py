@@ -151,7 +151,7 @@ def generate_and_update_answer_task(
         # ----------------------------------------------------
         # Already generated -> Skip LLM completely
         # ----------------------------------------------------
-        if existing_answer and existing_answer.lower() != "generating answer...":
+        if existing_answer and question.answer_status == "ready":
             logger.info(
                 "Answer already exists for question %s. Skipping AI generation.",
                 question.id,
@@ -172,12 +172,16 @@ def generate_and_update_answer_task(
 
         if not answer_text or not answer_text.strip():
             logger.warning(
-                "LLM returned empty answer for question %s",
+                "LLM returned empty answer for question %s. Setting status to failed.",
                 question.id,
             )
+            question.answer_status = "failed"
+            question.answer = None
+            db.commit()
             return
 
         question.answer = answer_text.strip()
+        question.answer_status = "ready"
 
         db.commit()
         db.refresh(question)
@@ -204,7 +208,15 @@ def generate_and_update_answer_task(
             "Background answer generation failed for question %s",
             question_id,
         )
-        db.rollback()
+        try:
+            db.rollback()
+            q = db.query(InterviewQuestionBank).filter(InterviewQuestionBank.id == question_id).first()
+            if q:
+                q.answer_status = "failed"
+                q.answer = None
+                db.commit()
+        except Exception:
+            pass
 
     finally:
         db.close()
@@ -234,9 +246,11 @@ def create_question(
 
     answer_text = payload.answer
     generate_in_background = False
+    answer_status = "ready"
 
     if not answer_text or not answer_text.strip():
-        answer_text = "Generating answer..."
+        answer_text = None
+        answer_status = "pending"
         generate_in_background = True
 
     difficulty = classify_difficulty(
@@ -246,6 +260,7 @@ def create_question(
     question = InterviewQuestionBank(
         question=payload.question,
         answer=answer_text,
+        answer_status=answer_status,
         skill=payload.skill,
         category=payload.category,
         experience_level=payload.experience_level,

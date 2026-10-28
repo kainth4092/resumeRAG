@@ -37,10 +37,41 @@ class InterviewGeneratorService:
 
         # Step 3: Load Catalog
         if db is not None:
-            logger.info("Loading catalog questions from the database.")
+            logger.info("Loading catalog questions from the database with skill filtering.")
             from app.models.interview_bank import InterviewQuestionBank
+            from sqlalchemy import func, or_
 
-            db_questions = db.query(InterviewQuestionBank).all()
+            if matched_skills:
+                skill_clauses = [
+                    func.lower(InterviewQuestionBank.skill) == s.strip().lower()
+                    for s in matched_skills
+                    if s and s.strip()
+                ]
+                db_questions = (
+                    db.query(InterviewQuestionBank)
+                    .filter(or_(*skill_clauses))
+                    .all()
+                )
+                if len(db_questions) < config.length * 2:
+                    extra_needed = (config.length * 2) - len(db_questions)
+                    extra_q = (
+                        db.query(InterviewQuestionBank)
+                        .order_by(InterviewQuestionBank.id.desc())
+                        .limit(extra_needed)
+                        .all()
+                    )
+                    existing_ids = {q.id for q in db_questions}
+                    for eq in extra_q:
+                        if eq.id not in existing_ids:
+                            db_questions.append(eq)
+            else:
+                db_questions = (
+                    db.query(InterviewQuestionBank)
+                    .order_by(InterviewQuestionBank.id.desc())
+                    .limit(config.length * 2)
+                    .all()
+                )
+
             catalog = []
             for db_q in db_questions:
                 difficulty = (db_q.difficulty or "Medium").strip().title()
@@ -67,7 +98,7 @@ class InterviewGeneratorService:
                     )
                 )
             logger.info(
-                "Loaded %d questions from the database to populate catalog",
+                "Loaded %d filtered questions from the database to populate catalog",
                 len(catalog),
             )
         else:
@@ -92,7 +123,7 @@ class InterviewGeneratorService:
         filtered_pool = filtered_by_skills
 
         # Step 6: Select Technical Questions from the DB
-        db_target = config.length // 2
+        db_target = max(config.length // 2, 10)
 
         tech_db_pool = [
             q
@@ -126,19 +157,19 @@ class InterviewGeneratorService:
                 }
             )
 
-        # Step 8: Call AI Generator to get Project/Experience/Behavioral questions
+        # Step 8: Call AI Generator to get Project/Experience/Gap questions (<= 12)
         ai_questions = []
         try:
-            logger.info("Generating AI questions for Projects and Experience")
+            logger.info("Generating targeted AI questions for Projects, Experience, and Gaps (<= 12)")
             from app.interview.services.interview_service import (
                 generate_interview_questions,
             )
 
             ai_payload = generate_interview_questions(
-                resume_text, job_description, target_count=config.length
+                resume_text, job_description, target_count=min(config.length // 2, 12)
             )
 
-            for cat in ["project", "experience", "technical"]:
+            for cat in ["project", "experience", "gap", "technical"]:
                 if cat in ai_payload and isinstance(ai_payload[cat], list):
                     for q in ai_payload[cat]:
                         ai_questions.append(
@@ -147,7 +178,7 @@ class InterviewGeneratorService:
                                 "category": cat.title(),
                                 "difficulty": q.get("difficulty", "Medium"),
                                 "estimated_duration": q.get(
-                                    "estimated_duration", "2-3 minutes"
+                                    "estimated_duration", "3-5 minutes"
                                 ),
                                 "tech_skill": q.get("tech_skill"),
                                 "answer": None,

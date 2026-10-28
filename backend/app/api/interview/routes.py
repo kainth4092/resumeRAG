@@ -58,23 +58,21 @@ def get_challenge_questions(
 ):
     from app.interview.services.challenge_service import ChallengeService
 
-    return ChallengeService.get_challenge_questions(db)
+    return ChallengeService.get_challenge_questions(db, user_id=current_user.id)
 
 
 @router.post("/challenge/submit")
 def submit_challenge(
     payload: SubmitChallengeRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        get_current_user
-    ),
+    current_user: User = Depends(get_current_user),
 ):
-    from app.interview.services.challenge_service import (
-        ChallengeService,
-    )
+    from app.interview.services.challenge_service import ChallengeService
 
     return ChallengeService.submit_challenge(
-        payload.model_dump()
+        db=db,
+        user_id=current_user.id,
+        payload=payload.model_dump(),
     )
 
 

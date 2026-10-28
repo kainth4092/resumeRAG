@@ -26,7 +26,22 @@ class ResendEmailProvider(BaseEmailProvider):
         attachment_path: Optional[str] = None,
         attachment_name: Optional[str] = None,
     ) -> dict:
-        logger.info("Dispatching email to %s (mock=%s)", to_email, self.is_mock)
+        if self.is_mock:
+            if settings.ENVIRONMENT == "production":
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=503,
+                    detail="Email delivery service is unavailable in production (RESEND_API_KEY is not configured).",
+                )
+            if "fail" in to_email.lower() or "error" in to_email.lower():
+                raise Exception(
+                    "Simulated Resend API delivery error: Invalid recipient credentials."
+                )
+            return {
+                "success": True,
+                "id": f"mock_resend_{int(time.time())}",
+                "provider": "Resend (Mock)",
+            }
 
         cc_list = (
             [email.strip() for email in cc.split(",") if email.strip()] if cc else []
@@ -45,18 +60,6 @@ class ResendEmailProvider(BaseEmailProvider):
                     "filename": attachment_name or os.path.basename(attachment_path),
                 }
             )
-
-        if self.is_mock:
-            time.sleep(1.2)
-            if "fail" in to_email.lower() or "error" in to_email.lower():
-                raise Exception(
-                    "Simulated Resend API delivery error: Invalid recipient credentials."
-                )
-            return {
-                "success": True,
-                "id": f"mock_resend_{int(time.time())}",
-                "provider": "Resend (Mock)",
-            }
 
         url = "https://api.resend.com/emails"
         headers = {

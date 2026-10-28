@@ -81,11 +81,7 @@ class ChallengeAnswerRequest(BaseModel):
         gt=0,
     )
     selected_option: str | None = None
-    correct_option: str = Field(
-        ...,
-        min_length=1,
-        max_length=1,
-    )
+    correct_option: str | None = None
     skill: str = Field(
         default="General",
         min_length=1,
@@ -132,6 +128,7 @@ class ChallengeAnswerRequest(BaseModel):
 
 
 class SubmitChallengeRequest(BaseModel):
+    attempt_id: int | None = None
     answers: list[
         ChallengeAnswerRequest
     ] = Field(

@@ -61,31 +61,66 @@ def extract_text_from_docx(
     file_path: str,
 ) -> str:
     """
-    Extract paragraphs and tables in their original DOCX order.
-
+    Extract paragraphs, tables, headers, footers, and textboxes in DOCX.
     Preserving order is required for section-based resume parsing.
-    For example, a skills table between the Skills and Experience
-    headings must remain inside the Skills section.
+    Headers, footers, and textboxes frequently contain contact info and personal links.
     """
-
     document = docx.Document(file_path)
 
-    full_text = []
+    header_text = []
+    footer_text = []
+    for section in document.sections:
+        try:
+            for p in section.header.paragraphs:
+                t = p.text.strip()
+                if t:
+                    header_text.append(t)
+        except Exception:
+            pass
+        try:
+            for p in section.footer.paragraphs:
+                t = p.text.strip()
+                if t:
+                    footer_text.append(t)
+        except Exception:
+            pass
 
+    body_text = []
     for block in iter_block_items(document):
         if isinstance(
             block,
             Paragraph,
         ):
             paragraph_text = block.text.strip()
-
             if paragraph_text:
-                full_text.append(paragraph_text)
+                body_text.append(paragraph_text)
 
         elif isinstance(
             block,
             Table,
         ):
-            full_text.extend(extract_table_rows(block))
+            body_text.extend(extract_table_rows(block))
 
-    return "\n".join(full_text)
+    # Extract text from text boxes (w:txbxContent)
+    textbox_text = []
+    try:
+        for txbx in document.element.xpath(".//w:txbxContent"):
+            for p in txbx.xpath(".//w:p"):
+                p_obj = Paragraph(p, document)
+                t = p_obj.text.strip()
+                if t and t not in body_text:
+                    textbox_text.append(t)
+    except Exception:
+        pass
+
+    all_parts = []
+    if header_text:
+        all_parts.extend(header_text)
+    if textbox_text:
+        all_parts.extend(textbox_text)
+    if body_text:
+        all_parts.extend(body_text)
+    if footer_text:
+        all_parts.extend(footer_text)
+
+    return "\n".join(all_parts)

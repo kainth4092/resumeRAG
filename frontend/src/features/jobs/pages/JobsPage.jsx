@@ -377,7 +377,16 @@ export default function JobsPage() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate("/resumes?view=new");
+                                        navigate("/resumes?view=new", {
+                                          state: {
+                                            job: {
+                                              id: app.job_id,
+                                              title: app.job_title,
+                                              company: app.company_name,
+                                              description: app.job_description || "",
+                                            },
+                                          },
+                                        });
                                       }}
                                       className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all cursor-pointer"
                                       title="Generate Resume"
@@ -477,7 +486,19 @@ export default function JobsPage() {
                     icon: MessageSquare,
                     label: "Prepare Interview",
                     action: () => {
-                      navigate("/interview");
+                      const target = trackedJobs.find((j) => j.job_id === menuOpen);
+                      navigate("/interview", {
+                        state: {
+                          job: target
+                            ? {
+                                id: target.job_id,
+                                title: target.job_title,
+                                company: target.company_name,
+                                description: target.job_description || "",
+                              }
+                            : null,
+                        },
+                      });
                       setMenuOpen(null);
                     },
                   },

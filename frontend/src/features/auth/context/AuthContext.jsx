@@ -30,9 +30,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {
-    const KEYS = ["access_token", "user_info", "remember_me", "token_expiry"];
-
-    KEYS.forEach((key) => localStorage.removeItem(key));
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith("saved_resumes_") ||
+          key.startsWith("last_resume_id_") ||
+          key.startsWith("last_job_description_") ||
+          key.startsWith("notes_") ||
+          key.startsWith("resupilot_dashboard_tasks_") ||
+          key.startsWith("bookmarked_questions_") ||
+          key.startsWith("profile_") ||
+          key.startsWith("dashboard_data_") ||
+          key === "access_token" ||
+          key === "user_info" ||
+          key === "remember_me" ||
+          key === "token_expiry")
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
 
     sessionStorage.clear();
     api.clearCache();
@@ -40,7 +59,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const fetchUser = useCallback(
-    async (force = false) => {
+    async () => {
       const token = localStorage.getItem("access_token");
 
       if (!token) {
@@ -52,13 +71,9 @@ export function AuthProvider({ children }) {
 
       setLoading(true);
 
-      const rememberMe = localStorage.getItem("remember_me") === "true";
       const tokenExpiry = localStorage.getItem("token_expiry");
-      const sessionActive = sessionStorage.getItem("session_active") === "true";
-
-      if (rememberMe && tokenExpiry) {
+      if (tokenExpiry) {
         const expiry = Number(tokenExpiry);
-
         if (Date.now() > expiry) {
           logout();
           setLoading(false);
@@ -66,24 +81,11 @@ export function AuthProvider({ children }) {
         }
       }
 
-      if (!rememberMe) {
-        if (!sessionActive && !force) {
-          logout();
-          setLoading(false);
-          return null;
-        }
-
-        sessionStorage.setItem("session_active", "true");
-      }
-
+      // Optimistically display cached user while revalidating
       const cached = localStorage.getItem("user_info");
-
-      if (cached && !force) {
+      if (cached) {
         try {
-          const parsed = JSON.parse(cached);
-          setUser(parsed);
-          setLoading(false);
-          return parsed;
+          setUser(JSON.parse(cached));
         } catch {
           localStorage.removeItem("user_info");
         }
@@ -91,7 +93,6 @@ export function AuthProvider({ children }) {
 
       try {
         const requestToken = localStorage.getItem("access_token");
-
         const res = await getCurrentUser();
 
         if (requestToken !== localStorage.getItem("access_token")) {
@@ -99,7 +100,6 @@ export function AuthProvider({ children }) {
         }
 
         const userData = res.data;
-
         const initials = userData.name
           ? userData.name
               .split(" ")
@@ -117,12 +117,10 @@ export function AuthProvider({ children }) {
         };
 
         setUser(completeUserData);
-
         localStorage.setItem("user_info", JSON.stringify(completeUserData));
-
         return completeUserData;
       } catch (err) {
-        console.error("Failed to fetch user", err);
+        console.error("Failed to revalidate user on /auth/me:", err);
         logout();
         return null;
       } finally {

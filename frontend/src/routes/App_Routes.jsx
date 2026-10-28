@@ -8,6 +8,7 @@ import Roadmap from "../features/careerRoadmap/pages/Roadmap";
 
 const Login = lazy(() => import("../features/auth/pages/Login"));
 const Register = lazy(() => import("../features/auth/pages/Register"));
+const ResetPassword = lazy(() => import("../features/auth/pages/ResetPassword"));
 const LandingPage = lazy(() => import("../features/landing/pages/LandingPage"));
 const Onboarding = lazy(
   () => import("../features/onboarding/pages/Onboarding"),
@@ -53,6 +54,7 @@ export default function AppRoutes() {
             <Route element={<PublicOnlyRoute />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Route>
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<Onboarding />} />

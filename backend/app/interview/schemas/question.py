@@ -25,6 +25,6 @@ class QuestionBankItem(BaseModel):
 
 
 class InterviewPipelineConfig(BaseModel):
-    length: int = 80
+    length: int = 25
     difficulty_distribution: Optional[dict] = None
     hybrid_mode: bool = False

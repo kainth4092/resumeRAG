@@ -23,6 +23,7 @@ export function useResumeAnalysis() {
   const [analysisStep, setAnalysisStep] = useState("");
   const [analysisResult, setAnalysisResult] = useState(null);
   const [error, setError] = useState("");
+  const [improving, setImproving] = useState(false);
   const [improvingSection, setImprovingSection] = useState(null);
   const [improvedText, setImprovedText] = useState("");
   const [copiedSection, setCopiedSection] = useState(false);
@@ -281,6 +282,7 @@ export function useResumeAnalysis() {
   const triggerSectionImprovement = async (sectionName) => {
     if (!selectedResume) return;
     setImprovingSection(sectionName);
+    setImproving(true);
     setImprovedText("");
     setError("");
 
@@ -295,6 +297,8 @@ export function useResumeAnalysis() {
     } catch (err) {
       console.error("Section improvement failed:", err);
       setError("Failed to improve section with AI. Please try again.");
+    } finally {
+      setImproving(false);
     }
   };
 
@@ -345,6 +349,8 @@ export function useResumeAnalysis() {
     setAnalysisResult,
     error,
     setError,
+    improving,
+    setImproving,
     improvingSection,
     setImprovingSection,
     improvedText,

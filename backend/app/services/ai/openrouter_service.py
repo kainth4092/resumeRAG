@@ -1,7 +1,6 @@
 import httpx
 import logging
 import time
-import json
 
 from app.core.config import settings
 from app.services.ai.base import AIProvider, AIProviderException
@@ -19,16 +18,27 @@ limits = httpx.Limits(
     max_connections=10,
 )
 
-DEFAULT_TIMEOUT = 20.0
+DEFAULT_TIMEOUT = 25.0
 FEATURE_TIMEOUTS = {
-    "resume_generation": 35.0,
-    "ats_analysis": 30.0,
-    "resume_health_analysis": 25.0,
-    "personalized_interview_questions": 20.0,
-    "interview_question_details": 15.0,
-    "interview_sample_answer": 15.0,
-    "interview_bank_generation": 20.0,
-    "interview_general_answer": 15.0,
+    "resume_generation": 45.0,
+    "ats_analysis": 35.0,
+    "resume_health_analysis": 30.0,
+    "personalized_interview_questions": 30.0,
+    "interview_question_details": 20.0,
+    "interview_sample_answer": 20.0,
+    "interview_bank_generation": 25.0,
+    "interview_general_answer": 20.0,
+    "interview_challenge_mcq": 20.0,
+}
+
+FEATURE_MAX_TOKENS = {
+    "resume_generation": 4096,
+    "ats_analysis": 3000,
+    "personalized_interview_questions": 2048,
+    "interview_question_details": 1500,
+    "interview_challenge_mcq": 1024,
+    "interview_general_answer": 1024,
+    "resume_improvement": 2048,
 }
 
 _sync_client = httpx.Client(
@@ -46,18 +56,12 @@ class OpenRouterProvider(AIProvider):
 
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
-
         self.base_url = (
             settings.OPENROUTER_BASE_URL.rstrip("/")
             if settings.OPENROUTER_BASE_URL
             else "https://openrouter.ai/api/v1"
         )
-
         self.model = settings.OPENROUTER_MODEL
-
-    # -----------------------------------------------------------------------
-    # HEADERS
-    # -----------------------------------------------------------------------
 
     def _get_headers(self) -> dict:
         headers = {
@@ -65,24 +69,15 @@ class OpenRouterProvider(AIProvider):
             "HTTP-Referer": "https://resupilot.ai",
             "X-Title": "ResuPilot AI",
         }
-
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-
         return headers
-
-    # -----------------------------------------------------------------------
-    # RESPONSE ERROR HANDLER
-    # -----------------------------------------------------------------------
 
     def _handle_response_error(self, response: httpx.Response):
         status = response.status_code
-
         try:
             error_data = response.json()
-
             error_message = error_data.get("error", {}).get("message", response.text)
-
         except Exception:
             error_message = response.text
 
@@ -97,84 +92,45 @@ class OpenRouterProvider(AIProvider):
                 "Invalid OpenRouter API key.",
                 status_code=401,
             )
-
         if status == 429:
             raise AIProviderException(
-                "OpenRouter rate limit exceeded. Please try again later.",
+                "OpenRouter rate limit or quota exceeded. Please try again shortly.",
                 status_code=429,
             )
-
-        if status in (502, 503, 504):
-            raise AIProviderException(
-                "OpenRouter service is temporarily unavailable.",
-                status_code=status,
-            )
-
         raise AIProviderException(
-            f"OpenRouter returned error: {error_message}",
+            f"OpenRouter service error ({status}): {error_message}",
             status_code=status,
         )
 
-    # -----------------------------------------------------------------------
-    # GENERAL EXCEPTION HANDLER
-    # -----------------------------------------------------------------------
-
     def _handle_exception(self, exception: Exception) -> AIProviderException:
-
         if isinstance(exception, AIProviderException):
             return exception
-
         if isinstance(exception, httpx.TimeoutException):
-
             logger.error("[AI_ERROR] OpenRouter request timed out.")
-
             return AIProviderException(
                 "The AI model took too long to respond.",
                 status_code=504,
             )
-
-        if isinstance(
-            exception,
-            (httpx.ConnectError, httpx.ConnectTimeout),
-        ):
-
-            logger.error(
-                "[AI_ERROR] Could not connect to OpenRouter: %s",
-                exception,
-            )
-
+        if isinstance(exception, (httpx.ConnectError, httpx.ConnectTimeout)):
+            logger.error("[AI_ERROR] Could not connect to OpenRouter: %s", exception)
             return AIProviderException(
                 "Could not connect to OpenRouter.",
                 status_code=503,
             )
-
-        logger.exception(
-            "[AI_ERROR] Unexpected OpenRouter error: %s",
-            exception,
-        )
-
+        logger.exception("[AI_ERROR] Unexpected OpenRouter error: %s", exception)
         return AIProviderException(
             f"Unexpected AI service error: {str(exception)}",
             status_code=500,
         )
 
-    # -----------------------------------------------------------------------
-    # SYNC CHAT
-    # -----------------------------------------------------------------------
-
     def _get_models_to_try(self, requested_model: str) -> list[str]:
         models = [requested_model]
-        is_free = requested_model == "openrouter/free" or requested_model.endswith(
-            ":free"
-        )
+        is_free = requested_model == "openrouter/free" or requested_model.endswith(":free")
         if is_free:
             fallback_pool = [
-                "google/gemma-4-26b-a4b-it:free",
-                "google/gemma-4-31b-it:free",
                 "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemma-4-31b-it:free",
                 "qwen/qwen3-coder:free",
-                "meta-llama/llama-3.2-3b-instruct:free",
-                "nvidia/nemotron-3-nano-30b-a3b:free",
                 "openrouter/free",
             ]
             for fb in fallback_pool:
@@ -182,98 +138,54 @@ class OpenRouterProvider(AIProvider):
                     models.append(fb)
         return models
 
-    def _is_invalid_response(
-        self, content: str, system_prompt: str, user_prompt: str
-    ) -> bool:
-        cleaned = content.strip()
-        if not cleaned:
-            return True
-        if "user safety:" in cleaned.lower():
-            logger.warning(
-                "[AI_RESPONSE_VALIDATION] Content safety verdict detected in response: %r",
-                content,
-            )
-            return True
-        is_json_expected = (
-            "json" in system_prompt.lower()
-            or "json" in user_prompt.lower()
-            or "schema" in user_prompt.lower()
-        )
-        if is_json_expected:
-            import json
-
-            candidate = cleaned
-            if cleaned.startswith("```"):
-                lines = cleaned.splitlines()
-
-                if len(lines) >= 2:
-                    candidate = "\n".join(lines[1:-1]).strip()
-            try:
-                parsed = json.loads(candidate)
-                if not isinstance(parsed, (dict, list)):
-                    logger.warning(
-                        "[AI_RESPONSE_VALIDATION] Parsed JSON is neither object nor array."
-                    )
-                    return True
-            except Exception as exc:
-                logger.warning(
-                    "[AI_RESPONSE_VALIDATION] JSON validation failed: %s. Content was: %r",
-                    exc,
-                    content,
-                )
-
-                return True
-
-    # -----------------------------------------------------------------------
-    # SYNC CHAT
-    # -----------------------------------------------------------------------
-
     def chat(
         self,
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.0,
-        timeout: float = None,
-        feature: str = "unknown",
+        timeout: float | None = None,
+        feature: str | None = None,
+        json_mode: bool = False,
+        **kwargs,
     ) -> str:
         models_to_try = self._get_models_to_try(self.model)
         models_to_try = models_to_try[:2]
         last_exception = None
+
+        feature_name = feature or "unknown"
+        max_tokens = FEATURE_MAX_TOKENS.get(feature_name, 2500)
+        actual_timeout = (
+            timeout
+            if timeout is not None
+            else FEATURE_TIMEOUTS.get(feature_name, DEFAULT_TIMEOUT)
+        )
 
         for model in models_to_try:
             url = f"{self.base_url}/chat/completions"
             payload = {
                 "model": model,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_prompt,
-                    },
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
                 ],
                 "temperature": temperature,
-                "max_tokens": 4096,
+                "max_tokens": max_tokens,
             }
+            if json_mode:
+                payload["response_format"] = {"type": "json_object"}
 
             prompt_size = len(system_prompt) + len(user_prompt)
             started_at = time.perf_counter()
 
             logger.info(
-                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s",
-                feature,
+                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s json_mode=%s",
+                feature_name,
                 model,
                 prompt_size,
+                json_mode,
             )
 
             try:
-                actual_timeout = (
-                    timeout
-                    if timeout is not None
-                    else FEATURE_TIMEOUTS.get(feature, DEFAULT_TIMEOUT)
-                )
                 response = _sync_client.post(
                     url,
                     json=payload,
@@ -286,14 +198,7 @@ class OpenRouterProvider(AIProvider):
 
                 data = response.json()
                 choices = data.get("choices", [])
-
                 if not choices:
-                    logger.error(
-                        "[LLM_EMPTY_CHOICES] feature=%s model=%s response=%s",
-                        feature,
-                        model,
-                        json.dumps(data, default=str)[:2000],
-                    )
                     raise AIProviderException(
                         "The AI provider returned an empty response. Please try again.",
                         status_code=503,
@@ -306,18 +211,11 @@ class OpenRouterProvider(AIProvider):
                         status_code=500,
                     )
 
-                if self._is_invalid_response(content, system_prompt, user_prompt):
-                    raise AIProviderException(
-                        f"Response content from model {model} failed format/safety validation.",
-                        status_code=500,
-                    )
-
                 duration = time.perf_counter() - started_at
                 usage = data.get("usage", {})
-
                 logger.info(
                     "[LLM_REQUEST_SUCCESS] feature=%s model=%s duration=%.2fs prompt_tokens=%s completion_tokens=%s total_tokens=%s",
-                    feature,
+                    feature_name,
                     model,
                     duration,
                     usage.get("prompt_tokens"),
@@ -329,70 +227,67 @@ class OpenRouterProvider(AIProvider):
             except Exception as exception:
                 duration = time.perf_counter() - started_at
                 logger.warning(
-                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
+                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s",
                     model,
-                    exception,
-                    models_to_try[models_to_try.index(model) + 1 :],
+                    str(exception),
                 )
                 last_exception = exception
 
         logger.error(
             "[LLM_ALL_MODELS_FAILED] feature=%s requested_model=%s",
-            feature,
+            feature_name,
             self.model,
         )
         raise self._handle_exception(last_exception)
-
-    # -----------------------------------------------------------------------
-    # ASYNC CHAT
-    # -----------------------------------------------------------------------
 
     async def chat_async(
         self,
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.0,
-        timeout: float = None,
-        feature: str = "unknown",
+        timeout: float | None = None,
+        feature: str | None = None,
+        json_mode: bool = False,
+        **kwargs,
     ) -> str:
         models_to_try = self._get_models_to_try(self.model)
         models_to_try = models_to_try[:2]
         last_exception = None
+
+        feature_name = feature or "unknown"
+        max_tokens = FEATURE_MAX_TOKENS.get(feature_name, 2500)
+        actual_timeout = (
+            timeout
+            if timeout is not None
+            else FEATURE_TIMEOUTS.get(feature_name, DEFAULT_TIMEOUT)
+        )
 
         for model in models_to_try:
             url = f"{self.base_url}/chat/completions"
             payload = {
                 "model": model,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_prompt,
-                    },
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
                 ],
                 "temperature": temperature,
-                "max_tokens": 2500,
+                "max_tokens": max_tokens,
             }
+            if json_mode:
+                payload["response_format"] = {"type": "json_object"}
 
             prompt_size = len(system_prompt) + len(user_prompt)
             started_at = time.perf_counter()
 
             logger.info(
-                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s",
-                feature,
+                "[LLM_REQUEST_START] feature=%s model=%s prompt_size=%s json_mode=%s",
+                feature_name,
                 model,
                 prompt_size,
+                json_mode,
             )
 
             try:
-                actual_timeout = (
-                    timeout
-                    if timeout is not None
-                    else FEATURE_TIMEOUTS.get(feature, DEFAULT_TIMEOUT)
-                )
                 response = await _async_client.post(
                     url,
                     json=payload,
@@ -405,7 +300,6 @@ class OpenRouterProvider(AIProvider):
 
                 data = response.json()
                 choices = data.get("choices", [])
-
                 if not choices:
                     raise AIProviderException(
                         "OpenRouter returned no response choices.",
@@ -419,18 +313,11 @@ class OpenRouterProvider(AIProvider):
                         status_code=500,
                     )
 
-                if self._is_invalid_response(content, system_prompt, user_prompt):
-                    raise AIProviderException(
-                        f"Response content from model {model} failed format/safety validation.",
-                        status_code=500,
-                    )
-
                 duration = time.perf_counter() - started_at
                 usage = data.get("usage", {})
-
                 logger.info(
                     "[LLM_REQUEST_SUCCESS] feature=%s model=%s duration=%.2fs prompt_tokens=%s completion_tokens=%s total_tokens=%s",
-                    feature,
+                    feature_name,
                     model,
                     duration,
                     usage.get("prompt_tokens"),
@@ -442,33 +329,24 @@ class OpenRouterProvider(AIProvider):
             except Exception as exception:
                 duration = time.perf_counter() - started_at
                 logger.warning(
-                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s. Remaining models: %s",
+                    "[LLM_REQUEST_FAILED_RETRYING] model=%s failed. Error: %s",
                     model,
-                    exception,
-                    models_to_try[models_to_try.index(model) + 1 :],
+                    str(exception),
                 )
                 last_exception = exception
 
         logger.error(
             "[LLM_ALL_MODELS_FAILED] feature=%s requested_model=%s",
-            feature,
+            feature_name,
             self.model,
         )
         raise self._handle_exception(last_exception)
 
-    # -----------------------------------------------------------------------
-    # STARTUP VALIDATION
-    # IMPORTANT: THIS MUST NEVER CALL THE LLM
-    # -----------------------------------------------------------------------
-
     def validate_startup(self) -> None:
-
         if not self.api_key:
             raise RuntimeError("OPENROUTER_API_KEY is not configured.")
-
         if not self.model:
             raise RuntimeError("OPENROUTER_MODEL is not configured.")
-
         logger.info(
             "[AI_CONFIG] OpenRouter validated. model=%s",
             self.model,

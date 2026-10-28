@@ -119,6 +119,14 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         db.close()
 
 
+def _determine_source(r: Resume) -> str:
+    if r.file_path == "generated" or r.is_generated:
+        return "generated"
+    if (r.original_filename or "").startswith("profile_import") or r.title == "Imported Profile":
+        return "import"
+    return "upload"
+
+
 class ResumeService:
     @staticmethod
     async def upload_resume(
@@ -127,16 +135,25 @@ class ResumeService:
         user_id: int,
         background_tasks: BackgroundTasks,
     ) -> dict:
+        if not file.filename:
+            raise HTTPException(
+                status_code=400,
+                detail="Filename is required.",
+            )
+
         file_ext = Path(file.filename).suffix.lower()
         allowed_file_types = {
             ".pdf": {
                 "application/pdf",
+                "application/x-pdf",
             },
             ".docx": {
                 (
                     "application/vnd.openxmlformats-"
                     "officedocument.wordprocessingml.document"
                 ),
+                "application/zip",
+                "application/octet-stream",
             },
         }
 
@@ -144,13 +161,10 @@ class ResumeService:
             file_ext,
         )
 
-        if (
-            allowed_content_types is None
-            or file.content_type not in allowed_content_types
-        ):
+        if allowed_content_types is None:
             raise HTTPException(
                 status_code=400,
-                detail=("Only valid PDF and DOCX " "files are allowed."),
+                detail="Only valid PDF and DOCX files are allowed.",
             )
         unique_name = f"{uuid.uuid4()}_{file.filename}"
 
@@ -167,6 +181,35 @@ class ResumeService:
                 status_code=400, detail="File size must not exceed 5 MB."
             )
 
+        # Magic byte validation
+        if file_ext == ".pdf":
+            if not content.startswith(b"%PDF"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="File content does not match PDF format.",
+                )
+        elif file_ext == ".docx":
+            if not content.startswith(b"PK"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="File content does not match DOCX format.",
+                )
+            import io
+            import zipfile
+
+            try:
+                with zipfile.ZipFile(io.BytesIO(content)) as z:
+                    if "word/document.xml" not in z.namelist():
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Invalid DOCX document archive structure.",
+                        )
+            except zipfile.BadZipFile:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid DOCX file archive.",
+                )
+
         temp_path = None
         try:
             with tempfile.NamedTemporaryFile(
@@ -177,10 +220,27 @@ class ResumeService:
 
             if file_ext == ".pdf":
                 parsed_text = extract_text_from_pdf(str(temp_path))
+                if len(parsed_text.strip()) < 200:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=(
+                            "The uploaded PDF contains fewer than 200 characters of readable text. "
+                            "It may be scanned or empty. Please upload a text-based resume."
+                        ),
+                    )
             else:
                 from app.services.docx_service import extract_text_from_docx
 
                 parsed_text = extract_text_from_docx(str(temp_path))
+                if len(parsed_text.strip()) < 50:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="The uploaded DOCX contains insufficient readable text.",
+                    )
+        except HTTPException:
+            if temp_path and temp_path.exists():
+                temp_path.unlink()
+            raise
         except Exception:
             if temp_path and temp_path.exists():
                 temp_path.unlink()
@@ -199,7 +259,8 @@ class ResumeService:
             db.query(Resume)
             .filter(
                 Resume.user_id == user_id,
-                Resume.canonical_hash == content_hash,
+                (Resume.content_hash == content_hash)
+                | (Resume.canonical_hash == content_hash),
                 Resume.parsing_status == "completed",
                 Resume.resume_json.isnot(None),
             )
@@ -222,9 +283,11 @@ class ResumeService:
                 template=duplicate_resume.template or "Professional",
                 resume_json=duplicate_resume.resume_json,
                 canonical_hash=content_hash,
+                content_hash=content_hash,
                 parsing_status="completed",
                 scoring_version=duplicate_resume.scoring_version,
                 prompt_version=duplicate_resume.prompt_version,
+                starred=False,
             )
             ResumeRepository.create_resume(db, resume)
 
@@ -284,7 +347,9 @@ class ResumeService:
             template="Professional",
             resume_json=None,
             canonical_hash=content_hash,
+            content_hash=content_hash,
             parsing_status="pending",
+            starred=False,
         )
         try:
             ResumeRepository.create_resume(db, resume)
@@ -342,6 +407,8 @@ class ResumeService:
                 "title": r.title,
                 "original_filename": r.original_filename,
                 "is_active": r.is_active,
+                "source": _determine_source(r),
+                "starred": bool(r.starred),
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "ats_score": r.ats_score,
                 "skills": (
@@ -374,6 +441,8 @@ class ResumeService:
             "title": resume.title,
             "original_filename": resume.original_filename,
             "is_active": resume.is_active,
+            "source": _determine_source(resume),
+            "starred": bool(resume.starred),
             "created_at": resume.created_at.isoformat() if resume.created_at else None,
             "ats_score": resume.ats_score,
             "skills": (
@@ -642,37 +711,48 @@ class ResumeService:
         if not resume:
             raise HTTPException(status_code=404, detail="Resume not found.")
 
-        if "title" in payload:
+        if "title" in payload and payload["title"] is not None:
             resume.title = payload["title"]
-        if "template" in payload:
+        if "template" in payload and payload["template"] is not None:
             resume.template = payload["template"]
-        if "version" in payload:
-            resume.version = payload["version"]
-        if "ats_score" in payload:
-            resume.ats_score = payload["ats_score"]
-        if "resume_json" in payload:
+        if "starred" in payload and payload["starred"] is not None:
+            resume.starred = bool(payload["starred"])
+
+        # Note: ats_score and version from client are intentionally ignored (computed server-side)
+        if "resume_json" in payload and payload["resume_json"] is not None:
             from app.resume.services.resume_normalizer import (
                 canonical_resume_to_text,
                 get_canonical_hash,
                 normalize_resume,
             )
+            from app.resume.services.resume_scoring_service import calculate_scores
 
             normalized_resume = normalize_resume(payload["resume_json"])
-
             resume.resume_json = json.dumps(normalized_resume)
-
             resume.skills = ",".join(
                 normalized_resume.get(
                     "skills",
                     [],
                 )
             )
-
             text_representation = canonical_resume_to_text(normalized_resume)
-
             resume.parsed_text = text_representation
+            new_hash = get_canonical_hash(normalized_resume)
+            resume.canonical_hash = new_hash
+            resume.content_hash = new_hash
 
-            resume.canonical_hash = get_canonical_hash(normalized_resume)
+            # Server-side ATS score recalculation
+            scores = calculate_scores(normalized_resume)
+            resume.ats_score = scores.get("ats_score", resume.ats_score)
+
+            # Server-side version auto-increment
+            current_v = resume.version or "v1"
+            try:
+                digits = "".join(filter(str.isdigit, current_v))
+                num = int(digits) if digits else 1
+                resume.version = f"v{num + 1}"
+            except Exception:
+                resume.version = "v2"
 
         try:
             db.commit()

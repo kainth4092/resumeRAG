@@ -261,6 +261,18 @@ export const PdfLayoutRenderer = ({ layout }) => {
   return renderNode(layout, 0, font);
 };
 
+export const getPDFBlob = async (
+  resumeData,
+  templateName = "Professional",
+) => {
+  const layout = generateLayout(templateName, resumeData);
+  if (!layout) {
+    throw new Error(`Could not generate layout for template: ${templateName}`);
+  }
+  const doc = <PdfLayoutRenderer layout={layout} />;
+  return await pdf(doc).toBlob();
+};
+
 export const downloadPDF = async (
   resumeData,
   filename = "Resume.pdf",

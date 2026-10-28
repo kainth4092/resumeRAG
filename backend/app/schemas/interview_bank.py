@@ -280,7 +280,8 @@ class GenerateBankAnswerRequest(BaseModel):
 class InterviewQuestionResponse(BaseModel):
     id: int
     question: str
-    answer: str
+    answer: Optional[str] = None
+    answer_status: str = "ready"
     skill: str
     category: str
     experience_level: str

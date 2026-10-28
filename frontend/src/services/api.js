@@ -1,11 +1,20 @@
 import axios from "axios";
 
 // VITE_API_URL must include the /api prefix (e.g., http://localhost:8000/api or https://domain.com/api).
-// Local development values are defined in frontend/.env.development.
 const getBaseURL = () => {
   return import.meta.env.VITE_API_URL || "/api";
 };
 
+// Strict allow-list for caching to avoid serving stale dynamic data (tracker, notifications, history, etc.)
+const CACHE_ALLOWLIST = [
+  "/meta/skills",
+  "/interview-bank/meta",
+];
+
+const isCacheable = (url) => {
+  if (!url) return false;
+  return CACHE_ALLOWLIST.some((path) => url.includes(path));
+};
 
 const getCache = new Map();
 const inFlightRequests = new Map();
@@ -26,10 +35,8 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (
-    config.method?.toLowerCase() === "get" &&
-    !config.url?.includes("/auth/me")
-  ) {
+  const isGet = config.method?.toLowerCase() === "get";
+  if (isGet && isCacheable(config.url)) {
     const cacheKey = `${config.url}?${JSON.stringify(config.params || {})}`;
     config.cacheKey = cacheKey;
 
@@ -60,7 +67,7 @@ api.interceptors.response.use(
     const config = response.config;
     const method = config.method?.toLowerCase();
 
-    // Clear GET cache when a mutating request (POST, PUT, DELETE, PATCH) is successful
+    // Clear GET cache when a mutating request succeeds
     if (method && ["post", "put", "delete", "patch"].includes(method)) {
       getCache.clear();
       inFlightRequests.clear();
@@ -69,7 +76,7 @@ api.interceptors.response.use(
     if (
       config.method?.toLowerCase() === "get" &&
       config.cacheKey &&
-      !config.url?.includes("/auth/me")
+      isCacheable(config.url)
     ) {
       getCache.set(config.cacheKey, {
         data: response.data,
@@ -94,10 +101,9 @@ api.interceptors.response.use(
         localStorage.removeItem("user_info");
         localStorage.removeItem("remember_me");
         localStorage.removeItem("token_expiry");
-        sessionStorage.removeItem("session_active");
         api.clearCache();
 
-        const publicPages = ["/", "/login", "/register", "/terms", "/privacy"];
+        const publicPages = ["/", "/login", "/register", "/terms", "/privacy", "/reset-password"];
         const currentPath = window.location.pathname;
         if (!publicPages.includes(currentPath)) {
           window.location.href = "/";
@@ -107,11 +113,8 @@ api.interceptors.response.use(
     }
 
     const method = config?.method?.toLowerCase();
-    const shouldRetry =
-      method === "get" ||
-      (method === "post" &&
-        (config.url?.includes("/auth/login") ||
-          config.url?.includes("/auth/google")));
+    // Retry only idempotent GET requests on transient network or 5xx failures
+    const shouldRetry = method === "get";
 
     if (config && shouldRetry) {
       const isNetworkError = !error.response;
@@ -140,7 +143,7 @@ api.interceptors.response.use(
   },
 );
 
-// Add custom request wrappers to support deduplication
+// Custom request wrappers to support deduplication only on cacheable endpoints
 const originalGet = api.get;
 api.get = function (url, config = {}) {
   const cacheKey = `${url}?${JSON.stringify(config.params || {})}`;
@@ -151,7 +154,7 @@ api.get = function (url, config = {}) {
     getCache.delete(cacheKey);
   }
 
-  if (!bypassCache && !url?.includes("/auth/me")) {
+  if (!bypassCache && isCacheable(url)) {
     if (inFlightRequests.has(cacheKey)) {
       return inFlightRequests.get(cacheKey);
     }
@@ -168,7 +171,7 @@ api.get = function (url, config = {}) {
       throw err;
     });
 
-  if (!bypassCache && !url?.includes("/auth/me")) {
+  if (!bypassCache && isCacheable(url)) {
     inFlightRequests.set(cacheKey, promise);
   }
 

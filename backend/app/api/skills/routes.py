@@ -20,7 +20,7 @@ def add_skill(
         db.query(UserSkill)
         .filter(
             UserSkill.user_id == current_user.id,
-            UserSkill.skill_name == payload.skill_name,
+            UserSkill.skill_name.ilike(payload.skill_name.strip()),
         )
         .first()
     )

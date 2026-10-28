@@ -17,7 +17,8 @@ class InterviewQuestionBank(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     question = Column(Text, nullable=False)
-    answer = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True)
+    answer_status = Column(String(20), nullable=False, default="ready")
 
     skill = Column(String(100), nullable=False)
     category = Column(String(50), nullable=False)

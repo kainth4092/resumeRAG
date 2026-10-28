@@ -156,6 +156,21 @@ def extract_jd_skills(job_description: str):
     return _extract_skills(job_description)
 
 
+def expand_bank_background_job(resume_skills: list[str], user_id: int):
+    """Run interview bank LLM expansion in background task to avoid blocking HTTP retrieval requests."""
+    from app.core.database import SessionLocal
+
+    with SessionLocal() as session:
+        try:
+            InterviewBankExpansionService.expand_bank(
+                db=session,
+                user_id=user_id,
+                resume_skills=resume_skills,
+            )
+        except Exception:
+            logger.exception("Background interview bank expansion failed.")
+
+
 def retrieve_questions_rag(
     db: Session,
     user_id: int,
@@ -172,14 +187,6 @@ def retrieve_questions_rag(
     if not resume_skills:
         logger.warning("No resume skills found.")
         return []
-    try:
-        InterviewBankExpansionService.expand_bank(
-            db=db,
-            user_id=user_id,
-            resume_skills=resume_skills,
-        )
-    except Exception:
-        logger.exception("Interview bank expansion failed.")
 
     # ----------------------------
     # Priority:

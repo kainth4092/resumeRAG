@@ -105,6 +105,11 @@ export function useInterviewQuestions(locationState) {
         setViewState("active");
         return;
       }
+
+      setQuestions([]);
+      setSession(null);
+      setViewState("empty");
+      return;
     } catch (err) {
       console.error("Failed to load session:", err);
       const detail =

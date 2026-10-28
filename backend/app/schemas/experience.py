@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict, model_valida
 class ExperienceBase(BaseModel):
     company: str = Field(min_length=2, max_length=100)
     role: str = Field(min_length=2, max_length=100)
-    description: str | None = Field(default=None, max_length=500)
+    description: str | None = Field(default=None, max_length=5000)
     start_month: str | None = None
     start_year: int | None = None
     end_month: str | None = None

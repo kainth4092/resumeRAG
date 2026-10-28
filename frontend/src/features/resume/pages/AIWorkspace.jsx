@@ -78,16 +78,14 @@ export default function AIWorkspace() {
   };
 
   const handleNavigateEditor = () => {
-    const resumeId =
-      generatorState.resume?.resume_id ||
-      generatorState.resume?.id ||
-      analysisState.selectedResume?.resume_id ||
-      analysisState.selectedResume?.id;
+    const tailoredId =
+      generatorState.generatedResume?.id ||
+      generatorState.generatedResume?.resume_id;
     generatorState.navigate("/resume/editor", {
       state: {
         resume: {
           ...generatorState.generatedResume,
-          id: resumeId,
+          id: tailoredId,
           score: generatorState.analysis?.ats_score,
         },
       },

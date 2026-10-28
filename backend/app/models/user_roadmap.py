@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import String, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -11,11 +11,11 @@ class UserRoadmap(Base):
         ForeignKey("users.id"), unique=True, nullable=False
     )
     target_role: Mapped[str] = mapped_column(
-        String(150), default="Senior Frontend Engineer"
+        String(150), default="Frontend Developer"
     )
     target_level: Mapped[str] = mapped_column(
-        String(250), default="At top-tier startups (Stripe, Linear, Vercel level)"
+        String(250), default="Mid"
     )
-    completed_tasks: Mapped[str | None] = mapped_column(Text, default="[]")
+    completed_tasks: Mapped[list] = mapped_column(JSON, default=list)
 
     user = relationship("User", back_populates="roadmap")

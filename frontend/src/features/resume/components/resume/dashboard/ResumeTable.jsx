@@ -234,6 +234,7 @@ export default function ResumeTable({
                           await downloadPDF(
                             resumeData,
                             `${target.name || "Resume"}.pdf`,
+                            target.template || "Professional",
                           );
                           setPreviewResume(null);
                         }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MoreHorizontal, AlertTriangle } from "lucide-react";
 import DashboardHeader from "../components/DashboardHeader";
 import ResumeHealth from "../components/ResumeHealth";
@@ -9,105 +9,44 @@ import AtsTrendChart from "../components/charts/ATSTrendChart";
 import ResumeRadarChart from "../components/charts/ResumeRadarChart";
 import WeeklyActivityChart from "../components/charts/WeeklyActivityChart";
 import { mapApiActivities } from "../data/dashboardData";
-import { useAuth } from "../../auth/context/AuthContext";
 import { getDashboardData } from "../services/dashboardService";
 import DashboardSkeleton from "../../../components/loading/DashboardSkeleton";
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const cacheKey = user?.email ? `dashboard_data_${user.email}` : null;
-
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== "undefined" && cacheKey) {
-      const cached = localStorage.getItem(cacheKey);
-      return !cached;
-    }
-    return true;
-  });
   const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState(() => {
-    if (typeof window !== "undefined" && cacheKey) {
-      const cached = localStorage.getItem(cacheKey);
-      try {
-        return cached ? JSON.parse(cached) : null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
 
-  const loadDashboardData = async (isRefresh = false) => {
-    const key = user?.email ? `dashboard_data_${user.email}` : null;
-    if (!isRefresh && (!key || !localStorage.getItem(key))) {
+  const fetchDashboard = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
       setLoading(true);
     }
     setError(null);
+
     try {
-      const localHour = new Date().getHours();
-      const data = await dashboardData.getDashboardData(localHour, isRefresh);
-      setDashboardData(data);
-      if (key) {
-        localStorage.setItem(key, JSON.stringify(data));
-      }
-    } catch (e) {
-      console.error("Failed to load dashboard statistics:", e);
-      if (!dashboardData) {
-        setError(
-          e.response?.data?.detail ||
-            e.message ||
-            "Failed to load dashboard statistics.",
-        );
-      }
+      const result = await getDashboardData();
+      setData(result);
+    } catch (err) {
+      console.error("Dashboard fetch failed:", err);
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          "Unable to load dashboard data. Please try again."
+      );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadDashboard() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const result = await getDashboardData();
-
-        if (mounted) {
-          setData(result);
-        }
-      } catch (error) {
-        console.error("Dashboard loading failed:", error);
-
-        if (mounted) {
-          setError(
-            error?.response?.data?.detail || "Unable to load dashboard data.",
-          );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadDashboard();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const refresh = async () => {
-    setRefreshing(true);
-    await loadDashboardData(true);
-    setRefreshing(false);
-  };
+  useEffect(() => {
+    fetchDashboard(false);
+  }, [fetchDashboard]);
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="h-full flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-card border border-border rounded-2xl p-6 text-center space-y-4 shadow-sm">
@@ -119,8 +58,8 @@ export default function Dashboard() {
           </h3>
           <p className="text-sm text-muted-foreground">{error}</p>
           <button
-            onClick={() => loadDashboardData()}
-            className="w-full py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all text-sm font-semibold shadow-sm"
+            onClick={() => fetchDashboard(false)}
+            className="w-full py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all text-sm font-semibold shadow-sm cursor-pointer"
           >
             Retry Connection
           </button>
@@ -129,19 +68,18 @@ export default function Dashboard() {
     );
   }
 
-  const greeting = dashboardData?.greeting || "";
-  const trend = dashboardData?.score_trend || [];
-  const radar = dashboardData?.resume_dna || [];
-  const weekly = dashboardData?.weekly_activity || [];
-  const activityFeed = mapApiActivities(dashboardData?.recent_activities);
-  const emptyStates = dashboardData?.empty_states || {
-    no_resumes: trend.length === 0,
-    no_jobs: true,
-    no_interviews: true,
-  };
+  if (loading && !refreshing) {
+    return <DashboardSkeleton />;
+  }
+
+  const greeting = data?.greeting || "";
+  const trend = data?.score_trend || [];
+  const radar = data?.resume_dna || [];
+  const weekly = data?.weekly_activity || [];
+  const activityFeed = mapApiActivities(data?.recent_activities);
 
   const getImprovementDelta = () => {
-    if (trend.length < 2) return null;
+    if (!trend || trend.length < 2) return null;
     const firstScore = trend[0].score;
     const lastScore = trend[trend.length - 1].score;
     const diff = lastScore - firstScore;
@@ -152,19 +90,15 @@ export default function Dashboard() {
 
   const deltaText = getImprovementDelta();
 
-  if (loading && !refreshing) {
-    return <DashboardSkeleton />;
-  }
-
   return (
-    <div className="h-full overflow-y-auto ">
+    <div className="h-full overflow-y-auto">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Welcome Banner */}
         <DashboardHeader
           refreshing={refreshing}
-          onRefresh={refresh}
+          onRefresh={() => fetchDashboard(true)}
           greeting={greeting}
-          stats={dashboardData}
+          stats={data}
         />
 
         {/* First Row Grid: ATS Trend and Resume Health */}
@@ -204,7 +138,7 @@ export default function Dashboard() {
           </div>
 
           <div className="col-span-1">
-            <ResumeHealth data={dashboardData} />
+            <ResumeHealth data={data} />
           </div>
         </div>
 
@@ -221,10 +155,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Third Row Grid: AI Copilot Suggestions & Tasks */}
+        {/* Third Row Grid: AI Suggestions & Upcoming Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AISuggestions data={dashboardData} />
-          <UpcomingTasks data={dashboardData} />
+          <AISuggestions data={data} />
+          <UpcomingTasks data={data} />
         </div>
       </div>
     </div>

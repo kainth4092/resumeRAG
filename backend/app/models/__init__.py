@@ -16,6 +16,9 @@ from app.models.user_jobs import UserJob
 from app.models.job_cache import SearchCache, JobCache
 from app.models.mock_interview import MockInterviewSession, MockInterviewAnswer
 from app.models.user_roadmap import UserRoadmap
+from app.models.challenge import ChallengeAttempt
+from app.models.auth import PasswordResetToken
+from app.models.dashboard_task import DashboardTask
 
 __all__ = [
     "User",
@@ -38,4 +41,7 @@ __all__ = [
     "MockInterviewSession",
     "MockInterviewAnswer",
     "UserRoadmap",
+    "ChallengeAttempt",
+    "PasswordResetToken",
+    "DashboardTask",
 ]

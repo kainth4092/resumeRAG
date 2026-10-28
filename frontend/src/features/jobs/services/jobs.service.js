@@ -10,6 +10,7 @@ export const recommendedJobs = (location = "", jobType = "", remote = "") => {
   }
   return api.get(url).then((res) => res.data);
 };
+
 export const searchJobs = (query, location = "", jobType = "", remote = "") => {
   let url = `/jobs/search?query=${encodeURIComponent(query)}&`;
   if (location) url += `location=${encodeURIComponent(location)}&`;
@@ -22,7 +23,7 @@ export const searchJobs = (query, location = "", jobType = "", remote = "") => {
 };
 
 export const getJob = (jobId) => {
-  return api.get(`/jobs/${jobId}`).then((res) => res.data);
+  return api.get(`/jobs/${encodeURIComponent(jobId)}`).then((res) => res.data);
 };
 
 export const saveJob = (job) => {
@@ -34,9 +35,17 @@ export const getTrackedJobs = () => {
 };
 
 export const updateJobStatus = (jobId, status) => {
-  return api.patch(`/tracker/${jobId}`, { status }).then((res) => res.data);
+  return api.patch(`/tracker/${encodeURIComponent(jobId)}`, { status }).then((res) => res.data);
 };
 
 export const deleteTrackedJob = (jobId) => {
-  return api.delete(`/tracker/${jobId}`).then((res) => res.data);
+  return api.delete(`/tracker/${encodeURIComponent(jobId)}`).then((res) => res.data);
+};
+
+export const getJobNotes = (jobId) => {
+  return api.get(`/jobs/${encodeURIComponent(jobId)}/notes`).then((res) => res.data);
+};
+
+export const updateJobNotes = (jobId, notes) => {
+  return api.put(`/jobs/${encodeURIComponent(jobId)}/notes`, { notes }).then((res) => res.data);
 };

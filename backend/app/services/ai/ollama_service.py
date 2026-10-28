@@ -44,7 +44,16 @@ class OllamaProvider(AIProvider):
             logger.error(f"[AI_ERROR] Unexpected error in Ollama provider: {str(e)}", exc_info=True)
             return AIProviderException(f"Unexpected AI service error: {str(e)}", status_code=500)
 
-    def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.1, timeout: float = None) -> str:
+    def chat(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.1,
+        timeout: float | None = None,
+        feature: str | None = None,
+        json_mode: bool = False,
+        **kwargs,
+    ) -> str:
         url = f"{self.base_url}/api/generate"
         payload = {
             "model": self.model,
@@ -54,9 +63,11 @@ class OllamaProvider(AIProvider):
             "options": {
                 "temperature": temperature,
                 "num_predict": 2048,
-                "num_ctx": 8192
-            }
+                "num_ctx": 8192,
+            },
         }
+        if json_mode:
+            payload["format"] = "json"
 
         prompt_size = len(system_prompt) + len(user_prompt)
         start_time = time.time()
@@ -66,9 +77,9 @@ class OllamaProvider(AIProvider):
             response = _sync_client.post(
                 url,
                 json=payload,
-                timeout=actual_timeout
+                timeout=actual_timeout,
             )
-            
+
             if response.status_code != 200:
                 self._handle_response_error(response)
 
@@ -79,7 +90,7 @@ class OllamaProvider(AIProvider):
 
             duration = time.time() - start_time
             logger.info(
-                f"[AI_METRICS] Ollama Sync Chat | Model: {self.model} | "
+                f"[AI_METRICS] Ollama Sync Chat | Model: {self.model} | Feature: {feature} | "
                 f"Prompt Size: {prompt_size} chars | Response Size: {len(content)} chars | "
                 f"Time taken: {duration:.3f}s"
             )
@@ -88,7 +99,16 @@ class OllamaProvider(AIProvider):
         except Exception as e:
             raise self._handle_exception(e)
 
-    async def chat_async(self, system_prompt: str, user_prompt: str, temperature: float = 0.1, timeout: float = None) -> str:
+    async def chat_async(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.1,
+        timeout: float | None = None,
+        feature: str | None = None,
+        json_mode: bool = False,
+        **kwargs,
+    ) -> str:
         url = f"{self.base_url}/api/generate"
         payload = {
             "model": self.model,
@@ -98,9 +118,11 @@ class OllamaProvider(AIProvider):
             "options": {
                 "temperature": temperature,
                 "num_predict": 2048,
-                "num_ctx": 8192
-            }
+                "num_ctx": 8192,
+            },
         }
+        if json_mode:
+            payload["format"] = "json"
 
         prompt_size = len(system_prompt) + len(user_prompt)
         start_time = time.time()
@@ -110,7 +132,7 @@ class OllamaProvider(AIProvider):
             response = await _async_client.post(
                 url,
                 json=payload,
-                timeout=actual_timeout
+                timeout=actual_timeout,
             )
 
             if response.status_code != 200:
@@ -123,7 +145,7 @@ class OllamaProvider(AIProvider):
 
             duration = time.time() - start_time
             logger.info(
-                f"[AI_METRICS] Ollama Async Chat | Model: {self.model} | "
+                f"[AI_METRICS] Ollama Async Chat | Model: {self.model} | Feature: {feature} | "
                 f"Prompt Size: {prompt_size} chars | Response Size: {len(content)} chars | "
                 f"Time taken: {duration:.3f}s"
             )

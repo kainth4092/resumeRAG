@@ -116,11 +116,12 @@ export default function PrivacyPage() {
               7. Third-Party Services & AI Providers
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              To analyze job fit and customize resumes, we transfer structured
-              resume fragments to compliant AI model API endpoints (such as
-              OpenRouter or Ollama). These partners are bound by confidentiality
-              clauses and are prohibited from storing or training models on your
-              personal inputs.
+              To analyze job descriptions, perform ATS scoring, and optimize resumes,
+              we transmit text prompts to upstream AI inference providers (such as
+              OpenRouter or configured local Ollama instances). When utilizing cloud AI providers,
+              prompts and completions are processed in accordance with their respective
+              terms of service and data retention policies. We never sell your personal
+              data, and we do not use your candidate submissions to train public models.
             </p>
           </section>
 

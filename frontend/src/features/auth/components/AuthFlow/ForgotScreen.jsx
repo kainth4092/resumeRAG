@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, Mail } from "lucide-react";
 import { Slide, Logo, Field, PrimaryButton } from "./AuthFlowShared";
+import { forgotPassword } from "../../services/authService";
 
 export default function ForgotScreen({ onBack }) {
   const [email, setEmail] = useState("");
@@ -21,11 +22,12 @@ export default function ForgotScreen({ onBack }) {
     try {
       setLoading(true);
       setError("");
-      // Simulate API call for forgot password
-      await new Promise((r) => setTimeout(r, 1600));
+      await forgotPassword({ email: email.trim().toLowerCase() });
       setSent(true);
-    } catch {
-      setError("An error occurred. Please try again.");
+    } catch (err) {
+      setError(
+        err.response?.data?.detail || "An error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }

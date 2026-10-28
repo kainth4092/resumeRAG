@@ -134,6 +134,115 @@ class OpenAIClientAdapter:
 client = OpenAIClientAdapter()
 
 
+def llm_text(
+    prompt: str,
+    *,
+    feature: str = "general_text",
+    system_prompt: str | None = None,
+    temperature: float = 0.2,
+    timeout: float | None = None,
+) -> str:
+    """
+    Plain-text LLM completion without JSON parsing or formatting enforcement.
+    """
+    sys_prompt = system_prompt or (
+        "You are an expert career and ATS resume assistant. "
+        "Follow the user's instructions directly and produce clear, concise text."
+    )
+    provider = get_ai_provider()
+    logger.info("[LLM_TEXT_CALL] feature=%s prompt_size=%d", feature, len(prompt))
+    return provider.chat(
+        system_prompt=sys_prompt,
+        user_prompt=prompt,
+        temperature=temperature,
+        timeout=timeout,
+        feature=feature,
+        json_mode=False,
+    ).strip()
+
+
+def llm_json(
+    prompt: str,
+    response_model=None,
+    *,
+    feature: str = "general_json",
+    system_prompt: str | None = None,
+    temperature: float = 0.0,
+    timeout: float | None = None,
+):
+    """
+    Structured JSON LLM completion.
+    Passes json_mode=True to the provider, extracts JSON from response, validates
+    against response_model if provided, retries ONCE with a repair prompt on failure,
+    and raises typed LLMValidationError.
+    """
+    from app.services.ai.base import LLMValidationError
+
+    sys_prompt = system_prompt or (
+        "You are an expert ATS resume writer and career coach. "
+        "Return valid JSON only matching the requested structure. "
+        "Do not include markdown code block syntax (like ```json) or explanatory commentary."
+    )
+    provider = get_ai_provider()
+    logger.info(
+        "[LLM_JSON_CALL] feature=%s prompt_size=%d model=%s",
+        feature,
+        len(prompt),
+        getattr(response_model, "__name__", None),
+    )
+
+    def _parse_and_validate(text: str):
+        data = extract_json(text)
+        if response_model is not None:
+            if hasattr(response_model, "model_validate"):
+                return response_model.model_validate(data)
+            elif hasattr(response_model, "parse_obj"):
+                return response_model.parse_obj(data)
+        return data
+
+    try:
+        raw = provider.chat(
+            system_prompt=sys_prompt,
+            user_prompt=prompt,
+            temperature=temperature,
+            timeout=timeout,
+            feature=feature,
+            json_mode=True,
+        )
+        return _parse_and_validate(raw)
+    except Exception as first_err:
+        logger.warning(
+            "[LLM_JSON_REPAIR] feature=%s first attempt failed: %s. Retrying with repair prompt.",
+            feature,
+            first_err,
+        )
+        repair_prompt = (
+            f"Your previous response was invalid JSON or failed schema validation.\n"
+            f"Validation error: {first_err}\n\n"
+            f"Original prompt:\n{prompt}\n\n"
+            f"Please output strictly valid JSON conforming to the original schema."
+        )
+        try:
+            repaired_raw = provider.chat(
+                system_prompt=sys_prompt,
+                user_prompt=repair_prompt,
+                temperature=0.0,
+                timeout=timeout,
+                feature=feature,
+                json_mode=True,
+            )
+            return _parse_and_validate(repaired_raw)
+        except Exception as second_err:
+            logger.error(
+                "[LLM_JSON_FAILED] feature=%s repair failed: %s",
+                feature,
+                second_err,
+            )
+            raise LLMValidationError(
+                f"Failed to generate valid structured data for {feature}: {second_err}"
+            ) from second_err
+
+
 def call_llm_with_retry(
     prompt: str,
     *,
@@ -143,53 +252,21 @@ def call_llm_with_retry(
     timeout: float = None,
 ):
     """
-    Call the active AI provider exactly once.
-
-    IMPORTANT:
-    This function intentionally performs no automatic retries.
-    One application action should result in at most one LLM request.
+    Compatibility wrapper delegating to llm_json or llm_text.
     """
-
-    system_prompt = (
-        "You are an expert ATS Resume Writer. "
-        "Follow the user's instructions exactly. "
-        "When JSON is requested, return valid JSON only with no markdown."
-    )
-
-    provider = get_ai_provider()
-
-    logger.info(
-        "[LLM_SERVICE_CALL] feature=%s prompt_size=%s json_response=%s",
-        feature,
-        len(prompt),
-        json_response,
-    )
-
-    try:
-        content = provider.chat(
-            system_prompt=system_prompt,
-            user_prompt=prompt,
+    if json_response:
+        return llm_json(
+            prompt,
+            feature=feature,
             temperature=temperature,
             timeout=timeout,
-            feature=feature,
         )
-
-        if json_response:
-            logger.warning(
-                "[LLM_RAW_JSON_RESPONSE] feature=%s content=%r",
-                feature,
-                content[:3000],
-            )
-            return extract_json(content)
-
-        return content
-
-    except Exception:
-        logger.exception(
-            "[LLM_SERVICE_FAILED] feature=%s",
-            feature,
-        )
-        raise
+    return llm_text(
+        prompt,
+        feature=feature,
+        temperature=temperature,
+        timeout=timeout,
+    )
 
 
 def normalize_generate_response(result: dict) -> dict:
@@ -595,7 +672,7 @@ def generate_general_answer(
     skill: str,
     category: str,
     experience_level: str,
-) -> str:
+) -> str | None:
     prompt_str = prompts.get_general_answer_prompt(
         question,
         skill,
@@ -604,7 +681,7 @@ def generate_general_answer(
     )
 
     try:
-        response = call_llm_with_retry(
+        response = llm_text(
             prompt_str,
             feature="interview_general_answer",
             temperature=0.2,
@@ -618,17 +695,17 @@ def generate_general_answer(
             if len(lines) >= 2:
                 response = "\n".join(lines[1:-1])
 
-        return response.strip()
+        clean_resp = response.strip()
+        return clean_resp if clean_resp else None
 
     except Exception:
         logger.exception(
-            "Failed to generate AI answer. " "skill=%s category=%s experience_level=%s",
+            "Failed to generate AI answer. skill=%s category=%s experience_level=%s",
             skill,
             category,
             experience_level,
         )
-
-        return f"AI generated sample answer for: {question}"
+        return None
 
 
 OUTPUT_SCHEMA = {
@@ -827,7 +904,7 @@ def improve_resume_section(
         section_content,
     )
 
-    response = call_llm_with_retry(
+    response = llm_text(
         prompt_str,
         feature="resume_section_improvement",
         temperature=0.2,

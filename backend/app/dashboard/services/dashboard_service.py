@@ -386,11 +386,155 @@ class DashboardService:
         suggestions = list(dict.fromkeys(suggestions))[:5]
 
         # -----------------------------------------
+        # REAL SCORE TREND
+        # -----------------------------------------
+        trend_map = {}
+        for r in sorted(resumes, key=lambda x: getattr(x, "created_at", None) or datetime.min):
+            if getattr(r, "created_at", None):
+                m_str = r.created_at.strftime("%b")
+                r_analysis = DashboardService._safe_json(getattr(r, "analysis_results", None), {})
+                s = DashboardService._get_score(r, r_analysis)
+                trend_map[m_str] = s
+
+        score_trend = [{"month": m, "score": s} for m, s in trend_map.items()]
+
+        # -----------------------------------------
+        # REAL RESUME DNA (RADAR)
+        # -----------------------------------------
+        resume_dna = []
+        if active_analysis and isinstance(active_analysis.get("heatmap"), dict):
+            for section, val in active_analysis["heatmap"].items():
+                try:
+                    resume_dna.append({"skill": section.replace("_", " ").title(), "A": int(val)})
+                except Exception:
+                    pass
+        if not resume_dna and skills:
+            for s in skills[:6]:
+                resume_dna.append({"skill": s.skill_name, "A": 80})
+
+        # -----------------------------------------
+        # REAL WEEKLY ACTIVITY
+        # -----------------------------------------
+        from datetime import timedelta
+        today = datetime.now()
+        start_of_week = today - timedelta(days=today.weekday())
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        weekly_activity = []
+        for i in range(7):
+            d = (start_of_week + timedelta(days=i)).date()
+            day_name = day_names[i]
+            applied_count = sum(
+                1 for j in jobs
+                if getattr(j, "created_at", None) and j.created_at.date() == d
+            )
+            interview_count = sum(
+                1 for iv in interviews
+                if getattr(iv, "created_at", None) and iv.created_at.date() == d
+            ) + sum(
+                1 for miv in mock_interviews
+                if getattr(miv, "created_at", None) and miv.created_at.date() == d
+            )
+            weekly_activity.append({
+                "day": day_name,
+                "applied": applied_count,
+                "interviews": interview_count,
+            })
+
+        # -----------------------------------------
+        # REAL RECENT ACTIVITIES
+        # -----------------------------------------
+        recent_activities = []
+        for a in activities:
+            recent_activities.append({
+                "type": a.get("type", "resume"),
+                "title": a.get("title", ""),
+                "body": a.get("description", ""),
+                "timestamp": a.get("created_at") or datetime.now(timezone.utc).isoformat(),
+            })
+
+        # -----------------------------------------
+        # REAL RESUME INSIGHTS
+        # -----------------------------------------
+        top_skills = [s.skill_name for s in skills[:5]] if skills else []
+        if not top_skills and active_resume and getattr(active_resume, "skills", None):
+            top_skills = [s.strip() for s in active_resume.skills.split(",") if s.strip()][:5]
+
+        missing_skills = active_analysis.get("missing_keywords", [])
+        if not isinstance(missing_skills, list):
+            missing_skills = []
+
+        resume_insights = {
+            "ats_score": current_ats_score,
+            "top_skills": top_skills,
+            "missing_skills": [str(x) for x in missing_skills[:5]],
+            "suggestions": suggestions,
+        }
+
+        # -----------------------------------------
+        # REAL STATS SUMMARY
+        # -----------------------------------------
+        trend_diff = "+0%"
+        if len(score_trend) >= 2:
+            diff = score_trend[-1]["score"] - score_trend[0]["score"]
+            trend_diff = f"+{diff}%" if diff >= 0 else f"{diff}%"
+
+        stats_summary = {
+            "resumes_count": len(resumes),
+            "ats_score": current_ats_score,
+            "ats_trend": trend_diff,
+            "interviews_count": len(interviews) + len(mock_interviews),
+            "jobs_count": len(jobs),
+        }
+
+        # -----------------------------------------
+        # REAL AI SUGGESTIONS
+        # -----------------------------------------
+        ai_suggestions = []
+        if not resumes:
+            ai_suggestions.append({
+                "title": "Upload or generate your resume",
+                "desc": "Add your professional history to let our AI scan and score your profile.",
+                "priority": "High",
+                "action_url": "/resumes",
+            })
+        elif current_ats_score < 75:
+            ai_suggestions.append({
+                "title": "Boost your ATS score",
+                "desc": "Tailor your resume against target jobs to match high-value industry keywords.",
+                "priority": "High",
+                "action_url": "/generator",
+            })
+
+        if not jobs:
+            ai_suggestions.append({
+                "title": "Track your job applications",
+                "desc": "Add target roles to Job Tracker to get personalized keyword matching.",
+                "priority": "Medium",
+                "action_url": "/tracker",
+            })
+
+        if not interviews and not mock_interviews:
+            ai_suggestions.append({
+                "title": "Start an interview simulation",
+                "desc": "Run a practice interview to test alignment and review live AI feedback.",
+                "priority": "Low",
+                "action_url": "/interview",
+            })
+
+        if not ai_suggestions:
+            ai_suggestions.append({
+                "title": "Review your career roadmap",
+                "desc": "Explore skill growth opportunities to level up your engineering career.",
+                "priority": "Low",
+                "action_url": "/roadmap",
+            })
+
+        # -----------------------------------------
         # FINAL RESPONSE
         # -----------------------------------------
-
         return {
-            "greeting": (f"Good {greeting_period}, " f"{user_name}"),
+            "user_id": user_id,
+            "greeting": f"Good {greeting_period}, {user_name}",
             "user_name": user_name,
             "current_ats_score": current_ats_score,
             "ats_score": current_ats_score,
@@ -398,7 +542,14 @@ class DashboardService:
             "total_resumes": len(resumes),
             "total_tracked_jobs": len(jobs),
             "total_interviews": (len(interviews) + len(mock_interviews)),
-            "community_questions": (len(community_questions)),
+            "community_questions": len(community_questions),
+            "score_trend": score_trend,
+            "resume_dna": resume_dna,
+            "weekly_activity": weekly_activity,
+            "recent_activities": recent_activities,
+            "resume_insights": resume_insights,
+            "stats_summary": stats_summary,
+            "ai_suggestions": ai_suggestions,
             "job_statistics": {
                 "total": len(jobs),
                 "applied": applied_jobs,
@@ -416,26 +567,12 @@ class DashboardService:
             "recent_activity": activities,
             "activities": activities,
             "suggestions": suggestions,
-            "matched_keywords": (
-                active_analysis.get(
-                    "matched_keywords",
-                    [],
-                )
-            ),
-            "missing_keywords": (
-                active_analysis.get(
-                    "missing_keywords",
-                    [],
-                )
-            ),
+            "matched_keywords": active_analysis.get("matched_keywords", []),
+            "missing_keywords": active_analysis.get("missing_keywords", []),
             "empty_states": {
                 "no_resumes": len(resumes) == 0,
                 "no_jobs": len(jobs) == 0,
                 "no_interviews": (len(interviews) == 0 and len(mock_interviews) == 0),
             },
-            "generated_at": (
-                datetime.now(
-                    timezone.utc
-                ).isoformat()
-            ),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }

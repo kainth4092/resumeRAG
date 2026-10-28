@@ -5,14 +5,14 @@ from pydantic import (
 )
 
 
-class AnalyzeRequest(BaseModel):
+class JobDescriptionRequest(BaseModel):
     resume_id: int = Field(..., gt=0, description="Valid resume ID")
 
     job_description: str = Field(
         ...,
         min_length=50,
         max_length=20000,
-        description="Job description used for ATS analysis",
+        description="Job description used for ATS analysis or tailoring",
     )
 
     @field_validator("job_description")
@@ -33,6 +33,10 @@ class AnalyzeRequest(BaseModel):
             )
 
         return cleaned
+
+
+class AnalyzeRequest(JobDescriptionRequest):
+    pass
 
 
 class Heatmap(BaseModel):
@@ -116,36 +120,8 @@ class GeneratedResume(BaseModel):
     )
 
 
-class GenerateRequest(BaseModel):
-    resume_id: int = Field(
-        ...,
-        gt=0,
-        description="Valid resume ID",
-    )
-    job_description: str = Field(
-        ...,
-        min_length=50,
-        max_length=20000,
-    )
-
-    @field_validator("job_description")
-    @classmethod
-    def validate_job_description(
-        cls,
-        value: str,
-    ) -> str:
-        cleaned = " ".join(
-            value.split()
-        )
-
-        if len(cleaned.split()) < 10:
-            raise ValueError(
-                "Job description is too short. "
-                "Please enter at least 10 "
-                "meaningful words."
-            )
-
-        return cleaned
+class GenerateRequest(JobDescriptionRequest):
+    pass
 
 
 class GenerateResponse(BaseModel):

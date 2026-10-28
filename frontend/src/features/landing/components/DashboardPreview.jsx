@@ -290,10 +290,10 @@ export default function DashboardPreview({ onTriggerAuth }) {
         </div>
         <div>
           <p className="text-[10px] font-bold text-slate-800 dark:text-white">
-            3× more interviews
+            Targeted Interview Prep
           </p>
           <p className="text-[9px] text-slate-500 dark:text-slate-400">
-            vs manual applications
+            Tailored to role & skills
           </p>
         </div>
       </button>

@@ -104,10 +104,10 @@ export function useResumeEditor() {
           role: exp.role || "",
           company: exp.company || "",
           location: exp.location || "",
-          startMonth: exp.startMonth || "01",
-          startYear: exp.startYear || "2021",
-          endMonth: exp.endMonth || "12",
-          endYear: exp.endYear || "present",
+          startMonth: exp.startMonth || exp.start_month || "",
+          startYear: exp.startYear || exp.start_year || "",
+          endMonth: exp.endMonth || exp.end_month || "",
+          endYear: exp.endYear || exp.end_year || "",
           current:
             exp.current ||
             exp.endYear === "present" ||
@@ -127,8 +127,8 @@ export function useResumeEditor() {
           degree: edu.degree || "",
           school: edu.school || edu.institution || "",
           location: edu.location || "",
-          startYear: edu.startYear || edu.start_year || "2015",
-          endYear: edu.endYear || edu.end_year || "2019",
+          startYear: edu.startYear || edu.start_year || "",
+          endYear: edu.endYear || edu.end_year || "",
           gpa: edu.gpa || "",
           honors: edu.honors || "",
         })),

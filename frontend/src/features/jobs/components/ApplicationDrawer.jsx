@@ -1,26 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, ChevronDown, Zap, MessageSquare, ExternalLink } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { ALL_STATUSES, STATUS_CFG } from "../constants/jobs.constants";
+import { getJobNotes, updateJobNotes } from "../services/jobs.service";
 
 export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState(app.status);
   const [notes, setNotes] = useState("");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const debounceRef = useRef(null);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const savedNotes = localStorage.getItem(`notes_${app.job_id}`) || "";
-    setNotes(savedNotes);
     setStatus(app.status);
+    let mounted = true;
+    async function loadNotes() {
+      try {
+        const res = await getJobNotes(app.job_id);
+        if (mounted && res && res.notes !== undefined) {
+          setNotes(res.notes || "");
+        }
+      } catch {
+        // Fallback to app notes if already loaded on model
+        if (mounted && app.notes) {
+          setNotes(app.notes);
+        }
+      }
+    }
+    loadNotes();
+    return () => {
+      mounted = false;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [app]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleNotesChange = (val) => {
     setNotes(val);
-    localStorage.setItem(`notes_${app.job_id}`, val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        await updateJobNotes(app.job_id, val);
+      } catch (err) {
+        console.error("Failed to save job notes to backend:", err);
+      }
+    }, 500);
   };
 
   const appliedDateStr = app.applied_at
@@ -158,7 +184,16 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => {
-                navigate("/resumes?view=new");
+                navigate("/resumes?view=new", {
+                  state: {
+                    job: {
+                      id: app.job_id,
+                      title: app.job_title,
+                      company: app.company_name,
+                      description: app.job_description || "",
+                    },
+                  },
+                });
                 onClose();
               }}
               className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm shadow-primary/15 cursor-pointer"
@@ -167,7 +202,16 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
             </button>
             <button
               onClick={() => {
-                navigate("/interview");
+                navigate("/interview", {
+                  state: {
+                    job: {
+                      id: app.job_id,
+                      title: app.job_title,
+                      company: app.company_name,
+                      description: app.job_description || "",
+                    },
+                  },
+                });
                 onClose();
               }}
               className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted active:scale-[0.98] transition-all cursor-pointer"

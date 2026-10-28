@@ -171,15 +171,11 @@ def generate(
                 detail="The selected resume does not contain usable content.",
             )
 
-        logger.warning(
-            "[GENERATOR_SOURCE] user_id=%s resume_id=%s title=%s "
-            "original_filename=%s parsed_preview=%s resume_json_preview=%s",
+        logger.info(
+            "[GENERATOR_SOURCE] user_id=%s resume_id=%s parsed_len=%d",
             current_user.id,
             resume.id,
-            resume.title,
-            resume.original_filename,
-            (resume.parsed_text or "")[:500],
-            (resume.resume_json or "")[:500],
+            len(source_resume_text),
         )
 
         result = generate_resume(
@@ -341,7 +337,40 @@ def generate(
                     new_ats = retry_ats
 
 
-        return {"resume": result.get("resume", {}), "resume_id": None}
+        from app.resume.repository.resume_repository import ResumeRepository
+        from app.resume.services.resume_normalizer import (
+            canonical_resume_to_text,
+            get_canonical_hash,
+            normalize_resume,
+        )
+
+        normalized_data = normalize_resume(r_data)
+        serialized_json = json.dumps(normalized_data)
+        parsed_text = canonical_resume_to_text(normalized_data)
+        c_hash = get_canonical_hash(normalized_data)
+
+        new_resume = Resume(
+            user_id=current_user.id,
+            title=f"Tailored - {cleaned_title[:80]}",
+            original_filename=f"{cleaned_title[:60]}_tailored.pdf",
+            file_path="generated",
+            file_type="json",
+            parsed_text=parsed_text,
+            resume_json=serialized_json,
+            skills=",".join(normalized_data.get("skills", [])),
+            ats_score=new_ats,
+            version="v1",
+            template="Professional",
+            is_generated=True,
+            is_master=False,
+            starred=False,
+            parsing_status="completed",
+            canonical_hash=c_hash,
+            content_hash=c_hash,
+        )
+        saved_resume = ResumeRepository.create_resume(db, new_resume)
+
+        return {"resume": normalized_data, "resume_id": saved_resume.id}
 
 
     except HTTPException as e:

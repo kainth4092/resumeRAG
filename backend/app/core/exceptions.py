@@ -47,3 +47,11 @@ class JobNotFoundException(AppException):
 
     status_code = 404
     default_message = "Job not found"
+
+
+class JobsProviderError(AppException):
+    """Exception raised when JSearch or upstream job provider fails."""
+
+    status_code = 502
+    default_message = "Jobs provider request failed."
+

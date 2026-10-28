@@ -72,22 +72,12 @@ class ResumeUpdateSchema(BaseModel):
         min_length=1,
         max_length=100,
     )
-    version: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=50,
-    )
-    ats_score: int | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-    )
+    starred: bool | None = None
     resume_json: dict | None = None
 
     @field_validator(
         "title",
         "template",
-        "version",
     )
     @classmethod
     def clean_text(

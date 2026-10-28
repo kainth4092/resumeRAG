@@ -33,6 +33,7 @@ from app.interview.services.interview_retrieval_service import (
     extract_resume_skills,
     extract_jd_skills,
     retrieve_questions_rag,
+    expand_bank_background_job,
 )
 from app.services.notification_service import create_notification
 
@@ -234,6 +235,7 @@ def list_bank_questions(
 )
 def retrieve_interview_questions(
     payload: InterviewRetrievalRequest,
+    background_tasks: BackgroundTasks,
     limit: int = Query(
         default=40,
         ge=1,
@@ -257,6 +259,12 @@ def retrieve_interview_questions(
         jd_skills = extract_jd_skills(
             payload.job_description,
         )
+        if resume_skills:
+            background_tasks.add_task(
+                expand_bank_background_job,
+                resume_skills,
+                current_user.id,
+            )
         questions = retrieve_questions_rag(
             db,
             user_id=current_user.id,

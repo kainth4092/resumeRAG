@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import ForeignKey, String, Text, DateTime, Boolean, Integer, Index
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, deferred
 from app.core.database import Base
 
 
@@ -15,9 +15,10 @@ class Resume(Base):
     title: Mapped[str] = mapped_column(String(255))
     original_filename: Mapped[str] = mapped_column(String(255))
     file_path: Mapped[str] = mapped_column(String(500))
-    file_content_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
-    parsed_text: Mapped[str] = mapped_column(Text)
+    file_content_base64: Mapped[str | None] = deferred(mapped_column(Text, nullable=True))
+    parsed_text: Mapped[str] = deferred(mapped_column(Text))
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    starred: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     ats_score: Mapped[int] = mapped_column(Integer, nullable=True, default=75)
     skills: Mapped[str] = mapped_column(Text, nullable=True)
@@ -30,6 +31,7 @@ class Resume(Base):
     resume_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsing_status: Mapped[str | None] = mapped_column(String(50), nullable=True, default="pending")
     canonical_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     scoring_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     prompt_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     jd_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)

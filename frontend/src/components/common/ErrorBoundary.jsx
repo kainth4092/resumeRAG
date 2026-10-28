@@ -31,17 +31,19 @@ class ErrorBoundary extends React.Component {
           <h2 style={{ fontSize: "1.25rem", fontWeight: "bold" }}>
             Something went wrong.
           </h2>
-          <details
-            style={{
-              whiteSpace: "pre-wrap",
-              marginTop: "10px",
-              fontSize: "0.875rem",
-            }}
-          >
-            {this.state.error && this.state.error.toString()}
-            <br />
-            {this.state.errorInfo && this.state.errorInfo.componentStack}
-          </details>
+          {import.meta.env.DEV && (
+            <details
+              style={{
+                whiteSpace: "pre-wrap",
+                marginTop: "10px",
+                fontSize: "0.875rem",
+              }}
+            >
+              {this.state.error && this.state.error.toString()}
+              <br />
+              {this.state.errorInfo && this.state.errorInfo.componentStack}
+            </details>
+          )}
         </div>
       );
     }

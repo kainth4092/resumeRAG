@@ -46,13 +46,28 @@ class GoogleLoginRequest(BaseModel):
 class AccountUpdateRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr
-    phone: str | None = None
-    location: str | None = None
-    headline: str | None = None
+    phone: str | None = Field(default=None, max_length=20)
+    location: str | None = Field(default=None, max_length=150)
+    headline: str | None = Field(default=None, max_length=150)
 
 
 class PasswordChangeRequest(BaseModel):
     current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str):
+        validate_password(value)
+        return value
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=10, max_length=128)
     new_password: str
 
     @field_validator("new_password")

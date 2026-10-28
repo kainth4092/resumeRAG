@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from app.services.roadmap.role_catalog import ROLE_CATALOG, ROLE_ALIASES
@@ -406,15 +407,12 @@ def build_roadmap_phases(
 
         for skill in skills:
             skill_name = skill["name"]
+            skill_slug = re.sub(r"[^a-z0-9]+", "-", skill_name.lower()).strip("-")
 
-            for task in get_skill_learning_tasks(skill_name):
+            for idx, task in enumerate(get_skill_learning_tasks(skill_name), start=1):
                 tasks.append(
                     {
-                        "id": (
-                            f"phase-{phase_number}-"
-                            f"{skill_name.lower().replace(' ', '-')}-"
-                            f"{len(tasks) + 1}"
-                        ),
+                        "id": f"task-{skill_slug}-{idx}",
                         "title": task,
                         "skill": skill_name,
                         "completed": False,

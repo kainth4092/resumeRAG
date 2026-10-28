@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class SkillCreate(BaseModel):
-    skill_name: str = Field(min_length=2, max_length=50)
+    skill_name: str = Field(min_length=1, max_length=50)
 
     @field_validator("skill_name")
     @classmethod

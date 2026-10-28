@@ -1,5 +1,8 @@
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
+import hashlib
 import json
+import logging
+import secrets
 import urllib.request
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -10,6 +13,7 @@ from google.auth.transport import requests
 from app.core.database import get_db
 from app.models.user import User
 from app.models.profile import Profile
+from app.models.auth import PasswordResetToken
 from app.schemas.auth import (
     RegisterRequest,
     LoginRequest,
@@ -18,10 +22,15 @@ from app.schemas.auth import (
     GoogleLoginRequest,
     AccountUpdateRequest,
     PasswordChangeRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 )
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.dependencies import get_current_user
 from app.core.config import settings
+from app.api.email.services.email_service import email_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -305,4 +314,96 @@ def delete_settings_account(
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to delete account.")
     return {"message": "Account deleted successfully"}
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
+    if not user:
+        # Avoid user enumeration
+        return {"message": "If this email is registered, password reset instructions have been sent."}
+
+    # Rate limiting: max 3 reset requests per hour per user
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    recent_count = (
+        db.query(PasswordResetToken)
+        .filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.created_at >= one_hour_ago,
+        )
+        .count()
+    )
+    if recent_count >= 3:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password reset attempts. Please try again later.",
+        )
+
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+    reset_token = PasswordResetToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=expires_at,
+    )
+    db.add(reset_token)
+    db.commit()
+
+    base_frontend = settings.FRONTEND_URL.split(",")[0].strip().rstrip("/")
+    reset_link = f"{base_frontend}/reset-password?token={raw_token}"
+    email_body = (
+        f"Hi {user.name or 'there'},\n\n"
+        f"We received a request to reset your ResuPilot password. Click the link below to set a new password:\n\n"
+        f"{reset_link}\n\n"
+        f"This link will expire in 30 minutes. If you did not request this, you can safely ignore this email."
+    )
+    try:
+        email_service.send_resume_email(
+            to_email=user.email,
+            subject="Reset your ResuPilot password",
+            message=email_body,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send password reset email to user_id=%s: %s", user.id, exc)
+
+    return {"message": "If this email is registered, password reset instructions have been sent."}
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    token_hash = hashlib.sha256(payload.token.strip().encode("utf-8")).hexdigest()
+    now = datetime.now(timezone.utc)
+
+    reset_record = (
+        db.query(PasswordResetToken)
+        .filter(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.expires_at > now,
+        )
+        .first()
+    )
+    if not reset_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token.",
+        )
+
+    user = db.query(User).filter(User.id == reset_record.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.password_hash = hash_password(payload.new_password)
+    reset_record.used_at = now
+
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to reset password.")
+
+    return {"message": "Password reset successfully. You may now log in with your new password."}
+
 

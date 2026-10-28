@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { emailService } from "../services/emailService";
 import { getResumes, getActiveResume } from "../../resume/services/resumeService";
+import { getPDFBlob } from "../../resume/exporters/pdf";
 
 export function useEmailModal({ open, onClose, initialResume }) {
   const { user } = useAuth();
@@ -204,9 +205,19 @@ export function useEmailModal({ open, onClose, initialResume }) {
     try {
       const activeRecipient = email.trim();
       const rawResumeId = selectedResume?.id || selectedResume?.resume_id;
-      let resumeId = parseInt(rawResumeId, 10);
-      if (isNaN(resumeId)) {
-        resumeId = 1;
+      const resumeId = parseInt(rawResumeId, 10);
+      if (isNaN(resumeId) || !selectedResume) {
+        setErrorMessage("Please select a valid resume before sending.");
+        setSendState("error");
+        return;
+      }
+
+      let pdfBlob = null;
+      try {
+        const resumeContent = selectedResume.resume || selectedResume;
+        pdfBlob = await getPDFBlob(resumeContent, selectedResume.template || "Professional");
+      } catch (pdfErr) {
+        console.warn("[Email Modal] Could not render local PDF blob, relying on backend resume copy:", pdfErr);
       }
 
       await emailService.send({
@@ -217,6 +228,7 @@ export function useEmailModal({ open, onClose, initialResume }) {
         templateId: selectedResume?.template || null,
         cc: cc.trim(),
         bcc: bcc.trim(),
+        pdfBlob,
       });
 
       setSendState("success");
