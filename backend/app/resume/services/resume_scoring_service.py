@@ -290,3 +290,6 @@ def calculate_scores(
         "recruiter_readiness": recruiter_readiness,
         "resume_health_score": resume_health_score,
     }
+
+
+calculate_ats_score = calculate_scores

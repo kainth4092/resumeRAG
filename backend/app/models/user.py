@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from app.models.user_project import UserProject
     from app.models.user_education import UserEducation
     from app.models.user_experience import UserExperience
-    from app.models.user_roadmap import UserRoadmap
+    from app.models.roadmap import Roadmap
 
 
 class User(Base):
@@ -55,9 +55,8 @@ class User(Base):
     resumes: Mapped[list["Resume"]] = relationship(
         "Resume", back_populates="user", cascade="all, delete-orphan"
     )
-    roadmap: Mapped["UserRoadmap"] = relationship(
-        "UserRoadmap",
+    roadmaps: Mapped[list["Roadmap"]] = relationship(
+        "Roadmap",
         back_populates="user",
-        uselist=False,
         cascade="all, delete-orphan",
     )

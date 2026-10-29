@@ -15,11 +15,16 @@ from app.models.bookmark import InterviewBookmark
 from app.models.user_jobs import UserJob
 from app.models.job_cache import SearchCache, JobCache
 from app.models.mock_interview import MockInterviewSession, MockInterviewAnswer
-from app.models.user_roadmap import UserRoadmap
+from app.models.roadmap import Roadmap
 from app.models.challenge import ChallengeAttempt
 from app.models.auth import PasswordResetToken
 from app.models.dashboard_task import DashboardTask
 from app.models.job_context import JobContext
+from app.models.pipeline_run import PipelineRun
+from app.models.resume_job_match import ResumeJobMatch
+from app.models.llm_usage import LLMUsage
+
+UserRoadmap = Roadmap
 
 __all__ = [
     "User",
@@ -42,8 +47,13 @@ __all__ = [
     "JobContext",
     "MockInterviewSession",
     "MockInterviewAnswer",
+    "Roadmap",
     "UserRoadmap",
     "ChallengeAttempt",
     "PasswordResetToken",
     "DashboardTask",
+    "PipelineRun",
+    "ResumeJobMatch",
+    "LLMUsage",
 ]
+

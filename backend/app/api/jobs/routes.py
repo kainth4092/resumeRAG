@@ -86,6 +86,7 @@ async def search_jobs(
 
 @router.get("/recommended")
 async def recommended_jobs(
+    resume_id: int | None = Query(default=None),
     location: str | None = Query(
         default=None,
         max_length=100,
@@ -106,9 +107,35 @@ async def recommended_jobs(
     db: Session = Depends(get_db),
 ):
     try:
+        if resume_id is not None:
+            from app.models.resume import Resume
+            from app.models.resume_job_match import ResumeJobMatch
+
+            resume = (
+                db.query(Resume)
+                .filter(Resume.id == resume_id, Resume.user_id == current_user.id)
+                .first()
+            )
+            if not resume:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Resume not found or access denied.",
+                )
+
+            # Check if ranked matches exist for this resume
+            matches = (
+                db.query(ResumeJobMatch)
+                .filter(ResumeJobMatch.resume_id == resume_id)
+                .order_by(ResumeJobMatch.score.desc())
+                .all()
+            )
+            if matches:
+                return [m.job_data for m in matches if m.job_data]
+
         return await JobsService.get_recommended_jobs(
             db,
             current_user=current_user,
+            resume_id=resume_id,
             location=location,
             employment_type=employment_type,
             remote=remote,

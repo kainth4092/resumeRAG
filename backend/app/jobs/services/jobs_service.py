@@ -70,6 +70,7 @@ class JobsService:
     async def get_recommended_jobs(
         db: Session,
         current_user: User,
+        resume_id: int | None = None,
         location: str | None = None,
         employment_type: str | None = None,
         remote: str | None = None,
@@ -85,9 +86,20 @@ class JobsService:
         if user_skills:
             skills = [s.skill_name for s in user_skills]
 
-        latest_resume = JobsRepository.get_active_resume(db, current_user.id)
-        if not latest_resume:
-            latest_resume = JobsRepository.get_latest_resume(db, current_user.id)
+        if resume_id is not None:
+            from app.models.resume import Resume
+            latest_resume = (
+                db.query(Resume)
+                .filter(Resume.id == resume_id, Resume.user_id == current_user.id)
+                .first()
+            )
+            if not latest_resume:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=404, detail="Resume not found or access denied.")
+        else:
+            latest_resume = JobsRepository.get_active_resume(db, current_user.id)
+            if not latest_resume:
+                latest_resume = JobsRepository.get_latest_resume(db, current_user.id)
 
         if latest_resume:
             resume_json = {}

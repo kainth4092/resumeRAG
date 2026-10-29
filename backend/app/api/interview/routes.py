@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -45,10 +45,31 @@ def generate_interview(
     response_model=list[InterviewHistoryItem],
 )
 def interview_history(
+    resume_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return InterviewWorkflowService.get_history(db, current_user)
+    return InterviewWorkflowService.get_history(
+        db=db,
+        current_user=current_user,
+        resume_id=resume_id,
+    )
+
+
+@router.get(
+    "/session-by-resume/{resume_id}",
+    response_model=InterviewSessionResponse,
+)
+def get_interview_session_by_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return InterviewWorkflowService.get_session_by_resume(
+        db=db,
+        resume_id=resume_id,
+        current_user=current_user,
+    )
 
 
 @router.get("/challenge/questions")

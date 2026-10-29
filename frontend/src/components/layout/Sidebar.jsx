@@ -32,8 +32,8 @@ const NAV_GROUPS = [
       {
         id: "generator",
         icon: Zap,
-        label: "AI Generator",
-        route: "/generator",
+        label: "AI Pipeline",
+        route: "/pipeline",
         badge: "AI",
       },
       { id: "resumes", icon: FileText, label: "Resumes", route: "/resumes" },
@@ -125,12 +125,11 @@ export default function Sidebar({ collapsed, setMobileOpen }) {
     if (route === "/dashboard") {
       return location.pathname === "/dashboard";
     }
-    if (route === "/generator") {
+    if (route === "/pipeline" || route === "/generator") {
       return (
+        location.pathname.startsWith("/pipeline") ||
         location.pathname.startsWith("/generator") ||
-        location.pathname.startsWith("/analysis") ||
-        (location.pathname.startsWith("/resumes") &&
-          location.search.includes("view=new"))
+        location.pathname.startsWith("/analysis")
       );
     }
     if (route === "/resumes") {

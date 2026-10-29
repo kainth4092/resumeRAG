@@ -32,6 +32,12 @@ class InterviewSession(Base):
     role = Column(String(255), nullable=True)
     candidate_type = Column(String(20), nullable=False)
     job_description = Column(Text, nullable=False)
+    job_context_id = Column(
+        Integer, ForeignKey("job_contexts.id", ondelete="SET NULL"), nullable=True
+    )
+    pipeline_run_id = Column(
+        String(36), ForeignKey("pipeline_runs.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),
@@ -44,6 +50,8 @@ class InterviewSession(Base):
         cascade="all, delete-orphan",
     )
     resume = relationship("Resume")
+    job_context = relationship("JobContext")
+    pipeline_run = relationship("PipelineRun")
 
     @property
     def questions_count(self) -> int:

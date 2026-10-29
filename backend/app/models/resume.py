@@ -28,6 +28,13 @@ class Resume(Base):
         String(100), nullable=True, default="Professional"
     )
     is_generated: Mapped[bool] = mapped_column(Boolean, default=False)
+    source: Mapped[str] = mapped_column(String(50), default="upload")
+    parent_resume_id: Mapped[int | None] = mapped_column(
+        ForeignKey("resumes.id", ondelete="SET NULL"), nullable=True
+    )
+    job_context_id: Mapped[int | None] = mapped_column(
+        ForeignKey("job_contexts.id", ondelete="SET NULL"), nullable=True
+    )
     resume_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsing_status: Mapped[str | None] = mapped_column(String(50), nullable=True, default="pending")
     parse_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -38,3 +45,7 @@ class Resume(Base):
     jd_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     user = relationship("User", back_populates="resumes")
+    parent_resume = relationship(
+        "Resume", remote_side=[id], foreign_keys=[parent_resume_id]
+    )
+    job_context = relationship("JobContext")

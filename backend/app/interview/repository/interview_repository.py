@@ -8,13 +8,35 @@ class InterviewRepository:
         return db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == user_id).first()
 
     @staticmethod
-    def get_user_interview_history(db: Session, user_id: int) -> list[InterviewSession]:
-        return (
+    def get_user_interview_history(
+        db: Session,
+        user_id: int,
+        resume_id: int | None = None,
+    ) -> list[InterviewSession]:
+        query = (
             db.query(InterviewSession)
             .options(joinedload(InterviewSession.questions))
             .filter(InterviewSession.user_id == user_id)
+        )
+        if resume_id is not None:
+            query = query.filter(InterviewSession.resume_id == resume_id)
+        return query.order_by(InterviewSession.created_at.desc()).all()
+
+    @staticmethod
+    def get_session_by_resume(
+        db: Session,
+        resume_id: int,
+        user_id: int,
+    ) -> InterviewSession | None:
+        return (
+            db.query(InterviewSession)
+            .options(joinedload(InterviewSession.questions))
+            .filter(
+                InterviewSession.resume_id == resume_id,
+                InterviewSession.user_id == user_id,
+            )
             .order_by(InterviewSession.created_at.desc())
-            .all()
+            .first()
         )
 
     @staticmethod

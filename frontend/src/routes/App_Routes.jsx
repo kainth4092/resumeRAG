@@ -22,6 +22,9 @@ const Profile = lazy(() =>
     default: m.Profile,
   })),
 );
+const PipelinePage = lazy(
+  () => import("../features/pipeline/pages/PipelinePage"),
+);
 const ResumeEditor = lazy(
   () => import("../features/resume/pages/ResumeEditor"),
 );
@@ -64,8 +67,10 @@ export default function AppRoutes() {
                 <Route path="/settings" element={<Settings />} />
                 <Route
                   path="/generator"
-                  element={<Navigate to="/resumes?view=new" replace />}
+                  element={<Navigate to="/pipeline" replace />}
                 />
+                <Route path="/pipeline" element={<PipelinePage />} />
+                <Route path="/pipeline/:runId" element={<PipelinePage />} />
                 <Route path="/resume/editor" element={<ResumeEditor />} />
                 <Route path="/resumes" element={<MyResumes />} />
                 <Route path="/analysis" element={<ResumeAnalysis />} />

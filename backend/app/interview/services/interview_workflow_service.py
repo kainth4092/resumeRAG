@@ -66,8 +66,43 @@ class InterviewWorkflowService:
         return {"session": session}
 
     @staticmethod
-    def get_history(db: Session, current_user: User) -> list:
-        return InterviewRepository.get_user_interview_history(db, current_user.id)
+    def get_history(
+        db: Session,
+        current_user: User,
+        resume_id: int | None = None,
+    ) -> list:
+        if resume_id is not None:
+            resume = InterviewRepository.get_resume(db, resume_id, current_user.id)
+            if not resume:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Resume not found",
+                )
+        return InterviewRepository.get_user_interview_history(
+            db,
+            current_user.id,
+            resume_id=resume_id,
+        )
+
+    @staticmethod
+    def get_session_by_resume(db: Session, resume_id: int, current_user: User):
+        resume = InterviewRepository.get_resume(db, resume_id, current_user.id)
+        if not resume:
+            raise HTTPException(
+                status_code=404,
+                detail="Resume not found",
+            )
+        session = InterviewRepository.get_session_by_resume(
+            db,
+            resume_id,
+            current_user.id,
+        )
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Interview session not found for this resume",
+            )
+        return session
 
     @staticmethod
     def get_session(db: Session, session_id: int, current_user: User):

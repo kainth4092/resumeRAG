@@ -24,10 +24,10 @@ export default function DashboardHeader({
   const quickActions = [
     {
       icon: Zap,
-      label: "Generate Resume",
-      desc: "AI-powered, ATS optimized",
+      label: "AI Pipeline",
+      desc: "Tailor resume, jobs & roadmap",
       color: "bg-primary",
-      page: "/generator",
+      page: "/pipeline",
     },
     {
       icon: MessageSquare,

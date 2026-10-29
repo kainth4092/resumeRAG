@@ -62,8 +62,10 @@ class RoadmapResponse(BaseModel):
 class RoadmapTargetUpdate(BaseModel):
     target_role: str | None = None
     target_level: str | None = None
+    resume_id: int | None = None
 
 
 class RoadmapTaskToggle(BaseModel):
     task_id: str
+    resume_id: int | None = None
 
