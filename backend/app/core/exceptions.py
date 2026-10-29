@@ -2,7 +2,9 @@ class AppException(Exception):
     status_code = 500
     default_message = "An unexpected error occurred"
 
-    def __init__(self, message: str | None = None):
+    def __init__(self, message: str | None = None, status_code: int | None = None):
+        if status_code is not None:
+            self.status_code = status_code
         self.message = message or self.default_message
         super().__init__(self.message)
 
