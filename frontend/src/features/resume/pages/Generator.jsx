@@ -7,7 +7,7 @@ import ATSScore from "../components/generator/ATSScore";
 import AISuggestions from "../components/generator/AISuggestions";
 import LivePreview from "../components/resume/editor/LivePreview";
 import TemplateSelector from "../components/generator/TemplateSelector";
-import { downloadPDF, downloadDOCX, printResume } from "../exporters";
+import { downloadPDF, printResume } from "../exporters";
 import {
   CheckCircle2,
   AlertCircle,
@@ -18,11 +18,14 @@ import {
   ArrowLeft,
   Zap,
   X,
+  Sparkles,
+  Lightbulb,
 } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "../components/resume/templates";
 import { useResumeGenerator } from "../hooks/useResumeGenerator";
 import Select from "../components/resume/dashboard/Select";
 import TemplateThumbnail from "../components/resume/templates/TemplateThumbnail";
+import { fromApi } from "../model/resumeModel";
 import { MOCK_RESUME } from "./templatesData";
 import ResumeSkeleton from "../../../components/loading/ResumeSkeleton";
 
@@ -68,64 +71,6 @@ export function ResumeGenerator({ onBack }) {
     importingProfile,
     handleImportProfile,
   } = useResumeGenerator();
-
-  const normalizeResumeForPreview = (r) => {
-    if (!r) return null;
-    return {
-      personal_info: {
-        name: r.personal_info?.name || "",
-        title: r.headline || r.personal_info?.title || "",
-        email: r.personal_info?.email || "",
-        phone: r.personal_info?.phone || "",
-        location: r.personal_info?.location || "",
-        linkedin: r.personal_info?.linkedin || "",
-        github: r.personal_info?.github || "",
-        website: r.personal_info?.website || "",
-      },
-      headline: r.headline || "",
-      summary: { text: r.summary || "" },
-      skills: (r.skills || []).map((s, idx) =>
-        typeof s === "string" ? { id: idx, name: s, level: 80 } : s,
-      ),
-      experience: (r.experience || []).map((exp, idx) => ({
-        id: exp.id || idx,
-        role: exp.role || "",
-        company: exp.company || "",
-        location: exp.location || "",
-        startMonth: exp.startMonth || exp.start_month || "",
-        startYear: exp.startYear || exp.start_year || "",
-        endMonth: exp.endMonth || exp.end_month || "",
-        endYear: exp.endYear || exp.end_year || "",
-        current: exp.current || exp.endYear === "present" || false,
-        bullets: exp.bullets || exp.description || [""],
-      })),
-      education: (r.education || []).map((edu, idx) => ({
-        id: edu.id || idx,
-        degree: edu.degree || "",
-        school: edu.school || edu.institution || "",
-        location: edu.location || "",
-        startYear: edu.startYear || edu.start_year || "",
-        endYear: edu.endYear || edu.end_year || "",
-        gpa: edu.gpa || "",
-        honors: edu.honors || "",
-      })),
-      projects: (r.projects || []).map((proj, idx) => ({
-        id: proj.id || idx,
-        name: proj.name || proj.title || "",
-        tech:
-          proj.tech ||
-          (Array.isArray(proj.technologies)
-            ? proj.technologies.join(" · ")
-            : proj.technologies || ""),
-        url: proj.url || proj.github || proj.live || "",
-        desc:
-          proj.desc ||
-          (Array.isArray(proj.description)
-            ? proj.description.join("\n")
-            : proj.description || ""),
-      })),
-    };
-  };
 
   const canGenerate = uploaded && !!jd && !!selectedTemplateName;
 
@@ -464,30 +409,92 @@ export function ResumeGenerator({ onBack }) {
                   </div>
                 </div>
 
-                <div className="bg-muted/10 border border-border rounded-xl p-4 overflow-y-auto max-h-[750px]">
-                  <div className="max-w-[650px] mx-auto shadow-md rounded-lg overflow-hidden bg-card border border-border">
-                    <LivePreview
-                      personal={
-                        normalizeResumeForPreview(generatedResume).personal_info
-                      }
-                      summary={
-                        normalizeResumeForPreview(generatedResume).summary
-                      }
-                      skills={normalizeResumeForPreview(generatedResume).skills}
-                      experience={
-                        normalizeResumeForPreview(generatedResume).experience
-                      }
-                      education={
-                        normalizeResumeForPreview(generatedResume).education
-                      }
-                      projects={
-                        normalizeResumeForPreview(generatedResume).projects
-                      }
-                      color="#4F46E5"
-                      templateName={activeTemplate}
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const previewDoc = fromApi(generatedResume);
+                  return (
+                    <>
+                      <div className="bg-muted/10 border border-border rounded-xl p-4 overflow-y-auto max-h-[750px]">
+                        <div className="max-w-[650px] mx-auto shadow-md rounded-lg overflow-hidden bg-card border border-border">
+                          {previewDoc && (
+                            <LivePreview
+                              personal={previewDoc.personal}
+                              summary={{ text: previewDoc.summary }}
+                              skills={previewDoc.skillsList}
+                              experience={previewDoc.experience}
+                              education={previewDoc.education}
+                              projects={previewDoc.projects}
+                              color="#4F46E5"
+                              templateName={activeTemplate}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {previewDoc?.skill_gaps && previewDoc.skill_gaps.length > 0 && (
+                        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 text-xs space-y-2 text-left">
+                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
+                            <Sparkles size={14} />
+                            <span>Target Skill Gaps Identified</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            These target skills from the job description are not currently evidenced in your source resume. They are not fabricated into your resume:
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {previewDoc.skill_gaps.map((skill, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[11px] border border-amber-500/20"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {previewDoc?.suggested_projects && previewDoc.suggested_projects.length > 0 && (
+                        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 text-xs space-y-3 text-left">
+                          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold">
+                            <Lightbulb size={14} />
+                            <span>Suggested Portfolio Projects for Roadmap</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            Recommended projects to build evidence for this role. These are roadmap suggestions and are never placed onto your resume:
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                            {previewDoc.suggested_projects.map((proj, idx) => (
+                              <div
+                                key={idx}
+                                className="bg-card border border-border rounded-xl p-3 space-y-1.5"
+                              >
+                                <div className="font-semibold text-foreground text-xs">
+                                  {proj.title}
+                                </div>
+                                {proj.description && (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {proj.description}
+                                  </p>
+                                )}
+                                {proj.technologies && proj.technologies.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 pt-1">
+                                    {proj.technologies.map((t, ti) => (
+                                      <span
+                                        key={ti}
+                                        className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-foreground font-mono"
+                                      >
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 <div className="flex justify-start">
                   <button

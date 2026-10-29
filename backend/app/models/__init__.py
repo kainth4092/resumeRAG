@@ -19,6 +19,7 @@ from app.models.user_roadmap import UserRoadmap
 from app.models.challenge import ChallengeAttempt
 from app.models.auth import PasswordResetToken
 from app.models.dashboard_task import DashboardTask
+from app.models.job_context import JobContext
 
 __all__ = [
     "User",
@@ -38,6 +39,7 @@ __all__ = [
     "UserJob",
     "SearchCache",
     "JobCache",
+    "JobContext",
     "MockInterviewSession",
     "MockInterviewAnswer",
     "UserRoadmap",

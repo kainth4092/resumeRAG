@@ -4,9 +4,12 @@ import {
   Edit2,
   Printer,
   ArrowLeft,
+  Sparkles,
+  Lightbulb,
 } from "lucide-react";
 import LivePreview from "../resume/editor/LivePreview";
 import { downloadPDF, downloadDOCX, printResume } from "../../exporters";
+import { fromApi } from "../../model/resumeModel";
 
 export default function TailoredResult({
   generatedResume,
@@ -15,65 +18,7 @@ export default function TailoredResult({
   onNavigateEditor,
   activeTemplate = "Professional",
 }) {
-  const normalizeResumeForPreview = (r) => {
-    if (!r) return null;
-    return {
-      personal_info: {
-        name: r.personal_info?.name || "",
-        title: r.headline || r.personal_info?.title || "",
-        email: r.personal_info?.email || "",
-        phone: r.personal_info?.phone || "",
-        location: r.personal_info?.location || "",
-        linkedin: r.personal_info?.linkedin || "",
-        github: r.personal_info?.github || "",
-        website: r.personal_info?.website || "",
-      },
-      headline: r.headline || "",
-      summary: { text: r.summary || "" },
-      skills: (r.skills || []).map((s, idx) =>
-        typeof s === "string" ? { id: idx, name: s, level: 80 } : s,
-      ),
-      experience: (r.experience || []).map((exp, idx) => ({
-        id: exp.id || idx,
-        role: exp.role || "",
-        company: exp.company || "",
-        location: exp.location || "",
-        startMonth: exp.startMonth || exp.start_month || "",
-        startYear: exp.startYear || exp.start_year || "",
-        endMonth: exp.endMonth || exp.end_month || "",
-        endYear: exp.endYear || exp.end_year || "",
-        current: exp.current || exp.endYear === "present" || false,
-        bullets: exp.bullets || exp.description || [""],
-      })),
-      education: (r.education || []).map((edu, idx) => ({
-        id: edu.id || idx,
-        degree: edu.degree || "",
-        school: edu.school || edu.institution || "",
-        location: edu.location || "",
-        startYear: edu.startYear || edu.start_year || "",
-        endYear: edu.endYear || edu.end_year || "",
-        gpa: edu.gpa || "",
-        honors: edu.honors || "",
-      })),
-      projects: (r.projects || []).map((proj, idx) => ({
-        id: proj.id || idx,
-        name: proj.name || proj.title || "",
-        tech:
-          proj.tech ||
-          (Array.isArray(proj.technologies)
-            ? proj.technologies.join(" · ")
-            : proj.technologies || ""),
-        url: proj.url || proj.github || proj.live || "",
-        desc:
-          proj.desc ||
-          (Array.isArray(proj.description)
-            ? proj.description.join("\n")
-            : proj.description || ""),
-      })),
-    };
-  };
-
-  const previewData = normalizeResumeForPreview(generatedResume);
+  const previewData = fromApi(generatedResume);
 
   return (
     <div className="space-y-6 text-left animate-in fade-in duration-300">
@@ -105,8 +50,8 @@ export default function TailoredResult({
           <button
             onClick={() =>
               downloadPDF(
-                generatedResume,
-                `${generatedResume.personal_info?.name || "Optimized"}_Resume.pdf`,
+                previewData,
+                `${previewData?.personal?.name || "Optimized"}_Resume.pdf`,
                 activeTemplate,
               )
             }
@@ -118,8 +63,8 @@ export default function TailoredResult({
           <button
             onClick={() =>
               downloadDOCX(
-                generatedResume,
-                `${generatedResume.personal_info?.name || "Optimized"}_Resume.docx`,
+                previewData,
+                `${previewData?.personal?.name || "Optimized"}_Resume.docx`,
                 activeTemplate,
               )
             }
@@ -142,9 +87,9 @@ export default function TailoredResult({
         <div className="max-w-[620px] mx-auto shadow-md rounded-lg overflow-hidden bg-card border border-border">
           {previewData && (
             <LivePreview
-              personal={previewData.personal_info}
-              summary={previewData.summary}
-              skills={previewData.skills}
+              personal={previewData.personal}
+              summary={{ text: previewData.summary }}
+              skills={previewData.skillsList}
               experience={previewData.experience}
               education={previewData.education}
               projects={previewData.projects}
@@ -154,6 +99,71 @@ export default function TailoredResult({
           )}
         </div>
       </div>
+
+      {/* Skill Gaps Identified (Outside Resume Document) */}
+      {previewData?.skill_gaps && previewData.skill_gaps.length > 0 && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
+            <Sparkles size={14} />
+            <span>Target Skill Gaps Identified</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            These target skills from the job description are not currently evidenced in your source resume. They are not fabricated into your resume:
+          </p>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {previewData.skill_gaps.map((skill, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[11px] border border-amber-500/20"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suggested Roadmap Projects (Outside Resume Document) */}
+      {previewData?.suggested_projects && previewData.suggested_projects.length > 0 && (
+        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 text-xs space-y-3">
+          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold">
+            <Lightbulb size={14} />
+            <span>Suggested Portfolio Projects for Roadmap</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Recommended projects to build evidence for this role. These are roadmap suggestions and are never placed onto your resume:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            {previewData.suggested_projects.map((proj, idx) => (
+              <div
+                key={idx}
+                className="bg-card border border-border rounded-xl p-3 space-y-1.5"
+              >
+                <div className="font-semibold text-foreground text-xs">
+                  {proj.title}
+                </div>
+                {proj.description && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {proj.description}
+                  </p>
+                )}
+                {proj.technologies && proj.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {proj.technologies.map((t, ti) => (
+                      <span
+                        key={ti}
+                        className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-foreground font-mono"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom return button */}
       <div className="flex justify-start">
@@ -167,3 +177,4 @@ export default function TailoredResult({
     </div>
   );
 }
+

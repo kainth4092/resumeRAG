@@ -4,7 +4,7 @@ import { Select, YEARS, CURRENT_YEARS } from "./Select";
 
 export default function EducationEditor({ education = [], onChange }) {
   const addEducation = () => onChange([...education, {
-    id: Date.now(), degree: "", school: "", location: "", startYear: "2018", endYear: "2022", gpa: "", honors: "",
+    id: Date.now(), degree: "", school: "", location: "", startYear: "", endYear: "", gpa: "", honors: "",
   }]);
 
   const updateEdu = (id, key, val) =>

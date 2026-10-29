@@ -113,6 +113,7 @@ TAXONOMY_ENTRIES: List[SkillEntry] = [
 
 # Build fast lookup indexes
 _CANONICAL_INDEX: Dict[str, SkillEntry] = {entry.canonical_name.lower(): entry for entry in TAXONOMY_ENTRIES}
+SKILLS_TAXONOMY = _CANONICAL_INDEX
 _ALIAS_TO_CANONICAL: Dict[str, str] = {}
 for entry in TAXONOMY_ENTRIES:
     _ALIAS_TO_CANONICAL[entry.canonical_name.lower()] = entry.canonical_name

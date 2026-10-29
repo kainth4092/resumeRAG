@@ -59,6 +59,15 @@ def get_resume(
     return ResumeService.get_resume_by_id(resume_id, db, current_user.id)
 
 
+@router.post("/{resume_id}/reparse")
+def reparse_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ResumeService.reparse_resume(resume_id, db, current_user.id)
+
+
 
 
 class ResumeUpdateSchema(BaseModel):

@@ -6,8 +6,7 @@ import {
   Edit2,
   CheckCircle2,
   Loader2,
-  Printer,
-  FileText,
+  AlertTriangle,
 } from "lucide-react";
 
 import PersonalEditor from "../components/resume/editor/PersonalEditor";
@@ -17,7 +16,7 @@ import SkillsEditor from "../components/resume/editor/SkillsEditor";
 import ExperienceEditor from "../components/resume/editor/ExperienceEditor";
 import ProjectsEditor from "../components/resume/editor/ProjectsEditor";
 import LivePreview from "../components/resume/editor/LivePreview";
-import { downloadPDF, downloadDOCX, printResume } from "../exporters";
+import { downloadPDF } from "../exporters";
 import { useResumeEditor } from "../hooks/useResumeEditor";
 import Select from "../components/resume/dashboard/Select";
 
@@ -43,6 +42,7 @@ export default function ResumeEditor() {
     setEducation,
     projects,
     setProjects,
+    parseWarnings,
     handleSave,
   } = useResumeEditor();
 
@@ -183,6 +183,28 @@ export default function ResumeEditor() {
       <div className="flex-1 overflow-hidden flex">
         {activeTab === "edit" && (
           <div className="flex-1 overflow-y-auto p-5 space-y-4 lg:max-w-2xl lg:border-r lg:border-border">
+            {parseWarnings && parseWarnings.length > 0 && (
+              <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200 text-xs space-y-2 text-left">
+                <div className="flex items-center gap-2 font-semibold">
+                  <AlertTriangle
+                    size={16}
+                    className="text-amber-600 dark:text-amber-400 shrink-0"
+                  />
+                  <span>
+                    Parsing Verification Warnings ({parseWarnings.length} item
+                    {parseWarnings.length > 1 ? "s" : ""})
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                  These parsed items could not be verified with high confidence against your source resume text. Please review and update them:
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                  {parseWarnings.map((warning, idx) => (
+                    <li key={idx}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <PersonalEditor personal={personal} onChange={setPersonal} />
             <SummaryEditor summary={summary} onChange={setSummary} />
             <SkillsEditor skills={skills} onChange={setSkills} />

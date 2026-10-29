@@ -61,310 +61,86 @@ def get_ats_prompt(resume_text: str, job_description: str) -> str:
 
 
 def get_resume_prompt(
-    resume_text: str,
+    indexed_resume_json: str,
     job_description: str,
-    schema_str: str,
+    schema_str: str = "",
     improvement_feedback: str | None = None,
 ) -> str:
-    return f"""
-ROLE:
-You are a senior ATS resume writer and technical recruiter.
+    feedback_block = ""
+    if improvement_feedback:
+        feedback_block = f"""
+==================================================
+VALIDATION FEEDBACK FROM PREVIOUS ATTEMPT
+==================================================
+{improvement_feedback}
+Fix all listed violations immediately. Do not repeat the flagged violations.
+"""
 
-PRIMARY OBJECTIVE:
-Create an ATS-friendly resume that follows the supplied JSON schema while
-preserving the candidate's real identity, employment history, education,
-skills, certifications, links, dates, and achievements.
+    return f"""ROLE:
+You are an expert ATS resume tailoring engine and technical career coach.
 
-The uploaded resume is the source of truth for candidate facts.
-The job description is used only for relevance, prioritization, terminology,
-and ATS optimization.
+CORE PRINCIPLE: CODE OWNS STRUCTURE, LLM OWNS WORDING.
+All candidate identity, contact details, companies, job titles, employment dates, degrees, institutions, and project links are preserved untouched by code.
+Your job is strictly to optimize the wording, summary, headline, and skills relevance against the target job description.
 
 ==================================================
-UPLOADED RESUME
+INDEXED SOURCE RESUME CONTENT
 ==================================================
-
-<RESUME>
-{resume_text}
-</RESUME>
+{indexed_resume_json}
 
 ==================================================
 TARGET JOB DESCRIPTION
 ==================================================
-
 <JOB_DESCRIPTION>
 {job_description}
 </JOB_DESCRIPTION>
 
 ==================================================
-FACTUAL RULES
+STRICT FACTUAL GUARDRAILS
 ==================================================
+1. ZERO METRIC HALLUCINATION:
+   Every number, percentage, dollar figure, or metric in a rewritten bullet MUST appear in the original source bullet. Never invent metrics (e.g. do not invent 'improved latency by 40%' if the original bullet did not state '40%').
 
-You MUST preserve all factual candidate information.
+2. NO NEW PROPER NOUNS:
+   Never introduce new companies, clients, unverified products, or organizations not present in the candidate's source text.
 
-Never invent or replace:
+3. SKILLS ORDERING & TRUTHFULNESS:
+   The `skills` field must ONLY contain skills already supported by the candidate's source resume or direct synonyms (e.g. Postgres -> PostgreSQL).
+   If the Job Description asks for skills the candidate does not have (e.g. AWS, Kubernetes, GraphQL), NEVER add them to candidate `skills` or bullet points. Put them in `skill_gaps` instead.
 
-- Candidate name
-- Email
-- Phone number
-- Location
-- LinkedIn URL
-- GitHub URL
-- Portfolio URL
-- Companies
-- Employment
-- Job titles
-- Internships
-- Training
-- Employment dates
-- Degrees
-- Institutions
-- Education dates
-- Certifications
-- Awards
-- Existing technical skills
-- Existing achievements
-- Existing numeric metrics
+4. NO FAKE PROJECTS ON THE RESUME:
+   Never fabricate fake portfolio or workplace projects on the resume. If the candidate could benefit from building portfolio projects for this job, put them in `suggested_projects` for their career roadmap.
 
-A technology appearing only in the Job Description is NOT evidence that the
-candidate possesses that technology.
-
-Do not convert:
-
-- Personal projects into employment
-- Academic projects into employment
-- Internships into full-time employment
-- Training into full-time employment
-- Job Description responsibilities into candidate experience
+5. SUMMARY BOUNDS:
+   The `summary` must be concise (60 to 100 words).
+   It must NEVER claim more years of experience than the source resume states.
 
 ==================================================
-EXPERIENCE RULES
+OUTPUT SCHEMA
 ==================================================
-
-Determine the candidate's experience using:
-
-1. Structured work-experience entries.
-2. Explicit experience statements anywhere in the resume.
-3. Experience statements in the professional summary.
-4. Experience statements in the headline.
-
-Examples:
-
-"6.5+ years of experience"
-"Over 4 years of software development experience"
-"3 years of experience as a backend developer"
-
-Preserve these experience claims when explicitly present.
-
-Do not downgrade an experienced candidate to a fresher merely because dates
-are incomplete.
-
-Do not assign an experience duration when the resume contains no supporting
-evidence.
-
-==================================================
-PROJECT POLICY
-==================================================
-
-CASE A — EXISTING PROJECTS:
-
-If one or more projects are present:
-
-- Preserve every real project.
-- Keep every project as one project object.
-- Improve grammar, clarity, action verbs, ATS terminology, and readability.
-- Preserve the project's original purpose.
-- Preserve supported technologies.
-- Never split project sentences or bullet points into separate projects.
-- Never merge unrelated projects.
-- Never move project content into Education.
-- Never move project content into Experience.
-- Never add unsupported functionality.
-- Never add unsupported technologies.
-- Never create additional projects when genuine projects already exist.
-
-CASE B — NO PROJECTS:
-
-If no project exists anywhere in the resume:
-
-You MAY generate a maximum of two realistic suggested portfolio projects.
-
-Generated projects MUST:
-
-- Use only skills already present in the candidate's resume.
-- Match the candidate's demonstrated experience level.
-- Be technically realistic.
-- Avoid fake companies and clients.
-- Avoid fake production usage.
-- Avoid fake deployment claims.
-- Avoid fake user counts.
-- Avoid fake performance metrics.
-- Avoid fake revenue or business impact.
-- Avoid claiming that the project is completed unless supported.
-- Be represented as personal or portfolio projects.
-
-Do not generate a project when the resume does not contain enough technical
-skills to support a realistic project.
-
-==================================================
-OPTIMIZATION RULES
-==================================================
-
-- Improve grammar and professional wording.
-- Improve ATS readability.
-- Use strong but factual action verbs.
-- Prioritize resume-supported Job Description skills first.
-
-- Reorder skills by relevance to the Job Description.
-- Promote technologies already demonstrated inside projects and experience.
-- Remove duplicate skills.
-- Merge obvious aliases.
-Examples:
-Postgres ↔ PostgreSQL
-JS ↔ JavaScript
-Py ↔ Python
-ML ↔ Machine Learning
-Do not remove distinct technologies.
-
-Never add unsupported Job Description skills.
-- Preserve distinct technologies.
-- Improve the professional summary.
-- Keep the summary approximately 60-100 words.
-- Preserve the candidate's actual experience level.
-==================================================
-JD COVERAGE OPTIMIZATION
-==================================================
-Before writing the resume:
-STEP 1
-Extract the Job Description into:
-
-- Required Skills
-- Preferred Skills
-- Responsibilities
-- Domain Keywords
-- Tools
-- Frameworks
-- Databases
-- Cloud Platforms
-- Soft Skills
-
-STEP 2
-Compare every extracted keyword with the uploaded resume.
-Create three internal groups:
-A. Already Supported
-Skills clearly supported by the resume.
-B. Indirectly Supported
-Skills reasonably inferred from projects or experience without inventing facts.
-
-Example:
-REST API
-↓
-Resume contains:
-Flask APIs
-→ acceptable
-Docker
-↓
-Resume contains Docker deployment
-→ acceptable
-C. Unsupported
-Skills with no evidence.
-Never add these.
-
-==================================================
-Resume optimization priorities:
-1. Rewrite the professional summary using the highest-priority supported JD keywords.
-2. Rewrite experience bullets to naturally include supported JD terminology.
-3. Rewrite project bullets to include supported technologies already demonstrated.
-4. Improve skill ordering so the most relevant supported skills appear first.
-5. Improve ATS keyword coverage naturally.
-6. Never repeat keywords unnaturally.
-7. Never perform keyword stuffing.
-8. Never invent experience.
-9. Never invent employment.
-10. Never invent years of experience.
-11. Maximize ATS using truthful evidence only.
-
-- Improve existing experience descriptions.
-- Improve existing project descriptions.
-- Do not fabricate measurable achievements.
-- Do not perform keyword stuffing.
-- Do not write "improved ATS score."
-==================================================
-STRICT STRUCTURE
-==================================================
-Return the root sections in exactly this order:
-
-1. personal_info
-2. headline
-3. summary
-4. skills
-5. experience
-6. projects
-7. education
-8. certifications
-9. awards
-10. languages
-11. hobbies
-
-SECTION BOUNDARY RULES:
-
-- Education may contain only education information.
-- Experience may contain only work, internship, or training information.
-- Projects may contain only project information.
-- Skills may contain only individual skill names.
-- Never append project descriptions to Education.
-- Never append skills to an institution or degree.
-- Never place project technologies inside an education degree.
-- Never use project bullet text as an education record.
-- Never create a separate project from an individual project bullet.
-
-==================================================
-OUTPUT
-==================================================
-
-Return one valid JSON object only.
-
-Do not return:
-
-- Markdown
-- Code fences
-- Comments
-- Explanations
-- Text before JSON
-- Text after JSON
-- Trailing commas
-- Additional keys
-
-Use exactly this schema:
-
-{schema_str}
-{
-f"""
-==================================================
-IMPROVEMENT FEEDBACK
-==================================================
-{improvement_feedback}
-Use this feedback only if it is provided.
-Improve the resume accordingly while preserving factual accuracy.
-"""
-if improvement_feedback
-else ""
-}
-
-FINAL VALIDATION:
-
-Before returning:
-
-1. Verify all personal information was preserved.
-2. Verify employment was not invented.
-3. Verify education contains no project or skill content.
-4. Verify every existing project remains one project.
-5. Verify no project bullet became a separate project.
-6. Verify unsupported JD skills were not added.
-7. Verify generated projects exist only when the original resume had none.
-8. Verify generated projects use only resume-supported skills.
-9. Verify missing values use empty strings or empty arrays.
-10. Verify the result is valid parseable JSON.
-"""
+Return ONLY valid JSON matching this schema:
+{{
+  "headline": "Targeted professional headline (e.g. Senior Backend Engineer | Python & Distributed Systems)",
+  "summary": "Targeted, compelling summary (60-100 words, strictly grounded in candidate experience)",
+  "skills": ["List of relevant skills drawn strictly from source skills / synonyms"],
+  "experience_bullets": {{
+    "0_0": "Rewritten experience bullet preserving all metrics and facts while improving action verbs and ATS clarity",
+    "0_1": "..."
+  }},
+  "project_bullets": {{
+    "0_0": "Rewritten project bullet preserving all original metrics and technologies",
+    "0_1": "..."
+  }},
+  "suggested_projects": [
+    {{
+      "title": "Roadmap Project Idea (clearly separated from resume)",
+      "description": "Recommended portfolio project to build in order to close skill gaps",
+      "technologies": ["Target technologies from JD"]
+    }}
+  ],
+  "skill_gaps": ["List of required JD skills absent from the candidate resume"]
+}}
+{feedback_block}"""
 
 
 def get_general_answer_prompt(

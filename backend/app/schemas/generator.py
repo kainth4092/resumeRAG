@@ -3,6 +3,7 @@ from pydantic import (
     Field,
     field_validator,
 )
+from app.schemas.resume_doc import ResumeDoc
 
 
 class JobDescriptionRequest(BaseModel):
@@ -102,22 +103,9 @@ class Education(BaseModel):
     end_year: str = ""
 
 
-class GeneratedResume(BaseModel):
-    personal_info: PersonalInfo = Field(default_factory=PersonalInfo)
-    headline: str = ""
-    summary: str = ""
-    skills: list[str] = Field(
-        default_factory=list,
-    )
-    experience: list[Experience] = Field(
-        default_factory=list,
-    )
-    projects: list[Project] = Field(
-        default_factory=list,
-    )
-    education: list[Education] = Field(
-        default_factory=list,
-    )
+class GeneratedResume(ResumeDoc):
+    """Backwards-compatible alias for ResumeDoc."""
+    pass
 
 
 class GenerateRequest(JobDescriptionRequest):
@@ -125,10 +113,16 @@ class GenerateRequest(JobDescriptionRequest):
 
 
 class GenerateResponse(BaseModel):
-    resume: GeneratedResume = Field(
-        default_factory=GeneratedResume,
+    resume: ResumeDoc = Field(
+        default_factory=ResumeDoc,
     )
     resume_id: int | None = None
+    suggested_projects: list[dict] = Field(
+        default_factory=list,
+    )
+    skill_gaps: list[str] = Field(
+        default_factory=list,
+    )
 
 
 class AnalyzeHealthRequest(BaseModel):

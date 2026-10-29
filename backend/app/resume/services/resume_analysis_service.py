@@ -44,35 +44,23 @@ def _is_empty_canonical(data: dict) -> bool:
 
 def parse_resume_text_to_json(resume_text: str) -> dict:
     """
-    Parses the resume text using a deterministic local parser and returns
-    the parsed canonical resume dict coerced to the schema.
-    Never returns None - always returns at least an empty canonical structure.
+    Parses resume text using the reliable 5-step pipeline and returns ResumeDoc dict.
+    Never returns None - always returns at least an empty ResumeDoc structure.
     """
     if not resume_text or not resume_text.strip():
-        logger.warning(
-            "[LOCAL_RESUME_PARSER] Empty resume text provided, returning empty canonical."
-        )
-        return coerce_to_canonical({})
+        from app.schemas.resume_doc import ResumeDoc
+        return ResumeDoc().model_dump()
 
     try:
-        from app.resume.services.local_resume_parser import parse_resume_text_locally
-
-        logger.info("[LOCAL_RESUME_PARSER] Running local deterministic resume parser.")
-        parsed = parse_resume_text_locally(resume_text)
-        result = coerce_to_canonical(parsed)
-
-        # Validate the parse result is not empty
-        if _is_empty_canonical(result):
-            logger.warning(
-                "[LOCAL_RESUME_PARSER] Local parser returned empty/minimal canonical resume."
-            )
-
-        return result
+        from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
+        doc, _warnings = parse_resume_pipeline(resume_text)
+        return doc.model_dump()
     except Exception as e:
         logger.error(
-            f"[LOCAL_RESUME_PARSER_FAILED] Error parsing resume text locally: {e}"
+            f"[RESUME_PARSER_PIPELINE_FAILED] Error parsing resume text: {e}"
         )
-        return coerce_to_canonical({})
+        from app.schemas.resume_doc import to_resume_doc
+        return to_resume_doc({}).model_dump()
 
 
 def analyze_resume_canonical(

@@ -30,6 +30,7 @@ class Resume(Base):
     is_generated: Mapped[bool] = mapped_column(Boolean, default=False)
     resume_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsing_status: Mapped[str | None] = mapped_column(String(50), nullable=True, default="pending")
+    parse_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
     canonical_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     scoring_version: Mapped[str | None] = mapped_column(String(50), nullable=True)

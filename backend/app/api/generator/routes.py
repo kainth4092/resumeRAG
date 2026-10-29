@@ -132,54 +132,36 @@ def generate(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        source_resume_text = resume.parsed_text or ""
+        from app.schemas.resume_doc import to_resume_doc, resume_doc_to_text
+        from app.resume.services.resume_scoring_service import calculate_scores
+        from app.resume.repository.resume_repository import ResumeRepository
+        import hashlib
+
+        # Extract source resume document
         if resume.resume_json:
             try:
-                stored_resume = json.loads(resume.resume_json)
-
-                if isinstance(stored_resume, dict) and stored_resume:
-                    contact = stored_resume.get("contact", {})
-                    has_name = (
-                        bool(contact.get("name", "").strip())
-                        if isinstance(contact, dict)
-                        else False
-                    )
-                    has_skills = bool(stored_resume.get("skills"))
-                    has_experience = bool(stored_resume.get("experience"))
-                    has_projects = bool(stored_resume.get("projects"))
-
-                    if has_name or has_skills or has_experience or has_projects:
-                        source_resume_text = json.dumps(
-                            stored_resume,
-                            ensure_ascii=False,
-                            indent=2,
-                        )
-                    else:
-                        logger.warning(
-                            "resume_json for resume id=%s is empty/incomplete; falling back to parsed_text.",
-                            resume.id,
-                        )
-            except (TypeError, ValueError, json.JSONDecodeError):
-                logger.warning(
-                    "Invalid resume_json for resume id=%s; using parsed_text.",
-                    resume.id,
-                )
-
-        if not source_resume_text.strip():
+                stored = json.loads(resume.resume_json)
+                source_doc = to_resume_doc(stored)
+            except Exception:
+                source_doc = to_resume_doc({})
+        elif resume.parsed_text and resume.parsed_text.strip():
+            from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
+            source_doc, _ = parse_resume_pipeline(resume.parsed_text)
+        else:
             raise HTTPException(
                 status_code=422,
                 detail="The selected resume does not contain usable content.",
             )
 
         logger.info(
-            "[GENERATOR_SOURCE] user_id=%s resume_id=%s parsed_len=%d",
+            "[GENERATOR_SOURCE] user_id=%s resume_id=%s skills_count=%d",
             current_user.id,
             resume.id,
-            len(source_resume_text),
+            len(source_doc.skills),
         )
 
         result = generate_resume(
-            source_resume_text,
+            source_doc,
             payload.job_description,
         )
         r_data = result.get("resume", {})
@@ -189,188 +171,50 @@ def generate(
                 detail="The AI returned an invalid resume. Please try again.",
             )
 
-        # Validate the generated resume has meaningful content
-        pi = r_data.get("personal_info", {})
-        has_name = bool(pi.get("name", "").strip()) if isinstance(pi, dict) else False
-        has_skills = bool(r_data.get("skills"))
-        has_experience = bool(r_data.get("experience"))
-        if not (has_name or has_skills or has_experience):
-            logger.error(
-                "[GENERATOR_EMPTY] Generated resume has no name, skills, or experience. "
-                "resume_id=%s r_data_keys=%s",
-                resume.id,
-                list(r_data.keys()),
-            )
-            raise HTTPException(
-                status_code=502,
-                detail="The AI returned an incomplete resume. Please try again.",
-            )
+        doc = to_resume_doc(r_data)
 
-        # Get clean name from r_data
-        pi = r_data.get("personal_info", {}) or {}
-        contact = r_data.get("contact", {}) or {}
-        name = ""
-        if isinstance(pi, dict):
-            name = pi.get("name", "").strip()
-        if not name and isinstance(contact, dict):
-            name = contact.get("name", "").strip()
+        # Name & Title
+        name = doc.contact.name.strip() or (current_user.name or "").strip() or resume.title
+        cleaned_title = re.sub(r"^Optimized:\s*", "", name, flags=re.IGNORECASE)
+        cleaned_title = re.sub(r"\.(pdf|docx|doc)$", "", cleaned_title, flags=re.IGNORECASE)
+        cleaned_title = re.sub(r"[_-]+", " ", cleaned_title)
+        cleaned_title = re.sub(r"\bresume\b.*$", "", cleaned_title, flags=re.IGNORECASE)
+        cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip() or "Tailored Resume"
 
-        if not name:
-            name = (current_user.name or "").strip() or resume.title
-
-        # Clean title using standard cleaning
-        cleaned_title = name
-        if cleaned_title:
-            cleaned_title = re.sub(
-                r"^Optimized:\s*", "", cleaned_title, flags=re.IGNORECASE
-            )
-            cleaned_title = re.sub(
-                r"\.(pdf|docx|doc)$", "", cleaned_title, flags=re.IGNORECASE
-            )
-            cleaned_title = re.sub(r"[_-]+", " ", cleaned_title)
-            cleaned_title = re.sub(
-                r"\bresume\b.*$", "", cleaned_title, flags=re.IGNORECASE
-            )
-            cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
-
-        # Ensure headline is preserved if generated one is empty
-        gen_headline = r_data.get("headline", "").strip()
-        if not gen_headline:
-            orig_headline = ""
-            if resume.resume_json:
-                try:
-                    orig_json = json.loads(resume.resume_json)
-                    orig_headline = (
-                        orig_json.get("headline")
-                        or orig_json.get("personal_info", {}).get("headline")
-                        or ""
-                    ).strip()
-                except Exception:
-                    pass
-            if orig_headline:
-                r_data["headline"] = orig_headline
-            else:
-                r_data["headline"] = "Optimized Resume"
-
-
-
-        # Calculate real ATS scores using deterministic scoring against JD
-        from app.resume.services.resume_scoring_service import calculate_scores
-
-        scores = calculate_scores(r_data, payload.job_description)
+        # Deterministic scoring against target JD
+        scores = calculate_scores(doc, payload.job_description)
         new_ats = scores.get("ats_score", 75)
-        # ----------------------------------------------------------
-        # Validate generated resume quality before saving
-        # ----------------------------------------------------------
 
-        matched_keywords = scores.get("matched_keywords", [])
-        missing_keywords = scores.get("missing_keywords", [])
-        coverage = len(matched_keywords) / max(
-            len(matched_keywords) + len(missing_keywords),
-            1,
-        )
-        quality_report = {
-            "ats": new_ats,
-            "coverage": round(coverage * 100, 2),
-            "matched": len(matched_keywords),
-            "missing": len(missing_keywords),
-        }
-        logger.info(
-            "[GENERATOR VALIDATION] %s",
-            quality_report,
-        )
-        if new_ats < 80:
-            logger.warning(
-                "[LOW ATS GENERATED] ATS=%s Coverage=%.2f%%",
-                new_ats,
-                coverage * 100,
-            )
-        if coverage < 0.70:
-            logger.warning(
-                "[LOW JD COVERAGE] %.2f%% keywords matched",
-                coverage * 100,
-            )
-
-        # ----------------------------------------------------------
-        # Retry generation once if the generated resume quality is low
-        # ----------------------------------------------------------
-        if new_ats < 90 and coverage < 0.85:
-            logger.info(
-                "[GENERATOR RETRY] ATS=%s Coverage=%.2f%% - requesting one improved generation.",
-                new_ats,
-                coverage * 100,
-            )
-            feedback = f"""
-            The previous generated resume achieved:           
-            ATS Score: {new_ats}
-            Matched Keywords:
-            {', '.join(matched_keywords)}     
-            Missing Keywords:
-            {', '.join(missing_keywords)} 
-            Improve the resume by naturally increasing coverage of supported missing keywords.
-            Do not invent employment, companies, experience, projects, certifications, or skills.
-            Strengthen the summary, skills ordering, experience bullets, and project descriptions where supported by the original resume.
-            """
-
-            retry_result = generate_resume(
-                source_resume_text,
-                payload.job_description,
-                improvement_feedback=feedback,
-            )
-            retry_resume = retry_result.get("resume", {})
-            if isinstance(retry_resume, dict) and retry_resume:
-                retry_scores = calculate_scores(
-                    retry_resume,
-                    payload.job_description,
-                )
-
-                retry_ats = retry_scores.get("ats_score", 0)
-                if retry_ats > new_ats:
-                    logger.info(
-                        "[GENERATOR RETRY SUCCESS] ATS improved %s -> %s",
-                        new_ats,
-                        retry_ats,
-                    )
-
-                    r_data = retry_resume
-                    scores = retry_scores
-                    new_ats = retry_ats
-
-
-        from app.resume.repository.resume_repository import ResumeRepository
-        from app.resume.services.resume_normalizer import (
-            canonical_resume_to_text,
-            get_canonical_hash,
-            normalize_resume,
-        )
-
-        normalized_data = normalize_resume(r_data)
-        serialized_json = json.dumps(normalized_data)
-        parsed_text = canonical_resume_to_text(normalized_data)
-        c_hash = get_canonical_hash(normalized_data)
+        text_repr = resume_doc_to_text(doc)
+        c_hash = hashlib.sha256(text_repr.encode("utf-8")).hexdigest()
 
         new_resume = Resume(
             user_id=current_user.id,
             title=f"Tailored - {cleaned_title[:80]}",
             original_filename=f"{cleaned_title[:60]}_tailored.pdf",
             file_path="generated",
-            file_type="json",
-            parsed_text=parsed_text,
-            resume_json=serialized_json,
-            skills=",".join(normalized_data.get("skills", [])),
+            parsed_text=text_repr,
+            resume_json=doc.model_dump_json(),
+            skills=",".join(doc.skills),
             ats_score=new_ats,
             version="v1",
             template="Professional",
             is_generated=True,
-            is_master=False,
             starred=False,
             parsing_status="completed",
             canonical_hash=c_hash,
             content_hash=c_hash,
+            scoring_version="v1",
+            prompt_version="v1",
         )
         saved_resume = ResumeRepository.create_resume(db, new_resume)
 
-        return {"resume": normalized_data, "resume_id": saved_resume.id}
+        return GenerateResponse(
+            resume=doc,
+            resume_id=saved_resume.id,
+            suggested_projects=result.get("suggested_projects", []),
+            skill_gaps=result.get("skill_gaps", []),
+        )
 
 
     except HTTPException as e:

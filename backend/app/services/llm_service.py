@@ -1,6 +1,7 @@
 import json
 import re
 import logging
+from pydantic import BaseModel, Field
 from app.services.ai import get_ai_provider, prompts
 
 logger = logging.getLogger(__name__)
@@ -859,25 +860,209 @@ def generate_interview_bank_questions(
         return []
 
 
+class RewrittenWordingSchema(BaseModel):
+    headline: str = ""
+    summary: str = ""
+    skills: list[str] = Field(default_factory=list)
+    experience_bullets: dict[str, str] = Field(default_factory=dict)
+    project_bullets: dict[str, str] = Field(default_factory=dict)
+    suggested_projects: list[dict] = Field(default_factory=list)
+    skill_gaps: list[str] = Field(default_factory=list)
+
+
 def generate_resume(
-    resume_text: str,
+    resume_input,
     job_description: str,
     improvement_feedback: str | None = None,
-):
-    schema_str = json.dumps(OUTPUT_SCHEMA)
+) -> dict:
+    import copy
+    from app.schemas.resume_doc import ResumeDoc, to_resume_doc
+    from app.resume.services.generation_validator import (
+        GenerationValidator,
+        build_allowed_skills_pool,
+        get_skill_synonyms,
+    )
+
+    # 1. Standardize source input to ResumeDoc
+    if isinstance(resume_input, ResumeDoc):
+        source_doc = resume_input
+    elif isinstance(resume_input, dict):
+        source_doc = to_resume_doc(resume_input)
+    else:
+        s_input = str(resume_input or "").strip()
+        try:
+            data = json.loads(s_input)
+            source_doc = to_resume_doc(data)
+        except Exception:
+            from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
+            source_doc, _ = parse_resume_pipeline(s_input)
+
+    # 2. Build indexed JSON representation for LLM
+    indexed_content = {
+        "headline": source_doc.headline,
+        "summary": source_doc.summary,
+        "skills": source_doc.skills,
+        "experience": [
+            {
+                "index": exp_idx,
+                "company": exp.company,
+                "role": exp.role,
+                "bullets": {f"{exp_idx}_{b_idx}": b for b_idx, b in enumerate(exp.bullets)},
+            }
+            for exp_idx, exp in enumerate(source_doc.experience)
+        ],
+        "projects": [
+            {
+                "index": proj_idx,
+                "title": proj.title,
+                "technologies": proj.technologies,
+                "bullets": {f"{proj_idx}_{b_idx}": b for b_idx, b in enumerate(proj.bullets)},
+            }
+            for proj_idx, proj in enumerate(source_doc.projects)
+        ],
+    }
+
     prompt_str = prompts.get_resume_prompt(
-        resume_text,
-        job_description,
-        schema_str,
+        indexed_resume_json=json.dumps(indexed_content, indent=2),
+        job_description=job_description,
         improvement_feedback=improvement_feedback,
     )
-    result = call_llm_with_retry(
-        prompt_str,
-        feature="resume_generation",
-        temperature=0.0,
-        json_response=True,
+
+    try:
+        wording: RewrittenWordingSchema = llm_json(
+            prompt=prompt_str,
+            response_model=RewrittenWordingSchema,
+            feature="resume_generation",
+            temperature=0.0,
+            timeout=60.0,
+        )
+    except Exception as e:
+        logger.error("[RESUME_GENERATION_FAILED] LLM call failed: %s", e)
+        return {
+            "resume": source_doc.model_dump(),
+            "suggested_projects": [],
+            "skill_gaps": [],
+        }
+
+    def _parse_bullet_dict(d: dict[str, str]) -> dict[tuple[int, int], str]:
+        parsed = {}
+        for k, v in d.items():
+            parts = str(k).split("_")
+            if len(parts) == 2:
+                try:
+                    parsed[(int(parts[0]), int(parts[1]))] = str(v).strip()
+                except ValueError:
+                    pass
+        return parsed
+
+    exp_replacements = _parse_bullet_dict(wording.experience_bullets)
+    proj_replacements = _parse_bullet_dict(wording.project_bullets)
+
+    is_valid, violations = GenerationValidator.validate_wording(
+        source_doc=source_doc,
+        rewritten_headline=wording.headline,
+        rewritten_summary=wording.summary,
+        rewritten_skills=wording.skills,
+        experience_bullet_replacements=exp_replacements,
+        project_bullet_replacements=proj_replacements,
     )
-    return normalize_generate_response(result)
+
+    if not is_valid:
+        logger.warning(
+            "[GENERATOR_VALIDATOR_REPAIR] %d violations detected. Retrying ONCE with feedback: %s",
+            len(violations),
+            violations[:3],
+        )
+        feedback_text = "\n".join(f"- {v}" for v in violations)
+        retry_prompt = prompts.get_resume_prompt(
+            indexed_resume_json=json.dumps(indexed_content, indent=2),
+            job_description=job_description,
+            improvement_feedback=feedback_text,
+        )
+        try:
+            retry_wording: RewrittenWordingSchema = llm_json(
+                prompt=retry_prompt,
+                response_model=RewrittenWordingSchema,
+                feature="resume_generation",
+                temperature=0.0,
+                timeout=60.0,
+            )
+            retry_exp_replacements = _parse_bullet_dict(retry_wording.experience_bullets)
+            retry_proj_replacements = _parse_bullet_dict(retry_wording.project_bullets)
+
+            retry_valid, retry_violations = GenerationValidator.validate_wording(
+                source_doc=source_doc,
+                rewritten_headline=retry_wording.headline,
+                rewritten_summary=retry_wording.summary,
+                rewritten_skills=retry_wording.skills,
+                experience_bullet_replacements=retry_exp_replacements,
+                project_bullet_replacements=retry_proj_replacements,
+            )
+
+            if retry_valid:
+                wording = retry_wording
+                exp_replacements = retry_exp_replacements
+                proj_replacements = retry_proj_replacements
+            else:
+                logger.warning(
+                    "[GENERATOR_REPAIR_FAILED] Retry still had %d violations. Original source text will be retained for invalid items.",
+                    len(retry_violations),
+                )
+        except Exception as retry_err:
+            logger.error("[GENERATOR_RETRY_ERROR] Retry call failed: %s", retry_err)
+
+    # 3. Merge verified wording into untouched clone of source_doc
+    target_doc = copy.deepcopy(source_doc)
+
+    if wording.headline and wording.headline.strip():
+        target_doc.headline = wording.headline.strip()
+
+    if wording.summary and len(wording.summary.split()) <= 100:
+        target_doc.summary = wording.summary.strip()
+
+    allowed_pool = build_allowed_skills_pool(source_doc)
+    verified_skills = []
+    for s in wording.skills:
+        s_clean = s.strip()
+        if s_clean.lower() in allowed_pool or (get_skill_synonyms(s_clean) & allowed_pool):
+            if s_clean not in verified_skills:
+                verified_skills.append(s_clean)
+    if verified_skills:
+        target_doc.skills = verified_skills
+
+    for (exp_idx, b_idx), text in exp_replacements.items():
+        if 0 <= exp_idx < len(target_doc.experience):
+            if 0 <= b_idx < len(target_doc.experience[exp_idx].bullets):
+                single_valid, _ = GenerationValidator.validate_wording(
+                    source_doc=source_doc,
+                    rewritten_headline="",
+                    rewritten_summary="",
+                    rewritten_skills=[],
+                    experience_bullet_replacements={(exp_idx, b_idx): text},
+                    project_bullet_replacements={},
+                )
+                if single_valid:
+                    target_doc.experience[exp_idx].bullets[b_idx] = text
+
+    for (proj_idx, b_idx), text in proj_replacements.items():
+        if 0 <= proj_idx < len(target_doc.projects):
+            if 0 <= b_idx < len(target_doc.projects[proj_idx].bullets):
+                single_valid, _ = GenerationValidator.validate_wording(
+                    source_doc=source_doc,
+                    rewritten_headline="",
+                    rewritten_summary="",
+                    rewritten_skills=[],
+                    experience_bullet_replacements={},
+                    project_bullet_replacements={(proj_idx, b_idx): text},
+                )
+                if single_valid:
+                    target_doc.projects[proj_idx].bullets[b_idx] = text
+
+    return {
+        "resume": target_doc.model_dump(),
+        "suggested_projects": wording.suggested_projects,
+        "skill_gaps": wording.skill_gaps,
+    }
 
 
 def analyze_resume_health(resume_text: str):

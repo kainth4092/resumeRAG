@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/context/AuthContext";
 import { estimatePageCount } from "../../../utils/resumeUtils";
 import { updateResume } from "../services/resumeService";
+import { fromApi, toApi } from "../model/resumeModel";
 
 export function useResumeEditor() {
   const navigate = useNavigate();
@@ -36,8 +37,8 @@ export function useResumeEditor() {
   const [experience, setExperience] = useState([]);
   const [education, setEducation] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [parseWarnings, setParseWarnings] = useState([]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user) return;
     let activeResume = state?.resume;
@@ -70,96 +71,127 @@ export function useResumeEditor() {
       }
     }
 
-    const r = activeResume?.resume || activeResume || {};
-    const info = r.personal_info || r.contact || {};
-    setPersonal({
-      name: info.name || activeResume.name || "",
-      title: r.headline || info.title || activeResume.role || "",
-      email: info.email || "",
-      phone: info.phone || "",
-      location: info.location || "",
-      linkedin: info.linkedin || "",
-      github: info.github || "",
-      website: info.website || "",
-    });
-
-    setSummary({
-      text: r.summary || "",
-    });
-
-    if (r.skills) {
-      setSkills(
-        r.skills.map((s, idx) =>
-          typeof s === "string" ? { id: idx, name: s, level: 80 } : s,
-        ),
-      );
-    } else {
-      setSkills([]);
-    }
-
-    if (r.experience) {
+    const doc = fromApi(activeResume);
+    if (doc) {
+      setPersonal(doc.personal);
+      setSummary({ text: doc.summary });
+      setSkills(doc.skillsList);
       setExperience(
-        r.experience.map((exp, idx) => ({
-          id: exp.id || idx,
+        doc.experience.map((exp, idx) => ({
+          id: exp.id ?? idx,
           role: exp.role || "",
           company: exp.company || "",
           location: exp.location || "",
-          startMonth: exp.startMonth || exp.start_month || "",
-          startYear: exp.startYear || exp.start_year || "",
-          endMonth: exp.endMonth || exp.end_month || "",
-          endYear: exp.endYear || exp.end_year || "",
-          current:
-            exp.current ||
-            exp.endYear === "present" ||
-            (exp.duration && exp.duration.toLowerCase().includes("present")) ||
-            false,
-          bullets: exp.bullets || exp.description || [""],
+          start: exp.start || null,
+          end: exp.end || null,
+          startMonth:
+            exp.start && exp.start.includes("-")
+              ? exp.start.split("-")[1]
+              : "",
+          startYear: exp.start ? exp.start.split("-")[0] : "",
+          endMonth:
+            exp.end && exp.end.includes("-") ? exp.end.split("-")[1] : "",
+          endYear: exp.current
+            ? "present"
+            : exp.end
+              ? exp.end.split("-")[0]
+              : "",
+          current: Boolean(exp.current),
+          bullets: exp.bullets && exp.bullets.length > 0 ? exp.bullets : [""],
         })),
       );
-    } else {
-      setExperience([]);
-    }
-
-    if (r.education) {
       setEducation(
-        r.education.map((edu, idx) => ({
-          id: edu.id || idx,
+        doc.education.map((edu, idx) => ({
+          id: edu.id ?? idx,
           degree: edu.degree || "",
-          school: edu.school || edu.institution || "",
+          school: edu.institution || edu.school || "",
           location: edu.location || "",
-          startYear: edu.startYear || edu.start_year || "",
-          endYear: edu.endYear || edu.end_year || "",
-          gpa: edu.gpa || "",
+          start: edu.start || null,
+          end: edu.end || null,
+          startYear: edu.start ? String(edu.start).split("-")[0] : "",
+          endYear: edu.end ? String(edu.end).split("-")[0] : "",
+          gpa: edu.grade || edu.gpa || "",
           honors: edu.honors || "",
         })),
       );
-    } else {
-      setEducation([]);
-    }
-
-    if (r.projects) {
       setProjects(
-        r.projects.map((proj, idx) => ({
-          id: proj.id || idx,
-          name: proj.name || proj.title || "",
-          tech:
-            proj.tech ||
-            (Array.isArray(proj.technologies)
-              ? proj.technologies.join(" · ")
-              : proj.technologies || ""),
-          url: proj.url || proj.github || proj.live || "",
-          desc:
-            proj.desc ||
-            (Array.isArray(proj.description)
-              ? proj.description.join("\n")
-              : proj.description || ""),
+        doc.projects.map((proj, idx) => ({
+          id: proj.id ?? idx,
+          name: proj.title || proj.name || "",
+          tech: proj.tech || "",
+          url: proj.url || "",
+          desc: proj.desc || "",
+          bullets: proj.bullets || [],
+          technologies: proj.technologies || [],
         })),
       );
+      setParseWarnings(doc.parse_warnings || []);
     } else {
+      setPersonal({
+        name: "",
+        title: "",
+        email: "",
+        phone: "",
+        location: "",
+        linkedin: "",
+        github: "",
+        website: "",
+      });
+      setSummary({ text: "" });
+      setSkills([]);
+      setExperience([]);
+      setEducation([]);
       setProjects([]);
+      setParseWarnings([]);
     }
   }, [user, resumesKey, editingResumeIdKey, state?.resume]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const buildEditorState = () => ({
+    personal,
+    headline: personal.title,
+    summary: summary.text,
+    skills,
+    experience: experience.map((exp) => {
+      let start = exp.start || null;
+      if (exp.startYear) {
+        start = exp.startMonth
+          ? `${exp.startYear}-${exp.startMonth}`
+          : String(exp.startYear);
+      }
+      let end = exp.end || null;
+      if (exp.current) {
+        end = null;
+      } else if (exp.endYear && exp.endYear !== "present") {
+        end = exp.endMonth
+          ? `${exp.endYear}-${exp.endMonth}`
+          : String(exp.endYear);
+      }
+      return {
+        company: exp.company,
+        role: exp.role,
+        location: exp.location,
+        start,
+        end,
+        current: Boolean(exp.current),
+        bullets: exp.bullets,
+      };
+    }),
+    projects: projects.map((proj) => ({
+      title: proj.name,
+      tech: proj.tech,
+      url: proj.url,
+      desc: proj.desc,
+      technologies: proj.technologies,
+      bullets: proj.bullets,
+    })),
+    education: education.map((edu) => ({
+      institution: edu.school,
+      degree: edu.degree,
+      start: edu.start || edu.startYear || null,
+      end: edu.end || edu.endYear || null,
+      grade: edu.gpa || "",
+    })),
+  });
 
   const handleSave = async () => {
     setSaving(true);
@@ -176,64 +208,8 @@ export function useResumeEditor() {
       );
 
       const existing = existingIdx >= 0 ? savedList[existingIdx] : null;
-
-      const newResumeObj = {
-        personal_info: {
-          name: personal.name,
-          title: personal.title,
-          email: personal.email,
-          phone: personal.phone,
-          location: personal.location,
-          linkedin: personal.linkedin,
-          github: personal.github,
-          website: personal.website,
-        },
-        headline: personal.title,
-        summary: summary.text,
-        skills: skills.map((s) => s.name),
-        experience: experience.map((exp) => ({
-          id: exp.id,
-          role: exp.role,
-          company: exp.company,
-          location: exp.location,
-          duration: exp.current
-            ? `${exp.startYear} – Present`
-            : `${exp.startYear} – ${exp.endYear}`,
-          startMonth: exp.startMonth,
-          startYear: exp.startYear,
-          endMonth: exp.endMonth,
-          endYear: exp.endYear,
-          current: exp.current,
-          bullets: exp.bullets,
-          description: exp.bullets,
-        })),
-        projects: projects.map((proj) => ({
-          id: proj.id,
-          name: proj.name,
-          title: proj.name,
-          tech: proj.tech,
-          technologies: proj.tech
-            ? proj.tech.split("·").map((t) => t.trim())
-            : [],
-          url: proj.url,
-          github: proj.url,
-          desc: proj.desc,
-          description: proj.desc ? proj.desc.split("\n") : [],
-        })),
-        education: education.map((edu) => ({
-          id: edu.id,
-          degree: edu.degree,
-          school: edu.school,
-          institution: edu.school,
-          location: edu.location,
-          startYear: edu.startYear,
-          endYear: edu.endYear,
-          start_year: edu.startYear,
-          end_year: edu.endYear,
-          gpa: edu.gpa,
-          honors: edu.honors,
-        })),
-      };
+      const editorState = buildEditorState();
+      const newResumeObj = toApi(editorState);
 
       let newVersion = "v1";
       if (existing) {
@@ -315,39 +291,7 @@ export function useResumeEditor() {
   };
 
   const getFullResumeObject = () => {
-    return {
-      personal_info: personal,
-      headline: personal.title,
-      summary: summary.text,
-      skills: skills.map((s) => s.name),
-      experience: experience.map((exp) => ({
-        id: exp.id,
-        role: exp.role,
-        company: exp.company,
-        location: exp.location,
-        duration: exp.current
-          ? `${exp.startYear} – Present`
-          : `${exp.startYear} – ${exp.endYear}`,
-        bullets: exp.bullets,
-      })),
-      projects: projects.map((proj) => ({
-        id: proj.id,
-        name: proj.name,
-        tech: proj.tech,
-        url: proj.url,
-        desc: proj.desc,
-      })),
-      education: education.map((edu) => ({
-        id: edu.id,
-        degree: edu.degree,
-        school: edu.school,
-        location: edu.location,
-        startYear: edu.startYear,
-        endYear: edu.endYear,
-        gpa: edu.gpa,
-        honors: edu.honors,
-      })),
-    };
+    return toApi(buildEditorState());
   };
 
   return {
@@ -373,7 +317,9 @@ export function useResumeEditor() {
     setEducation,
     projects,
     setProjects,
+    parseWarnings,
     handleSave,
     getFullResumeObject,
   };
 }
+

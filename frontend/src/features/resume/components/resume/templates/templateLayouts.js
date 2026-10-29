@@ -173,7 +173,11 @@ export const generateLayout = (templateName, resumeData) => {
                           {
                             type: "text",
                             props: {
-                              text: `${e.startYear} – ${e.current ? "Present" : e.endYear}`,
+                              text:
+                                e.duration ||
+                                (e.startYear
+                                  ? `${e.startYear} – ${e.current ? "Present" : e.endYear}`
+                                  : (e.current ? "Present" : "")),
                               size: 9,
                               bold: true,
                               color: "#4b5563",
@@ -293,7 +297,7 @@ export const generateLayout = (templateName, resumeData) => {
                       {
                         type: "text",
                         props: {
-                          text: e.endYear,
+                          text: e.duration || e.endYear || "",
                           size: 9.5,
                           bold: true,
                           color: "#4b5563",
@@ -482,7 +486,11 @@ export const generateLayout = (templateName, resumeData) => {
                           {
                             type: "text",
                             props: {
-                              text: `${e.startYear} – ${e.current ? "Present" : e.endYear}`,
+                              text:
+                                e.duration ||
+                                (e.startYear
+                                  ? `${e.startYear} – ${e.current ? "Present" : e.endYear}`
+                                  : (e.current ? "Present" : "")),
                               size: 9,
                               color: "#94a3b8",
                             },
@@ -571,7 +579,11 @@ export const generateLayout = (templateName, resumeData) => {
                       },
                       {
                         type: "text",
-                        props: { text: e.endYear, size: 9, color: "#94a3b8" },
+                        props: {
+                          text: e.duration || e.endYear || "",
+                          size: 9,
+                          color: "#94a3b8",
+                        },
                       },
                     ],
                   })),
@@ -730,7 +742,11 @@ export const generateLayout = (templateName, resumeData) => {
                           {
                             type: "text",
                             props: {
-                              text: `${e.startYear} – ${e.current ? "Present" : e.endYear}`,
+                              text:
+                                e.duration ||
+                                (e.startYear
+                                  ? `${e.startYear} – ${e.current ? "Present" : e.endYear}`
+                                  : (e.current ? "Present" : "")),
                               size: 10,
                               bold: true,
                               color: bodyColor,
@@ -846,7 +862,7 @@ export const generateLayout = (templateName, resumeData) => {
                       {
                         type: "text",
                         props: {
-                          text: e.endYear,
+                          text: e.duration || e.endYear || "",
                           size: 10,
                           bold: true,
                           color: bodyColor,
@@ -1055,7 +1071,11 @@ export const generateLayout = (templateName, resumeData) => {
                           {
                             type: "text",
                             props: {
-                              text: `${e.startYear} – ${e.current ? "Present" : e.endYear}`,
+                              text:
+                                e.duration ||
+                                (e.startYear
+                                  ? `${e.startYear} – ${e.current ? "Present" : e.endYear}`
+                                  : (e.current ? "Present" : "")),
                               size: 9,
                               color: lightGray,
                             },
@@ -1181,7 +1201,11 @@ export const generateLayout = (templateName, resumeData) => {
                       },
                       {
                         type: "text",
-                        props: { text: e.endYear, size: 9, color: lightGray },
+                        props: {
+                          text: e.duration || e.endYear || "",
+                          size: 9,
+                          color: lightGray,
+                        },
                       },
                     ],
                   })),

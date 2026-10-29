@@ -14,11 +14,6 @@ from app.models.resume import Resume
 from app.models.resume_health import ResumeHealthAnalysis
 from app.resume.repository.resume_repository import ResumeRepository
 from app.services.pdf_service import extract_text_from_pdf
-from app.resume.services.resume_normalizer import (
-    normalize_resume,
-    canonical_resume_to_text,
-    get_canonical_hash,
-)
 from app.resume.services.resume_scoring_service import calculate_scores
 
 logger = logging.getLogger(__name__)
@@ -35,23 +30,14 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
         resume.parsing_status = "processing"
         db.commit()
 
-        from app.resume.services.resume_analysis_service import (
-            parse_resume_text_to_json,
-        )
-        from app.resume.services.resume_normalizer import normalize_resume
+        from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
         from app.resume.services.resume_scoring_service import calculate_scores
-
-        parsed_json = parse_resume_text_to_json(parsed_text)
-        normalized = normalize_resume(parsed_json)
-        scores = calculate_scores(normalized)
         import re
 
-        contact_info = normalized.get("contact", {}) or {}
-        personal_info = normalized.get("personal_info", {}) or {}
-        name = contact_info.get("name", "").strip()
-        if not name and isinstance(personal_info, dict):
-            name = personal_info.get("name", "").strip()
+        doc, parse_warnings = parse_resume_pipeline(parsed_text)
+        scores = calculate_scores(doc)
 
+        name = doc.contact.name.strip()
         if name:
             resume.title = name
         else:
@@ -63,8 +49,9 @@ def parse_resume_background_task(resume_id: int, user_id: int, parsed_text: str)
             cleaned = re.sub(r"\s+", " ", cleaned).strip()
             resume.title = cleaned or "Untitled Resume"
 
-        resume.resume_json = json.dumps(normalized)
-        resume.skills = ",".join(normalized.get("skills", []))
+        resume.resume_json = doc.model_dump_json()
+        resume.parse_warnings = json.dumps(parse_warnings) if parse_warnings else None
+        resume.skills = ",".join(doc.skills)
         resume.ats_score = scores["ats_score"]
 
         resume.analysis_results = json.dumps(
@@ -423,6 +410,9 @@ class ResumeService:
                 "template": r.template or "Professional",
                 "resume_json": json.loads(r.resume_json) if r.resume_json else None,
                 "parsing_status": r.parsing_status or "completed",
+                "parse_warnings": (
+                    json.loads(r.parse_warnings) if r.parse_warnings else []
+                ),
             }
             for r in resumes
         ]
@@ -459,6 +449,9 @@ class ResumeService:
                 json.loads(resume.resume_json) if resume.resume_json else None
             ),
             "parsing_status": resume.parsing_status or "completed",
+            "parse_warnings": (
+                json.loads(resume.parse_warnings) if resume.parse_warnings else []
+            ),
         }
 
     @staticmethod
@@ -644,12 +637,13 @@ class ResumeService:
         db: Session,
         user_id: int,
     ) -> dict:
-        normalized_resume = normalize_resume(payload["resume"])
+        from app.schemas.resume_doc import to_resume_doc, resume_doc_to_text
 
-        parsed_text = canonical_resume_to_text(normalized_resume)
-        canonical_hash = get_canonical_hash(normalized_resume)
+        doc = to_resume_doc(payload["resume"])
+        parsed_text = resume_doc_to_text(doc)
+        canonical_hash = hashlib.sha256(parsed_text.encode("utf-8")).hexdigest()
 
-        scores = calculate_scores(normalized_resume)
+        scores = calculate_scores(doc)
 
         resume = Resume(
             user_id=user_id,
@@ -659,29 +653,30 @@ class ResumeService:
             parsed_text=parsed_text,
             is_active=False,
             ats_score=scores["ats_score"],
-            skills=",".join(normalized_resume.get("skills", [])),
+            skills=",".join(doc.skills),
             analysis_results=json.dumps(
                 {
                     "ats_score": scores["ats_score"],
-                    "matched_keywords": scores["matched_keywords"],
-                    "missing_keywords": scores["missing_keywords"],
+                    "matched_keywords": scores.get("matched_keywords", []),
+                    "missing_keywords": scores.get("missing_keywords", []),
                     "suggestions": ["Include measurable achievements where possible."],
                     "heatmap": {
-                        "contact_info": scores["formatting_score"],
-                        "summary": scores["readability_score"],
-                        "skills": scores["skills_coverage"],
-                        "experience": scores["experience_quality"],
-                        "projects": scores["projects_quality"],
-                        "education": scores["education_quality"],
+                        "contact_info": scores.get("formatting_score", 70),
+                        "summary": scores.get("readability_score", 70),
+                        "skills": scores.get("skills_coverage", 70),
+                        "experience": scores.get("experience_quality", 70),
+                        "projects": scores.get("projects_quality", 70),
+                        "education": scores.get("education_quality", 70),
                     },
                 }
             ),
             version="v1",
             template=payload["template"],
             is_generated=True,
-            resume_json=json.dumps(normalized_resume),
+            resume_json=doc.model_dump_json(),
             parsing_status="completed",
             canonical_hash=canonical_hash,
+            content_hash=canonical_hash,
             scoring_version="v1",
             prompt_version="v1",
         )
@@ -720,29 +715,20 @@ class ResumeService:
 
         # Note: ats_score and version from client are intentionally ignored (computed server-side)
         if "resume_json" in payload and payload["resume_json"] is not None:
-            from app.resume.services.resume_normalizer import (
-                canonical_resume_to_text,
-                get_canonical_hash,
-                normalize_resume,
-            )
+            from app.schemas.resume_doc import to_resume_doc, resume_doc_to_text
             from app.resume.services.resume_scoring_service import calculate_scores
 
-            normalized_resume = normalize_resume(payload["resume_json"])
-            resume.resume_json = json.dumps(normalized_resume)
-            resume.skills = ",".join(
-                normalized_resume.get(
-                    "skills",
-                    [],
-                )
-            )
-            text_representation = canonical_resume_to_text(normalized_resume)
+            doc = to_resume_doc(payload["resume_json"])
+            resume.resume_json = doc.model_dump_json()
+            resume.skills = ",".join(doc.skills)
+            text_representation = resume_doc_to_text(doc)
             resume.parsed_text = text_representation
-            new_hash = get_canonical_hash(normalized_resume)
+            new_hash = hashlib.sha256(text_representation.encode("utf-8")).hexdigest()
             resume.canonical_hash = new_hash
             resume.content_hash = new_hash
 
             # Server-side ATS score recalculation
-            scores = calculate_scores(normalized_resume)
+            scores = calculate_scores(doc)
             resume.ats_score = scores.get("ats_score", resume.ats_score)
 
             # Server-side version auto-increment
@@ -761,7 +747,59 @@ class ResumeService:
             db.rollback()
             raise HTTPException(status_code=500, detail="Failed to update resume.")
 
-        return {"message": "Resume updated successfully", "resume_id": resume.id}
+        return {
+            "message": "Resume updated successfully.",
+            "resume": {
+                "id": resume.id,
+                "title": resume.title,
+                "template": resume.template,
+                "version": resume.version,
+                "ats_score": resume.ats_score,
+                "starred": bool(resume.starred),
+            },
+        }
+
+    @staticmethod
+    def reparse_resume(
+        resume_id: int,
+        db: Session,
+        user_id: int,
+    ) -> dict:
+        resume = ResumeRepository.get_resume_by_id(db, resume_id, user_id)
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found.")
+        if not resume.parsed_text or not resume.parsed_text.strip():
+            raise HTTPException(
+                status_code=422,
+                detail="No extracted text available for this resume to reparse.",
+            )
+
+        from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
+        from app.resume.services.resume_scoring_service import calculate_scores
+
+        doc, parse_warnings = parse_resume_pipeline(resume.parsed_text)
+        scores = calculate_scores(doc)
+
+        resume.resume_json = doc.model_dump_json()
+        resume.parse_warnings = json.dumps(parse_warnings) if parse_warnings else None
+        resume.skills = ",".join(doc.skills)
+        resume.ats_score = scores.get("ats_score", resume.ats_score)
+        resume.parsing_status = "completed"
+
+        try:
+            db.commit()
+            db.refresh(resume)
+        except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Failed to persist reparsed resume.")
+
+        return {
+            "message": "Resume reparsed successfully.",
+            "resume_id": resume.id,
+            "resume_json": doc.model_dump(),
+            "parse_warnings": parse_warnings,
+            "ats_score": resume.ats_score,
+        }
 
     @staticmethod
     def delete_resume(
