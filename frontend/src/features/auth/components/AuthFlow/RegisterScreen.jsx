@@ -15,7 +15,7 @@ import {
   PasswordStrength,
   PrimaryButton,
   Divider,
-  GoogleButton,
+  GoogleCredentialButton,
 } from "./AuthFlowShared";
 import { AuthAlert } from "../../pages/AuthComponents";
 
@@ -23,8 +23,8 @@ export default function RegisterScreen({
   onSignup,
   onLogin,
   onBack,
-  onGoogleClick,
-  googleLoading,
+  onGoogleSuccess,
+  onGoogleError,
   alert,
   setAlert,
 }) {
@@ -239,7 +239,11 @@ export default function RegisterScreen({
       </form>
 
       <Divider />
-      <GoogleButton onClick={onGoogleClick} loading={googleLoading} />
+      <GoogleCredentialButton
+        onSuccess={onGoogleSuccess}
+        onError={onGoogleError}
+        text="signup_with"
+      />
 
       <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
         Already have an account?{" "}

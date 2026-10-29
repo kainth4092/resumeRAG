@@ -38,9 +38,6 @@ function Row({ label, desc, value, onChange, disabled = false }) {
 }
 
 const DEFAULT_SETTINGS = {
-  email_notifications: true,
-  weekly_digest: true,
-  job_alerts: true,
   interview_alerts: true,
   roadmap_updates: true,
   product_updates: false,
@@ -143,42 +140,12 @@ export default function NotificationSettings() {
 
       <div className="space-y-1">
         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-          Email Notifications
-        </h4>
-
-        <Row
-          label="Email Notifications"
-          desc="Master control for receiving email notifications from ResuPilot."
-          value={settings.email_notifications}
-          onChange={(value) => handleToggle("email_notifications", value)}
-          disabled={saving}
-        />
-
-        <Row
-          label="Job Matches"
-          desc="Receive notifications about jobs that match your target role."
-          value={settings.job_alerts}
-          onChange={(value) => handleToggle("job_alerts", value)}
-          disabled={saving}
-        />
-
-        <Row
-          label="Weekly Summary Report"
-          desc="Receive a weekly summary of your resumes, applications, interviews, and career progress."
-          value={settings.weekly_digest}
-          onChange={(value) => handleToggle("weekly_digest", value)}
-          disabled={saving}
-        />
-      </div>
-
-      <div className="pt-4 border-t border-border space-y-1">
-        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
           In-App Notifications
         </h4>
 
         <Row
           label="Interview Alerts"
-          desc="Get notified about interview preparation activity and shared questions."
+          desc="Get notified about interview preparation activity and question generation."
           value={settings.interview_alerts}
           onChange={(value) => handleToggle("interview_alerts", value)}
           disabled={saving}
@@ -186,19 +153,19 @@ export default function NotificationSettings() {
 
         <Row
           label="Roadmap Updates"
-          desc="Get notified when your career roadmap or target role is updated."
+          desc="Get notified when milestone tasks and skill roadmaps are updated."
           value={settings.roadmap_updates}
           onChange={(value) => handleToggle("roadmap_updates", value)}
           disabled={saving}
         />
 
-        {/* <Row
+        <Row
           label="Product Updates"
-          desc="Receive notifications about new features and product improvements."
+          desc="Get notified about new features, model updates, and workflow tools."
           value={settings.product_updates}
           onChange={(value) => handleToggle("product_updates", value)}
           disabled={saving}
-        /> */}
+        />
       </div>
 
       <div className="pt-4 border-t border-border flex justify-end">

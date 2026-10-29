@@ -16,7 +16,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     setDeleting(true);
     setError("");
     try {
-      await api.delete("/auth/settings/account");
+      await api.delete("/account");
       logout();
     } catch (err) {
       console.error(err);

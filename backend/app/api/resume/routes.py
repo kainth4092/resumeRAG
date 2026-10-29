@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.resume.services.resume_service import ResumeService
+from app.core.limiter import limiter
 from pydantic import (
     BaseModel,
     Field,
@@ -14,7 +15,9 @@ router = APIRouter(prefix="/api/resume", tags=["Resume"])
 
 
 @router.post("/upload")
+@limiter.limit("10/minute")
 async def upload_resume(
+    request: Request,
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
@@ -60,12 +63,17 @@ def get_resume(
 
 
 @router.post("/{resume_id}/reparse")
+@limiter.limit("10/minute")
 def reparse_resume(
+    request: Request,
     resume_id: int,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return ResumeService.reparse_resume(resume_id, db, current_user.id)
+    return ResumeService.reparse_resume(
+        resume_id, db, current_user.id, background_tasks=background_tasks
+    )
 
 
 

@@ -1,5 +1,6 @@
 import { useState, forwardRef } from "react";
 import { Zap, AlertCircle, RefreshCw } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
 export function Logo() {
   return (
@@ -23,6 +24,26 @@ export function Divider({ label = "or" }) {
         {label}
       </span>
       <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+    </div>
+  );
+}
+
+
+export function GoogleCredentialButton({
+  onSuccess,
+  onError,
+  text = "continue_with",
+}) {
+  return (
+    <div className="w-full flex justify-center [&>div]:!w-full [&_iframe]:!w-full">
+      <GoogleLogin
+        onSuccess={onSuccess}
+        onError={onError}
+        text={text}
+        shape="rectangular"
+        size="large"
+        width="100%"
+      />
     </div>
   );
 }

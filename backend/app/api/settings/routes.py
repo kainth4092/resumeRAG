@@ -96,10 +96,7 @@ def get_privacy_settings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return get_or_create_settings(
-        db=db,
-        user_id=current_user.id,
-    )
+    return PrivacySettingsResponse(export_available=True, data_retention_days=30)
 
 
 @router.put(
@@ -111,23 +108,4 @@ def update_privacy_settings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    settings = get_or_create_settings(
-        db=db,
-        user_id=current_user.id,
-    )
-
-    settings.share_analytics = payload.share_analytics
-    settings.personalize_jobs = payload.personalize_jobs
-
-    try:
-        db.commit()
-        db.refresh(settings)
-        return settings
-
-    except SQLAlchemyError as exc:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to save privacy settings.",
-        ) from exc
+    return PrivacySettingsResponse(export_available=True, data_retention_days=30)

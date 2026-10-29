@@ -23,20 +23,20 @@ class InterviewSession(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     resume_id = Column(
-        Integer, ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
     company = Column(String(255), nullable=True)
     role = Column(String(255), nullable=True)
     candidate_type = Column(String(20), nullable=False)
     job_description = Column(Text, nullable=False)
     job_context_id = Column(
-        Integer, ForeignKey("job_contexts.id", ondelete="SET NULL"), nullable=True
+        Integer, ForeignKey("job_contexts.id", ondelete="SET NULL"), nullable=True, index=True
     )
     pipeline_run_id = Column(
-        String(36), ForeignKey("pipeline_runs.id", ondelete="SET NULL"), nullable=True
+        String(36), ForeignKey("pipeline_runs.id", ondelete="SET NULL"), nullable=True, index=True
     )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
@@ -67,7 +67,10 @@ class InterviewQuestion(Base):
     __tablename__ = "interview_questions"
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(
-        Integer, ForeignKey("interview_sessions.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("interview_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     category = Column(String(50), nullable=False)
     question = Column(Text, nullable=False)

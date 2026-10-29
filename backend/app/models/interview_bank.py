@@ -50,6 +50,7 @@ class InterviewQuestionBank(Base):
         Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
 
     created_at = Column(

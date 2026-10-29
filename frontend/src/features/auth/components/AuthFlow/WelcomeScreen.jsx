@@ -1,11 +1,11 @@
 import { ArrowRight } from "lucide-react";
-import { Slide, Logo, PrimaryButton, GoogleButton } from "./AuthFlowShared";
+import { Slide, Logo, PrimaryButton, GoogleCredentialButton } from "./AuthFlowShared";
 import { AuthAlert } from "../../pages/AuthComponents";
 
 export default function WelcomeScreen({
   onContinueEmail,
-  onGoogleClick,
-  googleLoading,
+  onGoogleSuccess,
+  onGoogleError,
   onSignIn,
   alert,
 }) {
@@ -55,7 +55,11 @@ export default function WelcomeScreen({
         <PrimaryButton onClick={onContinueEmail}>
           Continue with Email <ArrowRight size={15} />
         </PrimaryButton>
-        <GoogleButton onClick={onGoogleClick} loading={googleLoading} />
+        <GoogleCredentialButton
+          onSuccess={onGoogleSuccess}
+          onError={onGoogleError}
+          text="continue_with"
+        />
       </div>
 
       <div className="mt-6 text-center">

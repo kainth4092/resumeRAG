@@ -37,3 +37,10 @@ def decode_access_token(token: str):
         return payload
     except JWTError:
         return None
+
+
+def hash_token(token: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+

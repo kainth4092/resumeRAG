@@ -47,4 +47,11 @@ def get_current_user(
             detail="User account is inactive",
         )
 
+    token_ver = payload.get("ver")
+    if token_ver is not None and token_ver != user.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session has been revoked. Please sign in again.",
+        )
+
     return user

@@ -9,7 +9,9 @@ class UserProject(Base):
     __tablename__ = "user_projects"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     title: Mapped[str] = mapped_column(String(100))
 
     description: Mapped[str] = mapped_column(Text)

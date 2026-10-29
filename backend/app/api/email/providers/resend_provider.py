@@ -1,7 +1,7 @@
 import base64
 import os
 import logging
-import requests
+import httpx
 import time
 from typing import Optional
 from app.core.config import settings
@@ -84,7 +84,7 @@ class ResendEmailProvider(BaseEmailProvider):
             payload["attachments"] = attachments
 
         try:
-            response = requests.post(
+            response = httpx.post(
                 url,
                 json=payload,
                 headers=headers,

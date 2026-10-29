@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from typing import TYPE_CHECKING
@@ -35,6 +35,16 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+    )
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False,
+    )
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     profile: Mapped["Profile"] = relationship(

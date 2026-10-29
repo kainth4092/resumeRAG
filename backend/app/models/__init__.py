@@ -17,7 +17,11 @@ from app.models.job_cache import SearchCache, JobCache
 from app.models.mock_interview import MockInterviewSession, MockInterviewAnswer
 from app.models.roadmap import Roadmap
 from app.models.challenge import ChallengeAttempt
-from app.models.auth import PasswordResetToken
+from app.models.auth import (
+    PasswordResetToken,
+    EmailVerificationToken,
+    RefreshToken,
+)
 from app.models.dashboard_task import DashboardTask
 from app.models.job_context import JobContext
 from app.models.pipeline_run import PipelineRun
@@ -51,6 +55,8 @@ __all__ = [
     "UserRoadmap",
     "ChallengeAttempt",
     "PasswordResetToken",
+    "EmailVerificationToken",
+    "RefreshToken",
     "DashboardTask",
     "PipelineRun",
     "ResumeJobMatch",

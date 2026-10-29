@@ -1,11 +1,12 @@
 import json
 import logging
 import re
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.exceptions import AppException
+from app.core.limiter import limiter
 from app.models.resume import Resume
 from app.models.resume_health import ResumeHealthAnalysis
 from app.models.user import User
@@ -64,7 +65,9 @@ def safe_json_loads(
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
+@limiter.limit("10/minute")
 def analyze(
+    request: Request,
     payload: AnalyzeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -118,7 +121,9 @@ def analyze(
 
 
 @router.post("/generate", response_model=GenerateResponse)
+@limiter.limit("10/minute")
 def generate(
+    request: Request,
     payload: GenerateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -229,7 +234,9 @@ def generate(
 
 
 @router.post("/analyze-health")
+@limiter.limit("10/minute")
 def analyze_health(
+    request: Request,
     payload: AnalyzeHealthRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -257,7 +264,9 @@ def analyze_health(
 
 
 @router.post("/improve-section")
+@limiter.limit("10/minute")
 def improve_section(
+    request: Request,
     payload: ImproveSectionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

@@ -12,6 +12,7 @@ from app.models.user import User
 from app.api.email.schemas import EmailSendResponse
 from app.api.email.services import email_service
 from app.resume.repository.resume_repository import ResumeRepository
+from app.core.limiter import limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/email", tags=["Email"])
@@ -35,6 +36,7 @@ def _check_rate_limit(user_id: int):
 
 
 @router.post("/send", response_model=EmailSendResponse)
+@limiter.limit("5/minute")
 async def send_email(
     request: Request,
     db: Session = Depends(get_db),

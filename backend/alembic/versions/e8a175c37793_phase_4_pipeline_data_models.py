@@ -119,7 +119,12 @@ def upgrade() -> None:
     # Migrate existing user_roadmaps into roadmaps
     op.execute("""
         INSERT INTO roadmaps (user_id, target_role, target_level, completed_tasks, generated_at)
-        SELECT user_id, target_role, target_level, completed_tasks, NOW() FROM user_roadmaps
+        SELECT user_id, target_role, target_level,
+               CASE 
+                   WHEN completed_tasks IS NOT NULL AND completed_tasks != '' THEN completed_tasks::json 
+                   ELSE '[]'::json 
+               END,
+               NOW() FROM user_roadmaps
     """)
     op.drop_table('user_roadmaps')
 

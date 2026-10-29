@@ -764,6 +764,7 @@ class ResumeService:
         resume_id: int,
         db: Session,
         user_id: int,
+        background_tasks: BackgroundTasks | None = None,
     ) -> dict:
         resume = ResumeRepository.get_resume_by_id(db, resume_id, user_id)
         if not resume:
@@ -773,6 +774,21 @@ class ResumeService:
                 status_code=422,
                 detail="No extracted text available for this resume to reparse.",
             )
+
+        if background_tasks:
+            resume.parsing_status = "processing"
+            db.commit()
+            background_tasks.add_task(
+                parse_resume_background_task,
+                resume_id=resume.id,
+                user_id=user_id,
+                parsed_text=resume.parsed_text,
+            )
+            return {
+                "message": "Resume reparsing queued in background.",
+                "resume_id": resume.id,
+                "parsing_status": "processing",
+            }
 
         from app.resume.services.resume_parsing_pipeline import parse_resume_pipeline
         from app.resume.services.resume_scoring_service import calculate_scores
@@ -799,6 +815,7 @@ class ResumeService:
             "resume_json": doc.model_dump(),
             "parse_warnings": parse_warnings,
             "ats_score": resume.ats_score,
+            "parsing_status": "completed",
         }
 
     @staticmethod

@@ -9,7 +9,7 @@ class MockInterviewSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     interview_type = Column(String(100), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -37,11 +37,13 @@ class MockInterviewAnswer(Base):
         Integer,
         ForeignKey("mock_interview_sessions.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     question_id = Column(
         Integer,
         ForeignKey("interview_question_bank.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     question_text = Column(Text, nullable=False)
     transcript = Column(Text, nullable=True)

@@ -2,22 +2,22 @@ from pydantic import BaseModel, ConfigDict
 
 
 class NotificationSettingsUpdate(BaseModel):
-    email_notifications: bool
-    weekly_digest: bool
-    job_alerts: bool
-    interview_alerts: bool
-    roadmap_updates: bool
-    product_updates: bool
+    model_config = ConfigDict(extra="ignore")
+
+    interview_alerts: bool = True
+    roadmap_updates: bool = True
+    product_updates: bool = False
 
 
 class NotificationSettingsResponse(NotificationSettingsUpdate):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
 
 class PrivacySettingsUpdate(BaseModel):
-    share_analytics: bool
-    personalize_jobs: bool
+    model_config = ConfigDict(extra="ignore")
 
 
-class PrivacySettingsResponse(PrivacySettingsUpdate):
-    model_config = ConfigDict(from_attributes=True)
+class PrivacySettingsResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    export_available: bool = True
+    data_retention_days: int = 30

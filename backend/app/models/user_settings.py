@@ -17,11 +17,6 @@ class UserSettings(Base):
     )
 
     email_notifications = Column(Boolean, default=True, nullable=False)
-    weekly_digest = Column(Boolean, default=True, nullable=False)
-    job_alerts = Column(Boolean, default=True, nullable=False)
     interview_alerts = Column(Boolean, default=True, nullable=False)
     roadmap_updates = Column(Boolean, default=True, nullable=False)
     product_updates = Column(Boolean, default=False, nullable=False)
-
-    share_analytics = Column(Boolean, default=True, nullable=False)
-    personalize_jobs = Column(Boolean, default=True, nullable=False)

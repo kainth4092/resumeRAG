@@ -1,179 +1,133 @@
-import { useEffect, useState } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Download, Trash2, ShieldCheck, FileText, AlertCircle, Loader2 } from "lucide-react";
 import DeleteAccountModal from "./DeleteAccountModal";
 import api from "../../../services/api";
 
-let privacySettingsCache = null;
-
-function Toggle({ value, onChange, disabled = false }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => {
-        if (!disabled) {
-          onChange(!value);
-        }
-      }}
-      className={`relative shrink-0 w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-        value ? "bg-primary" : "bg-muted border border-border"
-      }`}
-    >
-      <span
-        className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-          value ? "translate-x-[18px]" : ""
-        }`}
-      />
-    </button>
-  );
-}
-
 export default function PrivacySettings() {
-  const DEFAULT_PRIVACY = {
-    share_analytics: true,
-    personalize_jobs: true,
-  };
-  const [privacy, setPrivacy] = useState(
-    () => privacySettingsCache || DEFAULT_PRIVACY,
-  );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (privacySettingsCache) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchPrivacySettings = async () => {
-      try {
-        setError("");
-
-        const response = await api.get("/settings/privacy", {
-          bypassCache: true,
-        });
-
-        privacySettingsCache = response.data;
-        setPrivacy(response.data);
-      } catch (err) {
-        console.error("Failed to fetch privacy settings:", err);
-
-        setError(
-          err?.response?.data?.detail || "Failed to load privacy settings.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrivacySettings();
-  }, []);
-
-  const handleChange = async (key, value) => {
-    if (saving) return;
-
-    const previousPrivacy = { ...privacy };
-
-    const updatedPrivacy = {
-      ...privacy,
-      [key]: value,
-    };
-
-    setPrivacy(updatedPrivacy);
-    setSaving(true);
-    setSaved(false);
-    setError("");
-
+  const handleExportData = async () => {
     try {
-      const response = await api.put("/settings/privacy", updatedPrivacy);
-      privacySettingsCache = response.data;
-      setPrivacy(response.data);
-      setSaved(true);
+      setExporting(true);
+      setExportError("");
+      const response = await api.get("/account/export", {
+        bypassCache: true,
+      });
 
-      setTimeout(() => {
-        setSaved(false);
-      }, 2000);
+      const dataStr = JSON.stringify(response.data, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().split("T")[0];
+      link.href = url;
+      link.download = `resupilot_account_export_${date}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Failed to save privacy settings:", err);
-
-      setPrivacy(previousPrivacy);
-
-      setError(
-        err?.response?.data?.detail || "Failed to save privacy settings.",
+      console.error("Failed to export account data:", err);
+      setExportError(
+        err?.response?.data?.detail || "Failed to generate account export. Please try again."
       );
     } finally {
-      setSaving(false);
+      setExporting(false);
     }
   };
 
   return (
     <div className="space-y-4">
+      {/* Data Protection & Rights */}
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div>
           <h3 className="text-foreground font-semibold">
-            {" "}
-            <span className="border-b border-primary">
-              Privacy & Preference
-            </span>
+            <span className="border-b border-primary">Data Protection & Privacy</span>
           </h3>
-          {saved && (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-fade-in">
-              <Check size={13} /> Saved!
-            </span>
-          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            ResuPilot AI adheres to strict data minimization, GDPR, and CCPA privacy standards.
+          </p>
         </div>
 
-        <div className="flex items-start justify-between py-3 border-b border-border">
-          <div className="mr-4">
-            <p className="text-sm font-semibold text-foreground">
-              Usage Analytics
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Share anonymous click and hover analytics data to help us improve
-              the AI models.
-            </p>
+        <div className="p-4 rounded-xl border border-border/80 bg-muted/40 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
+              <ShieldCheck size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Zero AI Model Training</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Your resume text, contact details, and career history are processed strictly for
+                real-time inference via secure enterprise endpoints (OpenRouter, Groq, OpenAI).
+                Your data is never used to train public or foundation AI models.
+              </p>
+            </div>
           </div>
-          <Toggle
-            value={privacy.share_analytics}
-            onChange={(v) => handleChange("share_analytics", v)}
-            disabled={loading || saving}
-          />
+
+          <div className="flex items-start gap-3 pt-2 border-t border-border/60">
+            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500 shrink-0">
+              <FileText size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Data Rights & Portability</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                Under GDPR Article 20 and CCPA, you have the right to receive all your personal
+                data in a structured, commonly used, machine-readable JSON format.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-start justify-between py-3">
-          <div className="mr-4">
-            <p className="text-sm font-semibold text-foreground">
-              AI Personalization
-            </p>
+        {exportError && (
+          <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-xs font-medium text-red-500">
+            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+            <span>{exportError}</span>
+          </div>
+        )}
+
+        <div className="pt-2 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Export Account Data</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Use job matching metadata history to customize recommended
-              questions and resume insights.
+              Download all your resumes, scores, job matches, and profile history as a single JSON file.
             </p>
           </div>
-          <Toggle
-            value={privacy.personalize_jobs}
-            onChange={(v) => handleChange("personalize_jobs", v)}
-            disabled={loading || saving}
-          />
+          <button
+            type="button"
+            onClick={handleExportData}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 cursor-pointer shrink-0 ml-4"
+          >
+            {exporting ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Generating Export...
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                Export JSON
+              </>
+            )}
+          </button>
         </div>
       </div>
 
+      {/* Danger Zone */}
       <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 space-y-4">
         <div>
           <h3 className="text-destructive font-bold text-sm">Danger Zone</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Permanently remove your ResuPilot dashboard profile and settings.
-            This cannot be undone.
+            Permanently remove your ResuPilot dashboard profile, uploaded resumes, AI interview
+            history, and vector search embeddings. This cannot be undone.
           </p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-destructive hover:bg-destructive/95 text-white text-xs font-bold transition-all cursor-pointer"
         >
-          <Trash2 size={14} /> Delete Account...
+          <Trash2 size={14} /> Delete Account & All Data...
         </button>
       </div>
 

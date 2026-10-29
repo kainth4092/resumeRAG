@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
 
 import WelcomeScreen from "./WelcomeScreen";
 import LoginScreen from "./LoginScreen";
@@ -75,66 +74,48 @@ export function AuthFlow({ initialScreen = "welcome" }) {
     }
   };
 
-  const handleGoogleLoginTrigger = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        setGoogleLoading(true);
-        setAlert(null);
-        api.clearCache();
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setGoogleLoading(true);
+      setAlert(null);
+      api.clearCache();
 
-        const res = await googleLoginUser({
-          credential: tokenResponse.access_token,
-        });
-        localStorage.setItem("access_token", res.data.access_token);
-
-        localStorage.setItem("remember_me", "false");
-        localStorage.removeItem("token_expiry");
-        sessionStorage.setItem("session_active", "true");
-
-        await fetchUser(true);
-        navigate("/dashboard");
-      } catch (err) {
-        console.error("Google authentication failed", err);
-        const detail = err.response?.data?.detail;
-        const errorMessage = Array.isArray(detail)
-          ? detail[0].msg
-          : detail || "Google authentication failed. Please try again.";
-        setAlert({
-          type: "error",
-          message: errorMessage,
-        });
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error("Google authentication error", error);
-      setGoogleLoading(false);
-    },
-    onNonOAuthError: (error) => {
-      console.error("Google authentication non-oauth error", error);
-      setGoogleLoading(false);
-
-      if (error && error.type === "popup_closed") {
-        return;
+      if (!credentialResponse?.credential) {
+        throw new Error("No Google ID token credential received.");
       }
 
-      let errorMessage = "Google authentication failed. Please try again.";
-      if (error && error.type === "popup_blocked") {
-        errorMessage =
-          "Google login popup was blocked by your browser. Please allow popups.";
-      }
+      const res = await googleLoginUser({
+        credential: credentialResponse.credential,
+      });
+      localStorage.setItem("access_token", res.data.access_token);
 
+      localStorage.setItem("remember_me", "false");
+      localStorage.removeItem("token_expiry");
+      sessionStorage.setItem("session_active", "true");
+
+      await fetchUser(true);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Google authentication failed", err);
+      const detail = err.response?.data?.detail;
+      const errorMessage = Array.isArray(detail)
+        ? detail[0].msg
+        : detail || "Google authentication failed. Please try again.";
       setAlert({
         type: "error",
         message: errorMessage,
       });
-    },
-  });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
-  const handleGoogle = () => {
-    setGoogleLoading(true);
-    handleGoogleLoginTrigger();
+  const handleGoogleError = () => {
+    console.error("Google authentication error");
+    setAlert({
+      type: "error",
+      message: "Google authentication failed. Please try again.",
+    });
   };
 
   return (
@@ -158,7 +139,8 @@ export function AuthFlow({ initialScreen = "welcome" }) {
                 setAlert(null);
                 setScreen("register");
               }}
-              onGoogleClick={handleGoogle}
+              onGoogleSuccess={handleGoogleSuccess}
+              onGoogleError={handleGoogleError}
               googleLoading={googleLoading}
               onSignIn={() => {
                 setAlert(null);
@@ -182,7 +164,8 @@ export function AuthFlow({ initialScreen = "welcome" }) {
                 setAlert(null);
                 setScreen("welcome");
               }}
-              onGoogleClick={handleGoogle}
+              onGoogleSuccess={handleGoogleSuccess}
+              onGoogleError={handleGoogleError}
               googleLoading={googleLoading}
               alert={alert}
               setAlert={setAlert}
@@ -199,7 +182,8 @@ export function AuthFlow({ initialScreen = "welcome" }) {
                 setAlert(null);
                 setScreen("welcome");
               }}
-              onGoogleClick={handleGoogle}
+              onGoogleSuccess={handleGoogleSuccess}
+              onGoogleError={handleGoogleError}
               googleLoading={googleLoading}
               alert={alert}
               setAlert={setAlert}

@@ -34,6 +34,10 @@ from app.api.notifications.routes import router as notifications_router
 from app.api.settings.routes import router as settings_router
 from app.api.meta.routes import router as meta_router
 from app.api.pipeline.routes import router as pipeline_router
+from app.api.account.routes import router as account_router
+from slowapi.errors import RateLimitExceeded
+from app.core.limiter import limiter
+from app.core.middleware import SecurityAndObservabilityMiddleware
 
 
 logger = logging.getLogger(__name__)
@@ -259,11 +263,27 @@ async def generic_exception_handler(request: Request, exc: Exception):
     return _error("Internal server error.", 500)
 
 
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Rate limit exceeded. Please slow down and try again.",
+            "error_code": "RATE_LIMIT_EXCEEDED",
+        },
+    )
+
+
+app.add_middleware(SecurityAndObservabilityMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins or ["*"],
+    allow_origins=settings.cors_origins if settings.cors_origins else ["http://localhost:5173", "http://localhost:4173"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -289,6 +309,7 @@ app.include_router(notifications_router)
 app.include_router(settings_router)
 app.include_router(meta_router)
 app.include_router(pipeline_router)
+app.include_router(account_router)
 
 
 @app.get("/")
