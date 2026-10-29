@@ -1,28 +1,41 @@
 import { useState } from "react";
 import { AlertTriangle, FileText, Loader2, Trash2 } from "lucide-react";
+import { useModalA11y } from "../../../../../hooks/useModalA11y";
 
 function ConfirmDelete({ resume, onConfirm, onCancel }) {
   const [deleting, setDeleting] = useState(false);
+  const modalRef = useModalA11y({ isOpen: true, onClose: onCancel });
 
   const handleDelete = async () => {
     setDeleting(true);
-    await new Promise((r) => setTimeout(r, 900));
+    await new Promise((r) => setTimeout(r, 600));
     onConfirm();
   };
 
   return (
-    <div className="fixed inset-0 z-300 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-300 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-resume-title"
+    >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-150"
         onClick={!deleting ? onCancel : undefined}
       />
-      <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-(--shadow-lg) p-6 animate-in fade-in-0 zoom-in-95 duration-200 space-y-4">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-(--shadow-lg) p-6 animate-in fade-in-0 zoom-in-95 duration-200 space-y-4 outline-none"
+      >
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-destructive/10 flex items-center justify-center shrink-0">
             <AlertTriangle size={20} className="text-destructive" />
           </div>
           <div>
-            <h3 className="text-foreground font-semibold">Delete resume?</h3>
+            <h3 id="delete-resume-title" className="text-foreground font-semibold">
+              Delete resume?
+            </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               This action cannot be undone.
             </p>
@@ -44,8 +57,7 @@ function ConfirmDelete({ resume, onConfirm, onCancel }) {
         </div>
 
         <p className="text-sm text-muted-foreground leading-relaxed">
-          "<span className="font-medium text-foreground">{resume.name}</span>"
-          will be permanently deleted. All ATS scores and history will be lost.
+          "<span className="font-medium text-foreground">{resume.name}</span>" will be permanently deleted. All ATS scores and history will be lost.
         </p>
 
         <div className="flex gap-3 pt-1">

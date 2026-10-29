@@ -1,5 +1,3 @@
-import React from "react";
-
 const fontStyles = {
   Inter: { fontFamily: '"Inter", "Helvetica Neue", Helvetica, Arial, sans-serif' },
   "Times New Roman": { fontFamily: '"Times New Roman", Times, serif' },

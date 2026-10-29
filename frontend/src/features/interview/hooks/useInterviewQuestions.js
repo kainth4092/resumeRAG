@@ -52,9 +52,6 @@ export function useInterviewQuestions(locationState) {
   const loadSession = useCallback(async () => {
     if (!user) return;
     try {
-      setError("");
-      setViewState("loading");
-
       let sessionId = locationState?.sessionId;
       if (!sessionId) {
         try {
@@ -122,13 +119,19 @@ export function useInterviewQuestions(locationState) {
       setViewState("empty");
       return;
     }
-  }, [locationState, user, bookmarkedQuestionsKey]);
+  }, [locationState, user]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    loadSession();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        loadSession();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [loadSession]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggleBookmark = useCallback(
     async (questionId) => {

@@ -5,8 +5,10 @@ import { STATUS_STYLES } from "./constants";
 import { TEMPLATE_REGISTRY } from "../templates";
 import { useAuth } from "../../../../auth/context/AuthContext";
 import Select from "./Select";
+import { useModalA11y } from "../../../../../hooks/useModalA11y";
 
 function PreviewModal({ resume, onClose, onUpdate }) {
+  const modalRef = useModalA11y({ isOpen: true, onClose });
   const { user } = useAuth();
   const resumesKey = user?.email
     ? `saved_resumes_${user.email}`
@@ -36,12 +38,21 @@ function PreviewModal({ resume, onClose, onUpdate }) {
   }));
 
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center p-4 md:p-8">
+    <div
+      className="fixed inset-0 z-200 flex items-center justify-center p-4 md:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preview-modal-title"
+    >
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-150"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-(--shadow-lg) overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-200 max-h-[92vh]">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-(--shadow-lg) overflow-hidden flex flex-col animate-in fade-in-0 zoom-in-95 duration-200 max-h-[92vh] outline-none"
+      >
         <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">

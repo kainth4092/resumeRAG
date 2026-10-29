@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Plus, X, RefreshCw, CheckCircle2 } from "lucide-react";
 import Select from "../../resume/components/resume/dashboard/Select";
 import { saveJob, updateJobStatus } from "../services/jobs.service";
+import { useModalA11y } from "../../../hooks/useModalA11y";
 
 export default function AddJobModal({ onClose, onAdd }) {
+  const modalRef = useModalA11y({ isOpen: true, onClose });
   const [form, setForm] = useState({
     company: "",
     role: "",
@@ -66,7 +68,14 @@ export default function AddJobModal({ onClose, onAdd }) {
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-(--shadow-lg) overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-job-title"
+        className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-(--shadow-lg) overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200 outline-none"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">

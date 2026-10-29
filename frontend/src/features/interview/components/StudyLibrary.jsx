@@ -77,6 +77,39 @@ export default function StudyLibrary({
     return () => clearTimeout(timer);
   }, [search]);
 
+  useEffect(() => {
+    let active = true;
+    const params = {
+      search: debouncedSearch || undefined,
+      skill: selectedSkill || undefined,
+      difficulty: selectedDifficulty || undefined,
+      category: selectedCategory || undefined,
+      company: selectedCompany || undefined,
+      bookmark_only: bookmarkOnly || undefined,
+      source: defaultSource || undefined,
+    };
+    getInterviewBankMeta(params)
+      .then((res) => {
+        if (active && res.data) {
+          setMeta(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch library metadata:", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [
+    debouncedSearch,
+    selectedSkill,
+    selectedDifficulty,
+    selectedCategory,
+    selectedCompany,
+    bookmarkOnly,
+    defaultSource,
+  ]);
+
   const fetchMeta = useCallback(async () => {
     try {
       const params = {
@@ -105,36 +138,36 @@ export default function StudyLibrary({
     defaultSource,
   ]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  const filterKey = `${debouncedSearch}|${selectedSkill}|${selectedDifficulty}|${selectedCategory}|${selectedCompany}|${bookmarkOnly}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
+  }
+
   useEffect(() => {
-    fetchMeta();
-  }, [fetchMeta]);
+    let active = true;
+    const params = {
+      page,
+      limit,
+      search: debouncedSearch || undefined,
+      skill: selectedSkill || undefined,
+      difficulty: selectedDifficulty || undefined,
+      category: selectedCategory || undefined,
+      company: selectedCompany || undefined,
+      bookmark_only: bookmarkOnly || undefined,
+      source: defaultSource || undefined,
+    };
 
-  const loadQuestions = useCallback(
-    async (pageNum) => {
-      setLoading(true);
-      try {
-        const params = {
-          page: pageNum,
-          limit,
-          search: debouncedSearch || undefined,
-          skill: selectedSkill || undefined,
-          difficulty: selectedDifficulty || undefined,
-          category: selectedCategory || undefined,
-          company: selectedCompany || undefined,
-          bookmark_only: bookmarkOnly || undefined,
-          source: defaultSource || undefined,
-        };
-
-        const res = await getAllInterviewQuestions(params);
-
+    getAllInterviewQuestions(params)
+      .then((res) => {
+        if (!active) return;
         if (res.data) {
           const { questions: fetchedQuestions = [], total: totalCount = 0 } =
             res.data;
 
           const normalizedQuestions = fetchedQuestions.map((q) => ({
             ...q,
-
             bookmarked: Boolean(
               q.bookmarked ?? q.is_bookmarked ?? (bookmarkOnly ? true : false),
             ),
@@ -143,39 +176,31 @@ export default function StudyLibrary({
           setQuestions(normalizedQuestions);
           setTotal(totalCount);
         }
-      } catch (err) {
+      })
+      .catch((err) => {
+        if (!active) return;
         console.error("Failed to load library questions:", err);
         setError("Failed to load interview questions.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      debouncedSearch,
-      selectedSkill,
-      selectedDifficulty,
-      selectedCategory,
-      selectedCompany,
-      bookmarkOnly,
-      defaultSource,
-    ],
-  );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-  useEffect(() => {
-    setPage(1);
+    return () => {
+      active = false;
+    };
   }, [
+    page,
+    limit,
     debouncedSearch,
     selectedSkill,
     selectedDifficulty,
     selectedCategory,
     selectedCompany,
     bookmarkOnly,
+    defaultSource,
+    refreshKey,
   ]);
-
-  useEffect(() => {
-    loadQuestions(page);
-  }, [page, loadQuestions, refreshKey]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const [bookmarkLoadingId, setBookmarkLoadingId] = useState(null);
 

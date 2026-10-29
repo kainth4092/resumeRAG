@@ -24,7 +24,7 @@ export default function ChallengeTest({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-foreground">Time Capsule</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">20 Questions MCQ Challenge</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{questions.length} Questions MCQ Challenge</p>
               </div>
             </div>
 
@@ -49,7 +49,7 @@ export default function ChallengeTest({
             <div className="lg:col-span-8 bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20 shrink-0">
-                  Question {currentIdx + 1} of 20
+                  Question {currentIdx + 1} of {questions.length}
                 </span>
                 {questions[currentIdx].skill && (
                   <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
@@ -119,7 +119,7 @@ export default function ChallengeTest({
               </h4>
 
               <div className="grid grid-cols-5 gap-2.5">
-                {Array.from({ length: 20 }).map((_, idx) => {
+                {questions.map((_, idx) => {
                   const isCurrent = idx === currentIdx;
                   const isAnswered = userAnswers[idx] !== undefined;
 

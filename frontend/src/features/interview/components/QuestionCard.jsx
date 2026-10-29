@@ -169,16 +169,34 @@ export const QuestionCard = memo(function QuestionCard({
   );
   const isCreatedByCurrentUser = user && question.created_by === user.id;
 
-  const [open, setOpen] = useState(isInitiallyExpanded);
+  const [open, setOpen] = useState(Boolean(isInitiallyExpanded));
+  const [prevInitiallyExpanded, setPrevInitiallyExpanded] = useState(isInitiallyExpanded);
   const [localAnswer, setLocalAnswer] = useState(null);
+  const [pollFailed, setPollFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  if (prevInitiallyExpanded !== isInitiallyExpanded) {
+    setPrevInitiallyExpanded(isInitiallyExpanded);
+    if (isInitiallyExpanded) {
+      setOpen(true);
+    }
+  }
 
   const sampleAnswerText =
     localAnswer || toText(question.sampleAnswer || question.answer);
   const isGenerating = sampleAnswerText === "Generating answer...";
 
+  const handleRetry = () => {
+    setPollFailed(false);
+    setRetryCount((c) => c + 1);
+  };
+
   useEffect(() => {
-    if (open && sampleAnswerText === "Generating answer...") {
+    if (open && sampleAnswerText === "Generating answer..." && !pollFailed) {
       let active = true;
+      let attempts = 0;
+      const MAX_ATTEMPTS = 10;
+
       const fetchUpdatedAnswer = async () => {
         try {
           let updatedAnswer = "";
@@ -206,9 +224,15 @@ export const QuestionCard = memo(function QuestionCard({
       fetchUpdatedAnswer();
 
       const interval = setInterval(async () => {
+        attempts += 1;
         const done = await fetchUpdatedAnswer();
         if (done) {
           clearInterval(interval);
+        } else if (attempts >= MAX_ATTEMPTS) {
+          clearInterval(interval);
+          if (active) {
+            setPollFailed(true);
+          }
         }
       }, 3000);
 
@@ -217,18 +241,7 @@ export const QuestionCard = memo(function QuestionCard({
         clearInterval(interval);
       };
     }
-  }, [open, sampleAnswerText, question.id, question.source]);
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (isInitiallyExpanded) {
-      setOpen(true);
-      if (onExpand) {
-        onExpand(question.id);
-      }
-    }
-  }, [isInitiallyExpanded, onExpand, question.id]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [open, sampleAnswerText, pollFailed, retryCount, question.id, question.source]);
 
   const handleToggle = () => {
     const nextOpen = !open;
@@ -439,7 +452,21 @@ export const QuestionCard = memo(function QuestionCard({
               </div>
             </div>
 
-            {isLoading || isGenerating ? (
+            {pollFailed ? (
+              <div className="flex items-center justify-between py-3.5 px-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-600 dark:text-amber-400">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={15} className="shrink-0" />
+                  <span>AI generation took longer than expected.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 font-bold transition-all cursor-pointer"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : isLoading || isGenerating ? (
               <div className="flex items-center gap-2.5 py-4 px-5 bg-primary/4 border border-primary/12 rounded-2xl text-xs text-muted-foreground animate-pulse">
                 <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
                 <span>Generating a sample answer in background...</span>

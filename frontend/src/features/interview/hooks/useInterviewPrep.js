@@ -4,18 +4,18 @@ import { useInterviewQuestions } from "./useInterviewQuestions";
 import { useQuestionFilters } from "./useQuestionFilters";
 import { generateAIAnswer } from "../services/interviewBankService";
 
+const VALID_TABS = [
+  "personalized",
+  "library",
+  "challenge",
+  "mock",
+  "history",
+  "community",
+];
+
 export function useInterviewPrep({ onQuestionShared }) {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const VALID_TABS = [
-    "personalized",
-    "library",
-    "challenge",
-    "mock",
-    "history",
-    "community",
-  ];
 
   const [activeTab, setActiveTabState] = useState(() => {
     const params = new URLSearchParams(window.location.search);

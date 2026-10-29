@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, RefreshCw } from "lucide-react";
 import FilterBar from "./FilterBar";
 
@@ -14,14 +14,12 @@ export default function SearchBar({
   setRemote,
 }) {
   const [inputValue, setInputValue] = useState(query || "");
+  const [prevQuery, setPrevQuery] = useState(query);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (query !== inputValue) {
-      setInputValue(query || "");
-    }
-  }, [query]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  if (prevQuery !== query) {
+    setPrevQuery(query);
+    setInputValue(query || "");
+  }
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -46,6 +44,7 @@ export default function SearchBar({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            aria-label="Search jobs, companies or technologies"
             placeholder="Search jobs, companies or technologies..."
             className="w-full h-11 pl-11 pr-4 text-sm bg-input-background border border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary/40 transition-all"
           />

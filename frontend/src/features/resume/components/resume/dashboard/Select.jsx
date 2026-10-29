@@ -23,12 +23,7 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  useEffect(() => {
-    if (disabled) {
-      setIsOpen(false);
-    }
-  }, [disabled]);
-
+  const open = isOpen && !disabled;
   const selectedOption = options.find((opt) => opt.value === value);
 
   const sizeClasses = {
@@ -66,11 +61,11 @@ export default function Select({
         </span>
         <ChevronDown
           size={chevronSizes[size] || chevronSizes.md}
-          className={`text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180 text-primary" : ""}`}
+          className={`text-muted-foreground transition-transform duration-200 ${open ? "rotate-180 text-primary" : ""}`}
         />
       </button>
 
-      {isOpen && (
+      {open && (
         <div className="absolute left-0 right-0 mt-1.5 bg-popover border border-border rounded-xl shadow-lg shadow-black/10 z-50 py-1 max-h-56 overflow-y-auto animate-in fade-in-0 slide-in-from-top-1 duration-100">
           {options.length === 0 ? (
             <div className="px-3.5 py-2 text-xs text-muted-foreground text-center">

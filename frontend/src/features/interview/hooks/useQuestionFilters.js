@@ -93,6 +93,7 @@ export function useQuestionFilters({
 
     fetchFilteredQuestions();
   }, [
+    activeTab,
     debouncedSearch,
     activeFilter,
     diffFilter,

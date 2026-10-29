@@ -15,6 +15,11 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      const tokenExpiry = localStorage.getItem("token_expiry");
+      if (!token || (tokenExpiry && Date.now() > Number(tokenExpiry))) {
+        return null;
+      }
       const cached = localStorage.getItem("user_info");
       if (cached) {
         try {
@@ -27,7 +32,16 @@ export function AuthProvider({ children }) {
     return null;
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (!token) return false;
+      const tokenExpiry = localStorage.getItem("token_expiry");
+      if (tokenExpiry && Date.now() > Number(tokenExpiry)) return false;
+      return true;
+    }
+    return false;
+  });
 
   const logout = useCallback(() => {
     const keysToRemove = [];
@@ -81,16 +95,6 @@ export function AuthProvider({ children }) {
         }
       }
 
-      // Optimistically display cached user while revalidating
-      const cached = localStorage.getItem("user_info");
-      if (cached) {
-        try {
-          setUser(JSON.parse(cached));
-        } catch {
-          localStorage.removeItem("user_info");
-        }
-      }
-
       try {
         const requestToken = localStorage.getItem("access_token");
         const res = await getCurrentUser();
@@ -131,8 +135,49 @@ export function AuthProvider({ children }) {
   );
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    let active = true;
+    const token = localStorage.getItem("access_token");
+    const tokenExpiry = localStorage.getItem("token_expiry");
+    const isExpired = tokenExpiry && Date.now() > Number(tokenExpiry);
+
+    if (!token || isExpired) {
+      if (isExpired) {
+        Promise.resolve().then(() => logout());
+      }
+      return;
+    }
+
+    getCurrentUser()
+      .then((res) => {
+        if (!active) return;
+        const userData = res.data;
+        const initials = userData.name
+          ? userData.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
+          : userData.email
+            ? userData.email.slice(0, 2).toUpperCase()
+            : "U";
+        const completeUserData = { ...userData, avatar: initials };
+        setUser(completeUserData);
+        localStorage.setItem("user_info", JSON.stringify(completeUserData));
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error("Failed to revalidate user on /auth/me:", err);
+        logout();
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [logout]);
 
   const value = useMemo(
     () => ({

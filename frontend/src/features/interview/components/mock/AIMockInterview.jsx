@@ -27,11 +27,20 @@ export function AIMockInterview() {
     }
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    fetchHistory();
+    let active = true;
+    mockInterviewService
+      .getHistory()
+      .then((res) => {
+        if (active) setHistory(res.history || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load mock interview history:", err);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleStartInterview = async (type) => {
     setLoading(true);

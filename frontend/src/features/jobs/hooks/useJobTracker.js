@@ -82,7 +82,6 @@ export function useJobTracker() {
     setRemote("");
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const timer = setTimeout(() => {
       const trimmedSearch = search.trim();
@@ -98,9 +97,23 @@ export function useJobTracker() {
   }, [search, location, jobType, remote, handleSearch, loadRecommended]);
 
   useEffect(() => {
-    loadTrackedJobs();
-  }, [loadTrackedJobs]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    let active = true;
+    getTrackedJobs()
+      .then((data) => {
+        if (active) {
+          setTrackedJobs(data || []);
+          window.dispatchEvent(
+            new CustomEvent("tracker-updated", { detail: data?.length || 0 }),
+          );
+        }
+      })
+      .catch((e) => {
+        console.error("Failed to load tracked jobs:", e);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [loadingJobId, setLoadingJobId] = useState(null);
 

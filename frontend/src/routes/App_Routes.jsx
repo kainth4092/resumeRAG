@@ -4,7 +4,8 @@ import PublicOnlyRoute from "../components/layout/PublicOnlyRoute";
 import Layout from "../components/layout/Layout";
 import { lazy, Suspense } from "react";
 import PageLoader from "../components/loading/PageLoader";
-import Roadmap from "../features/careerRoadmap/pages/Roadmap";
+
+const Roadmap = lazy(() => import("../features/careerRoadmap/pages/Roadmap"));
 
 const Login = lazy(() => import("../features/auth/pages/Login"));
 const Register = lazy(() => import("../features/auth/pages/Register"));

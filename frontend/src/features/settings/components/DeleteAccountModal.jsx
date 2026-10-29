@@ -2,12 +2,14 @@ import { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import api from "../../../services/api";
 import { useAuth } from "../../auth/context/AuthContext";
+import { useModalA11y } from "../../../hooks/useModalA11y";
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   const { logout } = useAuth();
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const modalRef = useModalA11y({ isOpen, onClose });
 
   if (!isOpen) return null;
 
@@ -27,13 +29,24 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-popover border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+    <div
+      className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-account-title"
+    >
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="bg-popover border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150 outline-none"
+      >
         <div className="flex items-center gap-3 text-destructive">
           <div className="p-2 bg-destructive/10 rounded-xl">
             <AlertTriangle size={20} />
           </div>
-          <h3 className="text-lg font-bold text-foreground">Delete Account Permanently?</h3>
+          <h3 id="delete-account-title" className="text-lg font-bold text-foreground">
+            Delete Account Permanently?
+          </h3>
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed">

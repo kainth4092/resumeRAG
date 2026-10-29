@@ -19,7 +19,7 @@ export default function ChallengeResult({ step, result, onBackToPrep, onReviewAn
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-muted/40 border border-border rounded-2xl p-4 text-center space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Score</p>
-              <p className="text-xl font-black text-foreground">{result.score} / 20</p>
+              <p className="text-xl font-black text-foreground">{result.score} / {result.total_questions || (result.correct + result.wrong + result.skipped) || 20}</p>
             </div>
             <div className="bg-muted/40 border border-border rounded-2xl p-4 text-center space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accuracy</p>

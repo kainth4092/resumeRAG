@@ -33,6 +33,7 @@ import {
 import { getResumes } from "../../resume/services/resumeService";
 import { saveJob } from "../../jobs/services/jobs.service";
 import { toggleTask } from "../../careerRoadmap/services/roadmapService";
+import { toast } from "sonner";
 import { getQuestionDetails } from "../../interview/services/interviewService";
 import { generateLayout } from "../../resume/components/resume/templates/templateLayouts";
 import ReactPreviewRenderer from "../../resume/components/resume/templates/ReactPreviewRenderer";
@@ -57,16 +58,35 @@ export default function PipelinePage() {
   const [sourceType, setSourceType] = useState("resume"); // "resume" | "profile"
   const [selectedResumeId, setSelectedResumeId] = useState("");
   const [userResumes, setUserResumes] = useState([]);
-  const [jobDescription, setJobDescription] = useState("");
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const [jobDescription, setJobDescription] = useState(
+    () => location.state?.job?.job_description || location.state?.job?.description || location.state?.jobDescription || ""
+  );
+  const [company, setCompany] = useState(
+    () => location.state?.job?.company_name || location.state?.job?.company || ""
+  );
+  const [role, setRole] = useState(
+    () => location.state?.job?.job_title || location.state?.job?.title || ""
+  );
   const [template, setTemplate] = useState("Professional");
 
   // Pipeline Run execution state
   const [runId, setRunId] = useState(routeRunId || null);
+  const [prevRouteRunId, setPrevRouteRunId] = useState(routeRunId);
+  if (routeRunId !== prevRouteRunId) {
+    setPrevRouteRunId(routeRunId);
+    if (routeRunId && routeRunId !== runId) {
+      setRunId(routeRunId);
+    }
+  }
+
   const [runData, setRunData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pollError, setPollError] = useState(null);
+  const [prevPolledRunId, setPrevPolledRunId] = useState(runId);
+  if (runId !== prevPolledRunId) {
+    setPrevPolledRunId(runId);
+    setPollError(null);
+  }
 
   // Results state
   const [activeTab, setActiveTab] = useState("resume"); // "resume" | "jobs" | "interview" | "roadmap"
@@ -94,32 +114,16 @@ export default function PipelinePage() {
       .then((resumes) => {
         const list = Array.isArray(resumes) ? resumes : resumes?.resumes || [];
         setUserResumes(list);
-        if (list.length > 0 && !selectedResumeId) {
-          const active = list.find((r) => r.is_active) || list[0];
-          setSelectedResumeId(String(active.id));
+        if (list.length > 0) {
+          setSelectedResumeId((prev) => {
+            if (prev) return prev;
+            const active = list.find((r) => r.is_active) || list[0];
+            return String(active.id);
+          });
         }
       })
       .catch((err) => console.error("Failed to load user resumes:", err));
   }, []);
-
-  // Prefill from location state (e.g. from Job Tracker or "Tailor for this job")
-  useEffect(() => {
-    if (location.state?.job) {
-      const j = location.state.job;
-      setJobDescription(j.job_description || j.description || "");
-      setCompany(j.company_name || j.company || "");
-      setRole(j.job_title || j.title || "");
-    } else if (location.state?.jobDescription) {
-      setJobDescription(location.state.jobDescription);
-    }
-  }, [location.state]);
-
-  // Deep-link route support: /pipeline/:runId
-  useEffect(() => {
-    if (routeRunId && routeRunId !== runId) {
-      setRunId(routeRunId);
-    }
-  }, [routeRunId]);
 
   // Load artifact data once pipeline has completed or partial status
   const loadArtifacts = useCallback(async (run) => {
@@ -209,9 +213,10 @@ export default function PipelinePage() {
 
     pollStartRef.current = Date.now();
     pollDelayRef.current = 2000;
-    setPollError(null);
 
-    pollRun(runId);
+    pollTimerRef.current = setTimeout(() => {
+      pollRun(runId);
+    }, 0);
 
     return () => {
       if (pollTimerRef.current) {
@@ -232,11 +237,11 @@ export default function PipelinePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (jobDescription.trim().length < 50) {
-      alert("Please provide at least 50 characters for the Job Description.");
+      toast.error("Please provide at least 50 characters for the Job Description.");
       return;
     }
     if (sourceType === "resume" && !selectedResumeId) {
-      alert("Please select a base resume or choose Profile Import.");
+      toast.error("Please select a base resume or choose Profile Import.");
       return;
     }
 
@@ -266,7 +271,7 @@ export default function PipelinePage() {
       navigate(`/pipeline/${newRunId}`, { replace: true });
     } catch (err) {
       console.error("Pipeline submission failed:", err);
-      alert(err?.response?.data?.detail || "Failed to start AI generation pipeline.");
+      toast.error(err?.response?.data?.detail || "Failed to start AI generation pipeline.");
     } finally {
       setIsSubmitting(false);
     }

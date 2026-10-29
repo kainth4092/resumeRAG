@@ -109,6 +109,53 @@ const getResumeHeadline = (item) => {
   return "Not specified";
 };
 
+const mapSavedList = (list, user) => {
+  return (list || [])
+    .filter((item) => {
+      const name = item.title || item.name || "";
+      const origName =
+        item.original_filename || item.resume?.original_filename || "";
+
+      if (
+        name === "Imported Profile" ||
+        origName === "profile_import.txt"
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .map((item) => {
+      let score = item.score || item.resume?.score;
+      if (!score) {
+        const str = String(item.id || item.title || "");
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        score = 75 + (Math.abs(hash) % 20);
+      }
+      return {
+        id: item.id,
+        name: getResumeDisplayName(item, user),
+        role: getResumeHeadline(item),
+        originalTitle: item.title || item.name || "",
+        originalFilename:
+          item.original_filename || item.resume?.original_filename || "",
+        company: item.resume?.work_experience?.[0]?.company || "",
+        score: score,
+        status: item.status || "Active",
+        updated: item.updatedAt || item.updated || "Just now",
+        pages: item.pages || estimatePageCount(item.resume),
+        version: item.version || "v1",
+        starred: item.starred || false,
+        template: item.template || "Professional",
+        color: item.color || "#4F46E5",
+        resume: item.resume,
+        jobDescription: item.jobDescription,
+      };
+    });
+};
+
 export default function MyResumes() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -125,7 +172,14 @@ export default function MyResumes() {
     ? `last_job_description_${user.email}`
     : "last_job_description";
 
-  const [resumes, setResumes] = useState([]);
+  const [resumes, setResumes] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
+      return mapSavedList(saved, user);
+    } catch {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -146,11 +200,12 @@ export default function MyResumes() {
   const [success, setSuccess] = useState("");
   const [generatingPrep, setGeneratingPrep] = useState(false);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
+  const filterKey = `${search}|${statusFilter}|${starredFilter}|${sortBy}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
     setPage(1);
-  }, [search, statusFilter, starredFilter, sortBy]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }
 
   const menuRef = useRef(null);
 
@@ -164,63 +219,11 @@ export default function MyResumes() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user) return;
 
-    const mapSavedList = (list) => {
-      return list
-        .filter((item) => {
-          const name = item.title || item.name || "";
-          const origName =
-            item.original_filename || item.resume?.original_filename || "";
-
-          if (
-            name === "Imported Profile" ||
-            origName === "profile_import.txt"
-          ) {
-            return false;
-          }
-          return true;
-        })
-        .map((item) => {
-          let score = item.score || item.resume?.score;
-          if (!score) {
-            const str = String(item.id || item.title || "");
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-              hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            score = 75 + (Math.abs(hash) % 20);
-          }
-          return {
-            id: item.id,
-            name: getResumeDisplayName(item, user),
-            role: getResumeHeadline(item),
-            originalTitle: item.title || item.name || "",
-            originalFilename:
-              item.original_filename || item.resume?.original_filename || "",
-            company: item.resume?.work_experience?.[0]?.company || "",
-            score: score,
-            status: item.status || "Active",
-            updated: item.updatedAt || item.updated || "Just now",
-            pages: item.pages || estimatePageCount(item.resume),
-            version: item.version || "v1",
-            starred: item.starred || false,
-            template: item.template || "Professional",
-            color: item.color || "#4F46E5",
-            resume: item.resume,
-            jobDescription: item.jobDescription,
-          };
-        });
-    };
-
-    const saved = JSON.parse(localStorage.getItem(resumesKey) || "[]");
-    setResumes(mapSavedList(saved));
-
     let active = true;
     const syncWithBackend = async () => {
-      setLoading(true);
       try {
         const dbResumes = await getResumes();
         if (!active) return;
@@ -300,7 +303,6 @@ export default function MyResumes() {
       active = false;
     };
   }, [user, resumesKey, reloadTrigger]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const pendingResumes = resumes.filter(

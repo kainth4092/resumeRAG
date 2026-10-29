@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { emailService } from "../services/emailService";
 import { getResumes, getActiveResume } from "../../resume/services/resumeService";
@@ -16,7 +16,40 @@ export function useEmailModal({ open, onClose, initialResume }) {
 
   const [resumesList, setResumesList] = useState([]);
   const [selectedResume, setSelectedResume] = useState(null);
-  const [attachments, setAttachments] = useState([]);
+  const defaultAttachments = useMemo(() => {
+    if (!selectedResume) return [];
+    const resumeName =
+      selectedResume.original_filename ||
+      selectedResume.name ||
+      selectedResume.title ||
+      selectedResume;
+    const isDocx =
+      typeof resumeName === "string" &&
+      resumeName.toLowerCase().endsWith(".docx");
+
+    let formattedSize = "120 KB";
+    if (selectedResume.resume) {
+      const sizeBytes = JSON.stringify(selectedResume.resume).length;
+      formattedSize = `${(sizeBytes / 1024).toFixed(1)} KB`;
+    }
+
+    return [
+      {
+        name:
+          typeof resumeName === "string"
+            ? resumeName.endsWith(".pdf") || resumeName.endsWith(".docx")
+              ? resumeName
+              : `${resumeName}.pdf`
+            : "resume.pdf",
+        size: formattedSize,
+        type: isDocx ? "docx" : "pdf",
+        data: selectedResume.resume || selectedResume,
+      },
+    ];
+  }, [selectedResume]);
+
+  const [customAttachments, setAttachments] = useState(null);
+  const attachments = customAttachments !== null ? customAttachments : defaultAttachments;
   const [sendState, setSendState] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -27,6 +60,8 @@ export function useEmailModal({ open, onClose, initialResume }) {
 
   const handleClose = () => {
     if (sendState === "loading") return;
+    setSubject("");
+    setMessage("");
     setSendState("idle");
     setEmail("");
     setCc("");
@@ -36,13 +71,8 @@ export function useEmailModal({ open, onClose, initialResume }) {
     setBccError("");
     onClose();
   };
-
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
-      setSubject("");
-      setMessage("");
-
       const loadResumes = async () => {
         try {
           const allResumes = await getResumes();
@@ -103,32 +133,6 @@ export function useEmailModal({ open, onClose, initialResume }) {
     }
   }, [open, initialResume, user?.email]);
 
-  useEffect(() => {
-    if (selectedResume) {
-      const resumeName = selectedResume.original_filename || selectedResume.name || selectedResume.title || selectedResume;
-      const isDocx = typeof resumeName === "string" && resumeName.toLowerCase().endsWith(".docx");
-
-      let formattedSize = "120 KB";
-      if (selectedResume.resume) {
-        const sizeBytes = JSON.stringify(selectedResume.resume).length;
-        formattedSize = `${(sizeBytes / 1024).toFixed(1)} KB`;
-      }
-
-      setAttachments([
-        {
-          name: typeof resumeName === "string"
-            ? (resumeName.endsWith(".pdf") || resumeName.endsWith(".docx") ? resumeName : `${resumeName}.pdf`)
-            : "resume.pdf",
-          size: formattedSize,
-          type: isDocx ? "docx" : "pdf",
-          data: selectedResume.resume || selectedResume,
-        },
-      ]);
-    } else {
-      setAttachments([]);
-    }
-  }, [selectedResume]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const handleKeyDown = (e) => {

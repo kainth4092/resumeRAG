@@ -21,14 +21,14 @@ export default function ChallengeLanding({ step, error, onStartClick }) {
             <h2 className="text-2xl font-extrabold text-foreground tracking-tight mt-2">Time Capsule</h2>
             <p className="text-sm font-semibold text-primary">Random, high-priority questions.</p>
             <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
-              Test your technical strength under pressure. You will have exactly 10 minutes to solve 20 randomized multiple-choice questions fetched directly from the high-priority question bank.
+              Test your technical strength under pressure. You will have a countdown timer to solve randomized multiple-choice questions fetched directly from the high-priority question bank.
             </p>
           </div>
 
           <div className="flex gap-8 py-2">
             <div className="flex items-center gap-2">
               <BookOpen size={16} className="text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">20 Questions</span>
+              <span className="text-xs font-bold text-foreground">Timed MCQs</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock size={16} className="text-muted-foreground" />

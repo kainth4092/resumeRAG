@@ -91,7 +91,23 @@ jobs:
           cd frontend
           npm run lint
 
+      - name: Run Vitest Unit Tests
+        run: |
+          cd frontend
+          npm run test
+
       - name: Run Vite Build
         run: |
           cd frontend
           npm run build
+
+      - name: Install Playwright Browsers
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright Smoke Tests
+        run: |
+          cd frontend
+          npm run test:e2e
+

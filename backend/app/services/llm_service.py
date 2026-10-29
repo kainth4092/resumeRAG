@@ -76,65 +76,6 @@ def extract_json(content: str) -> dict:
 
         raise ValueError("The AI returned malformed JSON.") from exc
 
-
-class ChatCompletionsAdapter:
-    def create(
-        self,
-        model: str = None,
-        messages: list = None,
-        temperature: float = 0.1,
-        timeout: float = None,
-        feature: str = "legacy_adapter",
-    ):
-        if messages is None:
-            messages = []
-
-        system_content = "You are an expert assistant."
-        user_content = ""
-
-        for msg in messages:
-            if msg.get("role") == "system":
-                system_content = msg.get("content", "")
-            elif msg.get("role") == "user":
-                user_content = msg.get("content", "")
-
-        provider = get_ai_provider()
-
-        content = provider.chat(
-            system_prompt=system_content,
-            user_prompt=user_content,
-            temperature=temperature,
-            timeout=timeout,
-            feature=feature,
-        )
-
-        class MessageObj:
-            def __init__(self, content_str):
-                self.content = content_str
-
-        class ChoiceObj:
-            def __init__(self, content_str):
-                self.message = MessageObj(content_str)
-
-        class ResponseObj:
-            def __init__(self, content_str):
-                self.choices = [ChoiceObj(content_str)]
-
-        return ResponseObj(content)
-
-
-class ChatAdapter:
-    completions = ChatCompletionsAdapter()
-
-
-class OpenAIClientAdapter:
-    chat = ChatAdapter()
-
-
-# Expose 'client' as an instance of the adapter to maintain backward compatibility
-client = OpenAIClientAdapter()
-
-
 def llm_text(
     prompt: str,
     *,

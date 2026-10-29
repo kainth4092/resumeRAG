@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ChevronDown,
   LogOut,
@@ -123,7 +123,7 @@ export default function Navbar({
       searchInputRef.current.focus();
     }
   }, [searchOpen]);
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setNotificationsLoading(true);
       setNotificationError("");
@@ -138,12 +138,29 @@ export default function Navbar({
     } finally {
       setNotificationsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
+    if (!user) return;
+    let isCancelled = false;
+    getNotifications()
+      .then((response) => {
+        if (!isCancelled) {
+          setNotifications(response.data?.notifications || []);
+          setUnreadCount(response.data?.unread_count || 0);
+          setNotificationsLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.error("Failed to fetch notifications:", error);
+          setNotificationError("Failed to load notifications.");
+          setNotificationsLoading(false);
+        }
+      });
+    return () => {
+      isCancelled = true;
+    };
   }, [user]);
 
   const handleNotificationClick = async (notification) => {

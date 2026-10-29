@@ -377,7 +377,7 @@ export const generateLayout = (templateName, resumeData) => {
                 {
                   type: "col",
                   props: { align: "right", gap: 2 },
-                  children: contactFields.map((field, idx) => ({
+                  children: contactFields.map((field) => ({
                     type: "text",
                     props: {
                       text: field.text,

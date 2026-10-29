@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   X,
   Target,
@@ -7,6 +7,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Select from "../../resume/components/resume/dashboard/Select";
+import { useModalA11y } from "../../../hooks/useModalA11y";
 
 const ROLE_LEVELS = {
   "Frontend Developer": ["Junior", "Mid-Level", "Senior"],
@@ -56,25 +57,32 @@ export default function UpdateRoleModal({
   const [level, setLevel] = useState("Junior");
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
+  const modalRef = useModalA11y({ isOpen, onClose });
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const [prevProps, setPrevProps] = useState({ isOpen, initialRole, initialLevel });
+  if (
+    prevProps.isOpen !== isOpen ||
+    prevProps.initialRole !== initialRole ||
+    prevProps.initialLevel !== initialLevel
+  ) {
+    setPrevProps({ isOpen, initialRole, initialLevel });
+    if (isOpen) {
+      const safeRole = ROLE_LEVELS[initialRole]
+        ? initialRole
+        : "Frontend Developer";
 
-    const safeRole = ROLE_LEVELS[initialRole]
-      ? initialRole
-      : "Frontend Developer";
+      const availableLevels = ROLE_LEVELS[safeRole] || [];
 
-    const availableLevels = ROLE_LEVELS[safeRole];
+      const safeLevel = availableLevels.includes(initialLevel)
+        ? initialLevel
+        : availableLevels[0];
 
-    const safeLevel = availableLevels.includes(initialLevel)
-      ? initialLevel
-      : availableLevels[0];
-
-    setRole(safeRole);
-    setLevel(safeLevel);
-    setLocalError("");
-    setSubmitting(false);
-  }, [isOpen, initialRole, initialLevel]);
+      setRole(safeRole);
+      setLevel(safeLevel);
+      setLocalError("");
+      setSubmitting(false);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -142,7 +150,14 @@ export default function UpdateRoleModal({
         onClick={handleClose}
       />
 
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="update-role-title"
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   X,
   TrendingUp,
@@ -34,11 +34,10 @@ export default function FloatingAI() {
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      loadStats();
-    }
-  }, [open]);
+  const handleOpen = () => {
+    setOpen(true);
+    loadStats();
+  };
 
   const stats = data?.stats_summary || {
     resumes_count: 0,
@@ -54,7 +53,7 @@ export default function FloatingAI() {
     <div className="fixed bottom-6 right-6 z-40">
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={handleOpen}
           className="flex items-center gap-2 px-4 py-3 bg-card border border-border shadow-lg hover:shadow-xl rounded-full text-foreground hover:bg-muted/60 transition-all cursor-pointer font-semibold text-xs group"
           title="Open Quick Stats"
         >

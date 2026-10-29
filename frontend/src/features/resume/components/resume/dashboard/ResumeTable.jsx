@@ -10,7 +10,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { STATUS_STYLES } from "./constants";
-import { downloadPDF, downloadDOCX } from "../../../exporters";
+import { downloadPDF } from "../../../exporters";
 
 export default function ResumeTable({
   filtered,

@@ -41,7 +41,7 @@ export default function ChallengeReview({
             <div className="lg:col-span-8 bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20 shrink-0">
-                  Question {currentIdx + 1} of 20
+                  Question {currentIdx + 1} of {questions.length}
                 </span>
 
                 {(() => {
@@ -163,7 +163,7 @@ export default function ChallengeReview({
               </h4>
 
               <div className="grid grid-cols-5 gap-2.5">
-                {Array.from({ length: 20 }).map((_, idx) => {
+                {questions.map((_, idx) => {
                   const isCurrent = idx === currentIdx;
                   const userSel = userAnswers[idx];
                   const corrLetter = questions[idx].correct_option;

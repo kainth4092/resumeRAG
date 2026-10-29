@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import AppRoutes from "./routes/App_Routes";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Toaster } from "sonner";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -21,6 +22,7 @@ export default function App() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <Toaster richColors position="top-right" closeButton />
       <AppRoutes />
     </GoogleOAuthProvider>
   );

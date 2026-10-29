@@ -51,8 +51,33 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboard(false);
-  }, [fetchDashboard]);
+    let active = true;
+    Promise.all([
+      getDashboardData(),
+      listPipelineRuns(4).catch(() => []),
+    ])
+      .then(([result, runs]) => {
+        if (!active) return;
+        setData(result);
+        setPipelineRuns(runs || []);
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error("Dashboard fetch failed:", err);
+        setError(
+          err?.response?.data?.detail ||
+            err?.message ||
+            "Unable to load dashboard data. Please try again."
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (error && !data) {
     return (

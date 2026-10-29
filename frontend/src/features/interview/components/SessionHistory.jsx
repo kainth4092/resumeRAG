@@ -7,29 +7,31 @@ import {
 
 export default function SessionHistory({ onSelectSession, activeSessionId }) {
   const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const fetchHistory = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await getInterviewHistory();
-      setHistory(data || []);
-    } catch (e) {
-      console.error(e);
-      setError("Failed to load interview history.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    fetchHistory();
+    let active = true;
+    getInterviewHistory()
+      .then((data) => {
+        if (!active) return;
+        setHistory(data || []);
+      })
+      .catch((e) => {
+        if (!active) return;
+        console.error(e);
+        setError("Failed to load interview history.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();

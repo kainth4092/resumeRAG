@@ -1,5 +1,6 @@
 import { X, MapPin, Clock, DollarSign, ExternalLink, Bookmark, Briefcase, Globe, UserCheck } from "lucide-react";
 import { getLogoColor } from "../utils/jobs.utils";
+import { useModalA11y } from "../../../hooks/useModalA11y";
 
 export default function JobDetailsDrawer({
   job,
@@ -9,6 +10,8 @@ export default function JobDetailsDrawer({
   onSave,
   saving = false,
 }) {
+  const modalRef = useModalA11y({ isOpen, onClose });
+
   if (!isOpen || !job) return null;
 
   const companyName = job.company_name || job.company || "Unknown Company";
@@ -33,7 +36,14 @@ export default function JobDetailsDrawer({
         onClick={onClose}
       />
 
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] bg-card border-l border-border z-50 flex flex-col shadow-(--shadow-lg) animate-in slide-in-from-right duration-300">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="job-details-title"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] bg-card border-l border-border z-50 flex flex-col shadow-(--shadow-lg) animate-in slide-in-from-right duration-300 outline-none"
+      >
         <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3 min-w-0">
             {logoUrl ? (

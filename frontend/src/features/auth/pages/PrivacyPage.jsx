@@ -1,4 +1,4 @@
-import { ArrowLeft, Zap, Shield, Database, Cpu, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function PrivacyPage() {

@@ -1,4 +1,5 @@
 import { Save, X } from "lucide-react";
+import { useModalA11y } from "../../../../hooks/useModalA11y";
 
 export default function Modal({
   title,
@@ -8,18 +9,32 @@ export default function Modal({
   saving,
   error,
 }) {
+  const modalRef = useModalA11y({ isOpen: true, onClose });
+
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-100 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-modal-title"
+    >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-(--shadow-lg) animate-in fade-in-0 zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-(--shadow-lg) animate-in fade-in-0 zoom-in-95 duration-200 max-h-[90vh] flex flex-col outline-none"
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <h3 className="text-foreground">{title}</h3>
+          <h3 id="profile-modal-title" className="text-foreground font-semibold">
+            {title}
+          </h3>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Close modal"
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -35,14 +50,14 @@ export default function Modal({
         <div className="flex gap-3 px-5 py-4 border-t border-border shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted transition-all"
+            className="flex-1 py-2.5 rounded-xl border border-border text-sm text-foreground hover:bg-muted transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] disabled:opacity-70 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] disabled:opacity-70 transition-all cursor-pointer"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

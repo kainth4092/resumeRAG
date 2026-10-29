@@ -47,35 +47,37 @@ export function useResumeAnalysis() {
     }
   }, [resumesList, selectedResume]);
 
+  const selectedResumeId = selectedResume?.resume_id || selectedResume?.id;
+  const selectedResumeStatus = selectedResume?.parsing_status;
+  const selectedResumeAtsScore = selectedResume?.ats_score;
+
   useEffect(() => {
-    if (!selectedResume) return;
-    const resumeId = selectedResume.resume_id || selectedResume.id;
-    if (!resumeId) return;
+    if (!selectedResumeId) return;
 
     if (
-      selectedResume.parsing_status === "pending" ||
-      selectedResume.parsing_status === "processing"
+      selectedResumeStatus === "pending" ||
+      selectedResumeStatus === "processing"
     ) {
       let active = true;
       const intervalId = setInterval(async () => {
         try {
-          const freshData = await getResumeById(resumeId);
+          const freshData = await getResumeById(selectedResumeId);
           if (!active) return;
 
           if (freshData) {
             if (
-              freshData.parsing_status !== selectedResume.parsing_status ||
-              freshData.ats_score !== selectedResume.ats_score
+              freshData.parsing_status !== selectedResumeStatus ||
+              freshData.ats_score !== selectedResumeAtsScore
             ) {
               setSelectedResume((prev) => {
-                if (!prev || (prev.resume_id || prev.id) !== resumeId)
+                if (!prev || (prev.resume_id || prev.id) !== selectedResumeId)
                   return prev;
                 return { ...prev, ...freshData };
               });
 
               setResumesList((prevList) =>
                 prevList.map((item) =>
-                  String(item.id) === String(resumeId)
+                  String(item.id) === String(selectedResumeId)
                     ? { ...item, ...freshData }
                     : item,
                 ),
@@ -89,7 +91,7 @@ export function useResumeAnalysis() {
               clearInterval(intervalId);
               if (freshData.parsing_status === "completed") {
                 try {
-                  const healthRes = await getResumeHealth(resumeId);
+                  const healthRes = await getResumeHealth(selectedResumeId);
                   if (healthRes.data) {
                     setAnalysisResult(healthRes.data);
                   }
@@ -112,11 +114,7 @@ export function useResumeAnalysis() {
         clearInterval(intervalId);
       };
     }
-  }, [
-    selectedResume?.parsing_status,
-    selectedResume?.id,
-    selectedResume?.resume_id,
-  ]);
+  }, [selectedResumeId, selectedResumeStatus, selectedResumeAtsScore]);
 
   useEffect(() => {
     getResumes()

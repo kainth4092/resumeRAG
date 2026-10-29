@@ -8,13 +8,17 @@ import { getJobNotes, updateJobNotes } from "../services/jobs.service";
 export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState(app.status);
+  const [prevApp, setPrevApp] = useState(app);
   const [notes, setNotes] = useState("");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const debounceRef = useRef(null);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
+  if (prevApp !== app) {
+    setPrevApp(app);
     setStatus(app.status);
+  }
+
+  useEffect(() => {
     let mounted = true;
     async function loadNotes() {
       try {
@@ -35,7 +39,6 @@ export default function ApplicationDrawer({ app, onClose, onStatusChange }) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [app]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleNotesChange = (val) => {
     setNotes(val);

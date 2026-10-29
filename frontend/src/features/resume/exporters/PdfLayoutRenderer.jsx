@@ -1,6 +1,4 @@
-import React from "react";
-import { pdf, Document, Page, View, Text } from "@react-pdf/renderer";
-import { generateLayout } from "../components/resume/templates/templateLayouts";
+import { Document, Page, View, Text } from "@react-pdf/renderer";
 
 const fontMapping = {
   Inter: "Helvetica",
@@ -255,51 +253,10 @@ const renderNode = (node, index, font) => {
   }
 };
 
-export const PdfLayoutRenderer = ({ layout }) => {
+export function PdfLayoutRenderer({ layout }) {
   if (!layout) return null;
   const font = fontMapping[layout.props?.fontFamily] || "Helvetica";
   return renderNode(layout, 0, font);
-};
+}
 
-export const getPDFBlob = async (
-  resumeData,
-  templateName = "Professional",
-) => {
-  const layout = generateLayout(templateName, resumeData);
-  if (!layout) {
-    throw new Error(`Could not generate layout for template: ${templateName}`);
-  }
-  const doc = <PdfLayoutRenderer layout={layout} />;
-  return await pdf(doc).toBlob();
-};
-
-export const downloadPDF = async (
-  resumeData,
-  filename = "Resume.pdf",
-  templateName = "Professional",
-) => {
-  try {
-    const layout = generateLayout(templateName, resumeData);
-    if (!layout) {
-      console.error(
-        "Could not generate visual layout for template:",
-        templateName,
-      );
-      return;
-    }
-
-    const doc = <PdfLayoutRenderer layout={layout} />;
-    const blob = await pdf(doc).toBlob();
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Error generating vector PDF:", error);
-  }
-};
+export default PdfLayoutRenderer;
